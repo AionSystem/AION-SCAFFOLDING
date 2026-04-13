@@ -852,18 +852,48 @@ my-project/
 
   // ========== PARSING ==========
   function parseLine(line, lineNumber) {
-    if (!line.trim()) return null;
-    const indent = line.search(/\S/);
-    const content = line.trim();
-    if (!content.match(/^[├└]──/) && !content.match(/^[│\s]/) && !content.includes('/')) {
-      if (content === 'aion.ai/' || content === 'aion.ai') return { indent, name: content.replace('/', ''), isFolder: true, isRoot: true };
-      throw new Error(`Invalid tree format — expected ├──, └──, or │`);
-    }
-    let name = content.replace(/^[├└]──\s*/, '').replace(/^[│\s]*/, '');
-    const isFolder = name.endsWith('/');
-    if (isFolder) name = name.slice(0, -1);
-    return { indent, name, isFolder, isRoot: false };
+  if (!line.trim()) return null;
+  
+  // Strip comments that appear after the tree content
+  // Look for # or // that has whitespace before it (likely a comment, not part of filename)
+  let content = line;
+  const commentMatch = content.match(/\s+[#\/]{1,2}\s+.+$/);
+  if (commentMatch) {
+    content = content.substring(0, commentMatch.index).trimEnd();
   }
+  
+  const indent = content.search(/\S/);
+  const trimmed = content.trim();
+  
+  if (!trimmed.match(/^[├└]──/) && !trimmed.match(/^[│\s]/) && !trimmed.includes('/')) {
+    if (trimmed === 'aion.ai/' || trimmed === 'aion.ai') {
+      return { indent, name: trimmed.replace('/', ''), isFolder: true, isRoot: true };
+    }
+    // Check if it might be a root without tree characters
+    if (!trimmed.includes(' ') && trimmed.match(/^[a-zA-Z0-9_-]+(\/)?$/)) {
+      return { indent, name: trimmed.replace('/', ''), isFolder: trimmed.endsWith('/'), isRoot: true };
+    }
+    throw new Error(`Invalid tree format — expected ├──, └──, or │`);
+  }
+  
+  let name = trimmed.replace(/^[├└]──\s*/, '').replace(/^[│\s]*/, '');
+  
+  // Strip any trailing comments from the name itself
+  const nameCommentMatch = name.match(/\s+[#\/]{1,2}\s+.+$/);
+  if (nameCommentMatch) {
+    name = name.substring(0, nameCommentMatch.index).trimEnd();
+  }
+  
+  const isFolder = name.endsWith('/');
+  if (isFolder) name = name.slice(0, -1);
+  
+  // Validate name doesn't contain invalid filesystem characters
+  if (name.match(/[<>:"|?*]/)) {
+    throw new Error(`Invalid characters in name: '${name}' at line ${lineNumber}`);
+  }
+  
+  return { indent, name, isFolder, isRoot: false };
+}
 
   function validateInput(lines) {
     const warnings = [];
@@ -878,15 +908,13 @@ my-project/
   function buildTree(lines) {
   const root = { name: 'project', type: 'folder', children: [] };
   const stack = [{ node: root, indent: -1 }];
-  const pathMap = new Map(); // path -> node (for merging)
+  const pathMap = new Map();
   let fileCount = 0, folderCount = 0;
   let hasRoot = false;
   const warnings = [];
 
-  // Helper to find or create folder at path
   function getOrCreateFolder(parentPath, name) {
     const fullPath = parentPath ? `${parentPath}/${name}` : name;
-    
     if (pathMap.has(fullPath)) {
       const existing = pathMap.get(fullPath);
       if (existing.type !== 'folder') {
@@ -895,13 +923,10 @@ my-project/
       warnings.push(`Merged duplicate folder: ${fullPath}`);
       return existing;
     }
-    
     const folder = { name, type: 'folder', children: [] };
     pathMap.set(fullPath, folder);
     folderCount++;
-    if (folderCount > CONFIG.MAX_FOLDERS) {
-      throw new Error(`Too many folders (max ${CONFIG.MAX_FOLDERS})`);
-    }
+    if (folderCount > CONFIG.MAX_FOLDERS) throw new Error(`Too many folders (max ${CONFIG.MAX_FOLDERS})`);
     return folder;
   }
 
@@ -909,7 +934,14 @@ my-project/
     const line = lines[i];
     if (!line.trim()) continue;
     
-    const parsed = parseLine(line, i + 1);
+    // Strip comments before processing
+    let processedLine = line;
+    const commentMatch = processedLine.match(/\s+[#\/]{1,2}\s+.+$/);
+    if (commentMatch) {
+      processedLine = processedLine.substring(0, commentMatch.index).trimEnd();
+    }
+    
+    const parsed = parseLine(processedLine, i + 1);
     if (!parsed) continue;
     
     const { indent, name, isFolder, isRoot } = parsed;
@@ -921,7 +953,6 @@ my-project/
       continue;
     }
 
-    // Find parent based on indent
     while (stack.length > 1 && stack[stack.length - 1].indent >= indent) {
       stack.pop();
     }
@@ -931,36 +962,25 @@ my-project/
     
     if (isFolder) {
       const folder = getOrCreateFolder(parentPath, name);
-      
-      // Add to parent's children if not already there
       if (!parentNode.children.some(c => c.type === 'folder' && c.name === name)) {
         parentNode.children.push(folder);
       }
-      
       stack.push({ node: folder, indent });
     } else {
       const fullPath = parentPath ? `${parentPath}/${name}` : `${root.name}/${name}`;
-      
-      // Check for duplicate file
       if (pathMap.has(fullPath)) {
         throw new Error(`Duplicate file: ${fullPath} at line ${i + 1}`);
       }
-      
       const file = { name, type: 'file' };
       pathMap.set(fullPath, file);
       parentNode.children.push(file);
       fileCount++;
-      
-      if (fileCount > CONFIG.MAX_FILES) {
-        throw new Error(`Too many files (max ${CONFIG.MAX_FILES})`);
-      }
+      if (fileCount > CONFIG.MAX_FILES) throw new Error(`Too many files (max ${CONFIG.MAX_FILES})`);
     }
   }
 
-  // Helper to reconstruct path
   function getNodePath(node, rootNode, currentPath = '') {
     if (node === rootNode) return rootNode.name;
-    
     function findPath(n, target, path) {
       if (n === target) return path;
       if (n.type === 'folder' && n.children) {
@@ -971,14 +991,17 @@ my-project/
       }
       return null;
     }
-    
     return findPath(rootNode, node, '') || rootNode.name;
   }
 
-  if (!hasRoot && lines.some(l => l.trim())) {
+  if (!hasRoot) {
     const firstLine = lines.find(l => l.trim());
-    if (firstLine && !firstLine.includes('/')) {
-      root.name = firstLine.trim().replace(/^[├└]──\s*/, '').replace(/[\/]$/, '');
+    if (firstLine) {
+      let rootName = firstLine.trim();
+      const commentMatch = rootName.match(/\s+[#\/]{1,2}\s+.+$/);
+      if (commentMatch) rootName = rootName.substring(0, commentMatch.index).trimEnd();
+      rootName = rootName.replace(/^[├└]──\s*/, '').replace(/[\/]$/, '');
+      if (rootName && !rootName.includes(' ')) root.name = rootName;
     }
   }
 
