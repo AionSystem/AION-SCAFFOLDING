@@ -37,6 +37,7 @@
   --font-size-base: clamp(16px, 1vw + 8px, 20px);
   --glow-amber: 0 0 5px #f0a500, 0 0 10px #f0a500, 0 0 20px rgba(240,165,0,0.5);
   --glow-cyan: 0 0 5px #00d4ff, 0 0 10px #00d4ff, 0 0 20px rgba(0,212,255,0.4);
+  --glow-red: 0 0 5px #ff4d4d, 0 0 10px #ff4d4d, 0 0 30px rgba(255,77,77,0.6);
 }
 body {
   background: var(--bg);
@@ -73,6 +74,7 @@ body::after {
 }
 @keyframes scan { 0% { transform: translateY(0); } 100% { transform: translateY(4px); } }
 
+/* Three-Stage Custom Cursor */
 .custom-cursor {
   width: 20px;
   height: 20px;
@@ -82,16 +84,41 @@ body::after {
   pointer-events: none;
   z-index: 9999;
   mix-blend-mode: screen;
-  transition: transform 0.1s ease, background 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.15s ease, background 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, width 0.3s ease, height 0.3s ease;
   transform: translate(-50%, -50%);
   box-shadow: 0 0 15px var(--cyan), 0 0 30px rgba(0,212,255,0.3);
 }
+/* Stage 2: Interactive (hover) */
 .custom-cursor.hover {
-  transform: translate(-50%, -50%) scale(1.8);
-  background: rgba(0,212,255,0.1);
+  width: 36px;
+  height: 36px;
+  background: rgba(0,212,255,0.08);
   border-color: var(--amber);
   box-shadow: 0 0 25px var(--amber), 0 0 50px rgba(240,165,0,0.5);
 }
+/* Stage 3: Magnify (idle) */
+.custom-cursor.magnify {
+  width: 180px;
+  height: 180px;
+  border-color: var(--red);
+  background: rgba(255,77,77,0.05);
+  backdrop-filter: blur(4px) brightness(1.1);
+  -webkit-backdrop-filter: blur(4px) brightness(1.1);
+  box-shadow: var(--glow-red), 0 0 60px rgba(255,77,77,0.4);
+  transition: width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), height 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), backdrop-filter 0.3s ease;
+  transform: translate(-50%, -50%) scale(1);
+}
+.custom-cursor.magnify::after {
+  content: '🔍';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 24px;
+  opacity: 0.6;
+  text-shadow: 0 0 15px var(--red);
+}
+
 .cursor-trail {
   position: fixed;
   width: 6px;
@@ -103,6 +130,11 @@ body::after {
   opacity: 0.6;
   box-shadow: 0 0 10px var(--cyan);
   transition: opacity 0.3s ease;
+}
+.cursor-trail.magnify-trail {
+  background: var(--red);
+  box-shadow: 0 0 15px var(--red);
+  opacity: 0.4;
 }
 
 nav {
@@ -508,7 +540,7 @@ footer {
 </nav>
 
 <div class="page-header">
-  <div class="hero-eyebrow">Developer Tool · v2.1</div>
+  <div class="hero-eyebrow">Developer Tool · v2.2</div>
   <h1 class="page-title">AION<em>Scaffold</em></h1>
   <p class="page-sub">Paste a tree structure. Download a complete folder hierarchy — ZIP, shell script, or tree export.</p>
 </div>
@@ -525,25 +557,14 @@ footer {
       <div class="panel-header">
         <span class="panel-label">INPUT — Tree Structure</span>
         <div class="panel-actions">
-          <button class="icon-btn warning" id="cleanCommentsBtn" title="Remove all inline comments from tree">🧹 Clean Comments</button>
+          <button class="icon-btn" id="loadExampleBtn" title="Load example tree">📋 Example</button>
+          <button class="icon-btn warning" id="cleanCommentsBtn" title="Remove all inline comments from tree">🧹 Clean</button>
           <button class="icon-btn" id="undoBtn" disabled>↩ Undo</button>
           <button class="icon-btn" id="redoBtn" disabled>↪ Redo</button>
           <button class="icon-btn" id="clearBtn">Clear</button>
         </div>
       </div>
-      <textarea id="input" placeholder="Paste your tree structure here...
-
-Example:
-my-project/
-├── src/
-│   ├── components/
-│   │   └── App.tsx
-│   ├── utils/
-│   │   └── helpers.ts
-│   └── index.ts
-├── package.json
-├── tsconfig.json
-└── README.md"></textarea>
+      <textarea id="input" placeholder="Paste your tree structure here..."></textarea>
     </div>
     <div class="editor-panel">
       <div class="panel-header">
@@ -553,7 +574,7 @@ my-project/
         </div>
       </div>
       <div class="preview" id="preview" role="region" aria-label="Tree structure preview">
-        <span style="color: var(--dim);">Paste a tree and click "Parse"...</span>
+        <span style="color: var(--dim);">Click "Example" to load a sample tree, then "Parse"...</span>
       </div>
     </div>
   </div>
@@ -572,7 +593,7 @@ my-project/
     <div class="badge-group">
       <span id="recoveryHint" class="recovery-hint"></span>
       <span class="fqi-badge">FQI: 0.86</span>
-      <span class="version-badge">v2.1</span>
+      <span class="version-badge">v2.2</span>
     </div>
   </div>
 </div>
@@ -598,11 +619,39 @@ my-project/
   const CONFIG = {
     MAX_FILES: 10000,
     MAX_FOLDERS: 5000,
-    MAX_NESTING_DEPTH: 100,
     BINARY_EXTENSIONS: ['gguf', 'safetensors', 'png', 'jpg', 'jpeg', 'gif', 'ico', 'db', 'sqlite', 'bin', 'wasm', 'zip', 'tar', 'gz', 'webp', 'svg', 'mp4', 'mp3', 'wav'],
     MAX_HISTORY: 20,
-    AUTO_SAVE_KEY: 'aion-scaffold-backup-v2_1'
+    AUTO_SAVE_KEY: 'aion-scaffold-backup-v2_2',
+    IDLE_MAGNIFY_DELAY: 1800
   };
+
+  const EXAMPLE_TREE = `aion.ai/
+├── README.md
+├── package.json
+├── tsconfig.json
+├── .gitignore
+├── apps/
+│   ├── assistant/
+│   │   ├── index.html
+│   │   ├── assistant.js
+│   │   └── styles.css
+│   └── web/
+│       └── index.html
+├── packages/
+│   ├── idl/
+│   │   ├── IDL-v2.0-SPEC.md
+│   │   ├── index.ts
+│   │   └── processor/
+│   │       ├── types.ts
+│   │       └── event-store.ts
+│   └── praxis/
+│       ├── PRAXIS-v0.5-complete.md
+│       └── FTT-1-lovelace.ts
+├── memory/
+│   ├── ALBEDO-CORE-v4.4.md
+│   └── perma-memories.js
+└── models/
+    └── brain.gguf`;
 
   // ========== DOM ELEMENTS ==========
   const elements = {
@@ -616,6 +665,7 @@ my-project/
     generateBtn: document.getElementById('generateBtn'),
     clearBtn: document.getElementById('clearBtn'),
     cleanCommentsBtn: document.getElementById('cleanCommentsBtn'),
+    loadExampleBtn: document.getElementById('loadExampleBtn'),
     undoBtn: document.getElementById('undoBtn'),
     redoBtn: document.getElementById('redoBtn'),
     exportFormat: document.getElementById('exportFormat'),
@@ -705,22 +755,38 @@ my-project/
   resizeCanvas();
   drawSymbols();
 
-  // ========== CUSTOM CURSOR ==========
+  // ========== THREE-STAGE CUSTOM CURSOR ==========
   const cursor = document.getElementById('custom-cursor');
   const trailContainer = document.getElementById('cursor-trail-container');
   let trailPositions = [];
   const MAX_TRAIL = 8;
+  let idleTimer = null;
+  let isIdle = false;
+
+  function resetIdleTimer() {
+    if (idleTimer) clearTimeout(idleTimer);
+    cursor.classList.remove('magnify');
+    document.querySelectorAll('.cursor-trail').forEach(t => t.classList.remove('magnify-trail'));
+    isIdle = false;
+    idleTimer = setTimeout(() => {
+      cursor.classList.add('magnify');
+      document.querySelectorAll('.cursor-trail').forEach(t => t.classList.add('magnify-trail'));
+      isIdle = true;
+    }, CONFIG.IDLE_MAGNIFY_DELAY);
+  }
 
   document.addEventListener('mousemove', (e) => {
     const x = e.clientX, y = e.clientY;
     cursor.style.left = x + 'px';
     cursor.style.top = y + 'px';
+    
     trailPositions.push({ x, y, time: Date.now() });
     if (trailPositions.length > MAX_TRAIL) trailPositions.shift();
+    
     trailContainer.innerHTML = '';
     trailPositions.forEach((pos, i) => {
       const dot = document.createElement('div');
-      dot.className = 'cursor-trail';
+      dot.className = 'cursor-trail' + (isIdle ? ' magnify-trail' : '');
       const age = (Date.now() - pos.time) / 1000;
       const opacity = Math.max(0, 0.6 - age * 0.8);
       const scale = 1 - i * 0.1;
@@ -730,43 +796,58 @@ my-project/
       dot.style.transform = `translate(-50%, -50%) scale(${scale})`;
       trailContainer.appendChild(dot);
     });
+    
+    resetIdleTimer();
   });
 
-  document.querySelectorAll('a, button, .cta-btn, .editor-panel, .icon-btn').forEach(el => {
-    el.addEventListener('mouseenter', () => cursor.classList.add('hover'));
-    el.addEventListener('mouseleave', () => cursor.classList.remove('hover'));
+  document.addEventListener('mouseleave', () => {
+    if (idleTimer) clearTimeout(idleTimer);
+    cursor.classList.remove('magnify');
+    isIdle = false;
   });
+
+  document.querySelectorAll('a, button, .cta-btn, .editor-panel, .icon-btn, select').forEach(el => {
+    el.addEventListener('mouseenter', () => {
+      cursor.classList.add('hover');
+      if (idleTimer) clearTimeout(idleTimer);
+      cursor.classList.remove('magnify');
+    });
+    el.addEventListener('mouseleave', () => {
+      cursor.classList.remove('hover');
+      resetIdleTimer();
+    });
+  });
+
+  resetIdleTimer();
 
   // ========== COMMENT STRIPPING ==========
   function stripCommentsFromLine(line) {
-    // Remove inline comments that start with # or // after whitespace
     const commentMatch = line.match(/\s+[#\/]{1,2}\s+.+$/);
-    if (commentMatch) {
-      return line.substring(0, commentMatch.index).trimEnd();
-    }
+    if (commentMatch) return line.substring(0, commentMatch.index).trimEnd();
     return line;
   }
 
   function stripAllComments(text) {
-    const lines = text.split('\n');
-    const cleanedLines = lines.map(line => stripCommentsFromLine(line));
-    return cleanedLines.join('\n');
+    return text.split('\n').map(stripCommentsFromLine).join('\n');
   }
 
   function cleanCommentsAction() {
     const currentText = elements.input.value;
     if (!currentText.trim()) return;
-    
     const cleanedText = stripAllComments(currentText);
-    
-    // Only update if changed
     if (cleanedText !== currentText) {
-      pushHistory(); // Save current state before changing
+      pushHistory();
       elements.input.value = cleanedText;
       showSuccess('Comments removed. Click Parse to rebuild tree.');
     } else {
       showWarning('No comments found to clean.');
     }
+  }
+
+  function loadExample() {
+    pushHistory();
+    elements.input.value = EXAMPLE_TREE;
+    showSuccess('Example tree loaded. Click Parse to preview.');
   }
 
   // ========== UTILITIES ==========
@@ -837,8 +918,7 @@ my-project/
     if (history.past.length < 2) return;
     const current = history.past.pop();
     history.future.push(current);
-    const prev = history.past[history.past.length - 1];
-    restoreSnapshot(prev);
+    restoreSnapshot(history.past[history.past.length - 1]);
     updateUndoRedoButtons();
   }
 
@@ -855,16 +935,14 @@ my-project/
     state.parsedTree = snapshot.tree;
     state.fileCount = snapshot.fileCount;
     state.folderCount = snapshot.folderCount;
-    if (state.parsedTree) {
-      renderPreview(state.parsedTree);
-      updateStats();
-    }
+    if (state.parsedTree) { renderPreview(state.parsedTree); updateStats(); }
   }
 
   function saveToStorage() {
     try {
-      const backup = { input: elements.input.value, tree: state.parsedTree, fileCount: state.fileCount, folderCount: state.folderCount, timestamp: Date.now() };
-      localStorage.setItem(CONFIG.AUTO_SAVE_KEY, JSON.stringify(backup));
+      localStorage.setItem(CONFIG.AUTO_SAVE_KEY, JSON.stringify({
+        input: elements.input.value, tree: state.parsedTree, fileCount: state.fileCount, folderCount: state.folderCount, timestamp: Date.now()
+      }));
     } catch (e) {}
   }
 
@@ -873,20 +951,12 @@ my-project/
       const backup = localStorage.getItem(CONFIG.AUTO_SAVE_KEY);
       if (!backup) return;
       const data = JSON.parse(backup);
-      const age = Date.now() - data.timestamp;
-      if (age < 24 * 60 * 60 * 1000) {
+      if (Date.now() - data.timestamp < 24 * 60 * 60 * 1000) {
         elements.recoveryHint.textContent = `💾 Restore session`;
         elements.recoveryHint.onclick = () => {
           if (confirm('Restore previous session?')) {
             elements.input.value = data.input;
-            if (data.tree) {
-              state.parsedTree = data.tree;
-              state.fileCount = data.fileCount;
-              state.folderCount = data.folderCount;
-              renderPreview(state.parsedTree);
-              updateStats();
-              showSuccess('Session restored.');
-            }
+            if (data.tree) { state.parsedTree = data.tree; state.fileCount = data.fileCount; state.folderCount = data.folderCount; renderPreview(state.parsedTree); updateStats(); showSuccess('Session restored.'); }
             pushHistory();
           }
         };
@@ -894,81 +964,39 @@ my-project/
     } catch (e) {}
   }
 
-  // ========== PARSING ==========
+  // ========== PARSING (FIXED) ==========
   function parseLine(line, lineNumber) {
     if (!line.trim()) return null;
-    
-    // Strip comments first
     let content = stripCommentsFromLine(line);
-    
     const indent = content.search(/\S/);
     const trimmed = content.trim();
     
     if (!trimmed.match(/^[├└]──/) && !trimmed.match(/^[│\s]/) && !trimmed.includes('/')) {
-      if (trimmed === 'aion.ai/' || trimmed === 'aion.ai') {
-        return { indent, name: trimmed.replace('/', ''), isFolder: true, isRoot: true };
+      if (trimmed.match(/^[a-zA-Z0-9_-]+(\/)?$/)) {
+        return { indent, name: trimmed.replace(/\/$/, ''), isFolder: trimmed.endsWith('/'), isRoot: true };
       }
-      if (!trimmed.includes(' ') && trimmed.match(/^[a-zA-Z0-9_-]+(\/)?$/)) {
-        return { indent, name: trimmed.replace('/', ''), isFolder: trimmed.endsWith('/'), isRoot: true };
-      }
-      throw new Error(`Invalid tree format — expected ├──, └──, or │`);
+      throw new Error(`Invalid format at line ${lineNumber}`);
     }
     
     let name = trimmed.replace(/^[├└]──\s*/, '').replace(/^[│\s]*/, '');
-    
-    // Strip any remaining comments from the name itself
     name = stripCommentsFromLine(name);
-    
     const isFolder = name.endsWith('/');
     if (isFolder) name = name.slice(0, -1);
-    
-    if (name.match(/[<>:"|?*]/)) {
-      throw new Error(`Invalid characters in name: '${name}' at line ${lineNumber}`);
-    }
-    
+    if (name.match(/[<>:"|?*]/)) throw new Error(`Invalid characters in '${name}' at line ${lineNumber}`);
     return { indent, name, isFolder, isRoot: false };
-  }
-
-  function validateInput(lines) {
-    const warnings = [];
-    const hasTabs = lines.some(l => l.includes('\t'));
-    const hasSpaces = lines.some(l => l.match(/^[ ]+/));
-    if (hasTabs && hasSpaces) warnings.push('Mixed tabs and spaces — indentation may be incorrect.');
-    const maxIndent = Math.max(...lines.map(l => l.search(/\S/)).filter(i => i >= 0));
-    if (maxIndent > CONFIG.MAX_NESTING_DEPTH * 2) warnings.push(`Deep nesting detected (${Math.floor(maxIndent/2)} levels).`);
-    return warnings;
   }
 
   function buildTree(lines) {
     const root = { name: 'project', type: 'folder', children: [] };
-    const stack = [{ node: root, indent: -1 }];
-    const pathMap = new Map();
-    let fileCount = 0, folderCount = 0;
-    let hasRoot = false;
+    const stack = [{ node: root, indent: -1, path: 'project' }];
+    const pathMap = new Map([['project', root]]);
+    let fileCount = 0, folderCount = 1;
     const warnings = [];
-
-    function getOrCreateFolder(parentPath, name) {
-      const fullPath = parentPath ? `${parentPath}/${name}` : name;
-      if (pathMap.has(fullPath)) {
-        const existing = pathMap.get(fullPath);
-        if (existing.type !== 'folder') {
-          throw new Error(`Cannot create folder '${fullPath}' — a file with this path already exists.`);
-        }
-        warnings.push(`Merged duplicate folder: ${fullPath}`);
-        return existing;
-      }
-      const folder = { name, type: 'folder', children: [] };
-      pathMap.set(fullPath, folder);
-      folderCount++;
-      if (folderCount > CONFIG.MAX_FOLDERS) throw new Error(`Too many folders (max ${CONFIG.MAX_FOLDERS})`);
-      return folder;
-    }
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
       if (!line.trim()) continue;
       
-      // Strip comments before processing
       const processedLine = stripCommentsFromLine(line);
       if (!processedLine.trim()) continue;
       
@@ -979,103 +1007,75 @@ my-project/
 
       if (isRoot) {
         root.name = name;
-        hasRoot = true;
+        pathMap.delete('project');
         pathMap.set(name, root);
+        stack[0].path = name;
         continue;
       }
 
-      while (stack.length > 1 && stack[stack.length - 1].indent >= indent) {
-        stack.pop();
-      }
+      while (stack.length > 1 && stack[stack.length - 1].indent >= indent) stack.pop();
       
-      const parentNode = stack[stack.length - 1].node;
-      const parentPath = parentNode === root ? root.name : getNodePath(parentNode, root);
+      const parent = stack[stack.length - 1];
+      const fullPath = `${parent.path}/${name}`;
       
       if (isFolder) {
-        const folder = getOrCreateFolder(parentPath, name);
-        if (!parentNode.children.some(c => c.type === 'folder' && c.name === name)) {
-          parentNode.children.push(folder);
-        }
-        stack.push({ node: folder, indent });
-      } else {
-        const fullPath = parentPath ? `${parentPath}/${name}` : `${root.name}/${name}`;
         if (pathMap.has(fullPath)) {
-          throw new Error(`Duplicate file: ${fullPath} at line ${i + 1}`);
+          const existing = pathMap.get(fullPath);
+          if (existing.type !== 'folder') throw new Error(`Cannot create folder '${fullPath}' — file exists`);
+          warnings.push(`Merged: ${fullPath}`);
+          stack.push({ node: existing, indent, path: fullPath });
+          continue;
         }
+        const folder = { name, type: 'folder', children: [] };
+        pathMap.set(fullPath, folder);
+        parent.node.children.push(folder);
+        folderCount++;
+        if (folderCount > CONFIG.MAX_FOLDERS) throw new Error(`Too many folders (max ${CONFIG.MAX_FOLDERS})`);
+        stack.push({ node: folder, indent, path: fullPath });
+      } else {
+        if (pathMap.has(fullPath)) throw new Error(`Duplicate file: ${fullPath} at line ${i + 1}`);
         const file = { name, type: 'file' };
         pathMap.set(fullPath, file);
-        parentNode.children.push(file);
+        parent.node.children.push(file);
         fileCount++;
         if (fileCount > CONFIG.MAX_FILES) throw new Error(`Too many files (max ${CONFIG.MAX_FILES})`);
       }
     }
-
-    function getNodePath(node, rootNode) {
-      if (node === rootNode) return rootNode.name;
-      function findPath(n, target, path) {
-        if (n === target) return path;
-        if (n.type === 'folder' && n.children) {
-          for (const child of n.children) {
-            const found = findPath(child, target, path ? `${path}/${n.name}` : n.name);
-            if (found) return found;
-          }
-        }
-        return null;
-      }
-      return findPath(rootNode, node, '') || rootNode.name;
-    }
-
-    if (!hasRoot) {
-      const firstLine = lines.find(l => l.trim());
-      if (firstLine) {
-        let rootName = stripCommentsFromLine(firstLine).trim();
-        rootName = rootName.replace(/^[├└]──\s*/, '').replace(/[\/]$/, '');
-        if (rootName && !rootName.includes(' ')) root.name = rootName;
-      }
-    }
-
     return { root, fileCount, folderCount, warnings };
   }
 
   // ========== PLACEHOLDER GENERATION ==========
   function generatePlaceholderContent(name, path) {
-    if (isBinaryFile(name)) return `# ${path}\n# BINARY PLACEHOLDER — replace with actual ${name.split('.').pop()?.toUpperCase()} file\n`;
+    if (isBinaryFile(name)) return `# ${path}\n# BINARY PLACEHOLDER\n`;
     const ext = name.split('.').pop();
     const baseName = name.replace(/\.[^/.]+$/, '');
-    if (baseName === 'index' && (ext === 'ts' || ext === 'js')) return `// ${path}\n// Barrel export\n\nexport * from './types';\nexport * from './processor';\n`;
-    if (name === 'package.json') return JSON.stringify({ name: path.replace(/\//g, '-').replace(/[^a-z0-9-]/g, '-') || 'project', version: "1.0.0", private: true, scripts: { build: "tsc", dev: "tsc --watch" } }, null, 2);
-    if (name === 'tsconfig.json') return JSON.stringify({ compilerOptions: { target: "ES2022", module: "ESNext", strict: true, esModuleInterop: true, skipLibCheck: true }, include: ["src/**/*"], exclude: ["node_modules", "dist"] }, null, 2);
-    if (ext === 'md') return `# ${baseName.replace(/-/g, ' ').toUpperCase()}\n\n## Overview\n\n[Generated by AION Scaffold v2.1]\n`;
-    if (ext === 'ts' || ext === 'js') return `/**\n * ${path}\n * @module ${baseName}\n */\n\nexport {};\n`;
-    if (ext === 'yaml' || ext === 'yml') return `# ${path}\nversion: "1.0"\n`;
-    if (ext === 'sql') return `-- ${path}\n-- TODO: Define schema\n`;
-    if (ext === 'html') return `<!DOCTYPE html>\n<html>\n<head><meta charset="UTF-8"><title>${baseName}</title></head>\n<body><!-- ${path} --></body>\n</html>\n`;
-    if (ext === 'css') return `/* ${path} */\n:root { --amber: #f0a500; --cyan: #00d4ff; }\n`;
-    if (name === '.gitignore') return `node_modules/\ndist/\n.env\n*.gguf\n*.safetensors\n`;
-    return `# ${path}\n# AION Scaffold placeholder\n`;
+    if (baseName === 'index' && (ext === 'ts' || ext === 'js')) return `// ${path}\n// Barrel export\n\nexport * from './types';\n`;
+    if (name === 'package.json') return JSON.stringify({ name: path.replace(/\//g, '-').replace(/[^a-z0-9-]/g, '-') || 'project', version: "1.0.0", private: true }, null, 2);
+    if (name === 'tsconfig.json') return JSON.stringify({ compilerOptions: { target: "ES2022", module: "ESNext", strict: true } }, null, 2);
+    if (ext === 'md') return `# ${baseName}\n`;
+    if (ext === 'ts' || ext === 'js') return `// ${path}\n`;
+    if (name === '.gitignore') return `node_modules/\n.env\n`;
+    return '';
   }
 
   // ========== RENDERING ==========
   function renderPreview(tree) {
     if (!tree) { elements.preview.innerHTML = '<span style="color: var(--dim);">Parse the tree to see preview...</span>'; return; }
-    let html = '', accessible = '';
+    let html = '';
     function renderNode(node, depth = 0) {
       const indent = '  '.repeat(depth);
       if (node.type === 'folder') {
         html += `<div>${indent}<span class="preview-folder">📁 ${node.name}/</span></div>`;
-        accessible += `Folder: ${node.name}\n`;
         if (node.children) node.children.forEach(c => renderNode(c, depth + 1));
       } else {
         const binary = isBinaryFile(node.name);
         const icon = binary ? '📦' : getFileIcon(node.name.split('.').pop());
         const cls = binary ? 'preview-binary' : 'preview-file';
         html += `<div>${indent}<span class="${cls}">${icon} ${node.name}</span></div>`;
-        accessible += `File: ${node.name}${binary ? ' (binary)' : ''}\n`;
       }
     }
     tree.children?.forEach(c => renderNode(c, 0));
     elements.preview.innerHTML = html || '<span style="color: var(--dim);">Empty tree</span>';
-    elements.preview.setAttribute('aria-label', accessible || 'Empty tree');
   }
 
   // ========== PARSE ACTION ==========
@@ -1084,38 +1084,29 @@ my-project/
     const input = elements.input.value;
     if (!input.trim()) { showError('Paste a tree structure first.'); return; }
     try {
-      const lines = input.split('\n');
-      const warnings = validateInput(lines);
-      const result = buildTree(lines);
-      
+      const result = buildTree(input.split('\n'));
       state.parsedTree = result.root;
       state.fileCount = result.fileCount;
       state.folderCount = result.folderCount;
-      
       renderPreview(state.parsedTree);
       updateStats();
-      
-      if (warnings.length) showWarning(warnings.join(' '));
-      if (result.warnings && result.warnings.length) {
-        setTimeout(() => showWarning(result.warnings.join(' ')), 100);
-      }
-      
-      const binaryCount = result.root.children?.filter(c => c.type === 'file' && isBinaryFile(c.name)).length || 0;
-      const mergeNote = result.warnings?.length ? ` (${result.warnings.length} folder(s) merged)` : '';
-      showSuccess(`Parsed — ${result.folderCount} folders, ${result.fileCount} files${binaryCount ? ` (${binaryCount} binary)` : ''}${mergeNote}.`);
-      
+      if (result.warnings?.length) showWarning(result.warnings.join(' · '));
+      showSuccess(`Parsed — ${result.folderCount} folders, ${result.fileCount} files.`);
       pushHistory();
     } catch (e) {
       showError(e.message);
-      state.parsedTree = null;
     }
   }
 
   // ========== EXPORT ==========
   function addToZip(zip, node, path = '') {
     const full = path ? `${path}/${node.name}` : node.name;
-    if (node.type === 'folder') { const f = zip.folder(full); if (node.children) node.children.forEach(c => addToZip(zip, c, full)); }
-    else zip.file(full, generatePlaceholderContent(node.name, full));
+    if (node.type === 'folder') {
+      const f = zip.folder(full);
+      if (node.children) node.children.forEach(c => addToZip(zip, c, full));
+    } else {
+      zip.file(full, generatePlaceholderContent(node.name, full));
+    }
   }
 
   async function generateZip() {
@@ -1124,22 +1115,19 @@ my-project/
     try {
       const zip = new JSZip();
       const rootName = state.parsedTree.name || 'project';
-      const root = zip.folder(rootName);
       state.parsedTree.children?.forEach(c => addToZip(zip, c, rootName));
-      const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
-      const url = URL.createObjectURL(blob);
+      const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
       const a = document.createElement('a');
-      a.href = url; a.download = `${rootName}.zip`; document.body.appendChild(a); a.click(); document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      a.href = URL.createObjectURL(blob); a.download = `${rootName}.zip`; a.click();
       showSuccess(`${rootName}.zip generated.`);
     } catch (e) {
-      showError(e.message?.includes('blob') ? 'Tree too large for browser.' : `ZIP failed: ${e.message}`);
+      showError('ZIP failed — tree too large?');
     } finally { elements.generateBtn.disabled = false; }
   }
 
   function generateScript() {
     if (!state.parsedTree) { showError('Parse a tree first.'); return; }
-    let script = '#!/bin/bash\n# Generated by AION Scaffold v2.1\n\n';
+    let script = '#!/bin/bash\n';
     function add(n, path = '') {
       const full = path ? `${path}/${n.name}` : n.name;
       if (n.type === 'folder') { script += `mkdir -p "${full}"\n`; if (n.children) n.children.forEach(c => add(c, full)); }
@@ -1148,12 +1136,8 @@ my-project/
     const root = state.parsedTree.name || 'project';
     script += `mkdir -p "${root}"\ncd "${root}"\n`;
     state.parsedTree.children?.forEach(c => add(c, ''));
-    script += `\necho "✅ ${state.folderCount} folders, ${state.fileCount} files created."\n`;
-    const blob = new Blob([script], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url; a.download = `${root}.sh`; document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    a.href = URL.createObjectURL(new Blob([script])); a.download = `${root}.sh`; a.click();
     showSuccess(`${root}.sh generated.`);
   }
 
@@ -1162,19 +1146,15 @@ my-project/
     let out = `${state.parsedTree.name}/\n`;
     function add(n, depth = 0, last = true, prefix = '') {
       if (depth === 0) { n.children?.forEach((c, i) => add(c, depth+1, i === n.children.length-1, '')); return; }
-      const conn = last ? '└── ' : '├── ';
-      out += prefix + conn + n.name + (n.type === 'folder' ? '/' : '') + '\n';
+      out += prefix + (last ? '└── ' : '├── ') + n.name + (n.type === 'folder' ? '/' : '') + '\n';
       if (n.type === 'folder' && n.children) {
         const np = prefix + (last ? '    ' : '│   ');
         n.children.forEach((c, i) => add(c, depth+1, i === n.children.length-1, np));
       }
     }
     add(state.parsedTree);
-    const blob = new Blob([out], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url; a.download = `${state.parsedTree.name}.tree.txt`; document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    a.href = URL.createObjectURL(new Blob([out])); a.download = `${state.parsedTree.name}.tree.txt`; a.click();
     showSuccess(`Tree exported.`);
   }
 
@@ -1187,7 +1167,7 @@ my-project/
 
   function clearAll() {
     elements.input.value = '';
-    elements.preview.innerHTML = '<span style="color: var(--dim);">Paste a tree and click "Parse"...</span>';
+    elements.preview.innerHTML = '<span style="color: var(--dim);">Click "Example" to load a sample tree...</span>';
     elements.statsText.innerHTML = '📁 0 folders · 📄 0 files';
     clearMessages();
     state.parsedTree = null; state.fileCount = 0; state.folderCount = 0;
@@ -1200,6 +1180,7 @@ my-project/
   elements.generateBtn.addEventListener('click', handleExport);
   elements.clearBtn.addEventListener('click', clearAll);
   elements.cleanCommentsBtn.addEventListener('click', cleanCommentsAction);
+  elements.loadExampleBtn.addEventListener('click', loadExample);
   elements.undoBtn.addEventListener('click', undo);
   elements.redoBtn.addEventListener('click', redo);
 
@@ -1216,8 +1197,7 @@ my-project/
   mobileNav.id = 'mobileNav';
   document.body.appendChild(mobileNav);
   if (hamburger) {
-    const navLinks = document.querySelectorAll('.nav-links a');
-    navLinks.forEach(link => { const clone = link.cloneNode(true); mobileNav.appendChild(clone); });
+    document.querySelectorAll('.nav-links a').forEach(link => mobileNav.appendChild(link.cloneNode(true)));
     hamburger.addEventListener('click', () => { mobileNav.classList.toggle('open'); hamburger.classList.toggle('open'); });
     mobileNav.addEventListener('click', (e) => { if (e.target.tagName === 'A') { mobileNav.classList.remove('open'); hamburger.classList.remove('open'); } });
   }
