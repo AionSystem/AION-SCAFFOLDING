@@ -284,6 +284,14 @@ nav {
   opacity: 0.4;
   cursor: not-allowed;
 }
+.icon-btn.warning {
+  border-color: var(--amber);
+  color: var(--amber);
+}
+.icon-btn.warning:hover {
+  background: rgba(240,165,0,0.1);
+  text-shadow: 0 0 5px var(--amber);
+}
 textarea {
   width: 100%;
   height: 400px;
@@ -492,6 +500,7 @@ footer {
     <li><a href="/submissions/">Submissions</a></li>
     <li><a href="/case-studies/">Case-Studies</a></li>
     <li><a href="/stack/">Stack-Tools</a></li>
+    <li><a href="/dev-tools/">Dev-Tools</a></li>
     <li><a href="/certify/">Certify</a></li>
     <li><a href="/about/">About</a></li>
   </ul>
@@ -499,7 +508,7 @@ footer {
 </nav>
 
 <div class="page-header">
-  <div class="hero-eyebrow">Developer Tool · v2.0</div>
+  <div class="hero-eyebrow">Developer Tool · v2.1</div>
   <h1 class="page-title">AION<em>Scaffold</em></h1>
   <p class="page-sub">Paste a tree structure. Download a complete folder hierarchy — ZIP, shell script, or tree export.</p>
 </div>
@@ -516,6 +525,7 @@ footer {
       <div class="panel-header">
         <span class="panel-label">INPUT — Tree Structure</span>
         <div class="panel-actions">
+          <button class="icon-btn warning" id="cleanCommentsBtn" title="Remove all inline comments from tree">🧹 Clean Comments</button>
           <button class="icon-btn" id="undoBtn" disabled>↩ Undo</button>
           <button class="icon-btn" id="redoBtn" disabled>↪ Redo</button>
           <button class="icon-btn" id="clearBtn">Clear</button>
@@ -562,7 +572,7 @@ my-project/
     <div class="badge-group">
       <span id="recoveryHint" class="recovery-hint"></span>
       <span class="fqi-badge">FQI: 0.86</span>
-      <span class="version-badge">v2.0</span>
+      <span class="version-badge">v2.1</span>
     </div>
   </div>
 </div>
@@ -574,6 +584,7 @@ my-project/
     <li><a href="/services/">Services</a></li>
     <li><a href="/stack/">Stack</a></li>
     <li><a href="/submissions/">Submissions</a></li>
+    <li><a href="/dev-tools/">Dev-Tools</a></li>
     <li><a href="https://github.com/AionSystem" target="_blank" rel="noopener">GitHub ↗</a></li>
   </ul>
 </footer>
@@ -588,9 +599,9 @@ my-project/
     MAX_FILES: 10000,
     MAX_FOLDERS: 5000,
     MAX_NESTING_DEPTH: 100,
-    BINARY_EXTENSIONS: ['gguf', 'safetensors', 'png', 'jpg', 'jpeg', 'gif', 'ico', 'db', 'sqlite', 'bin', 'wasm', 'zip', 'tar', 'gz'],
+    BINARY_EXTENSIONS: ['gguf', 'safetensors', 'png', 'jpg', 'jpeg', 'gif', 'ico', 'db', 'sqlite', 'bin', 'wasm', 'zip', 'tar', 'gz', 'webp', 'svg', 'mp4', 'mp3', 'wav'],
     MAX_HISTORY: 20,
-    AUTO_SAVE_KEY: 'aion-scaffold-backup-v2'
+    AUTO_SAVE_KEY: 'aion-scaffold-backup-v2_1'
   };
 
   // ========== DOM ELEMENTS ==========
@@ -604,6 +615,7 @@ my-project/
     parseBtn: document.getElementById('parseBtn'),
     generateBtn: document.getElementById('generateBtn'),
     clearBtn: document.getElementById('clearBtn'),
+    cleanCommentsBtn: document.getElementById('cleanCommentsBtn'),
     undoBtn: document.getElementById('undoBtn'),
     redoBtn: document.getElementById('redoBtn'),
     exportFormat: document.getElementById('exportFormat'),
@@ -724,6 +736,38 @@ my-project/
     el.addEventListener('mouseenter', () => cursor.classList.add('hover'));
     el.addEventListener('mouseleave', () => cursor.classList.remove('hover'));
   });
+
+  // ========== COMMENT STRIPPING ==========
+  function stripCommentsFromLine(line) {
+    // Remove inline comments that start with # or // after whitespace
+    const commentMatch = line.match(/\s+[#\/]{1,2}\s+.+$/);
+    if (commentMatch) {
+      return line.substring(0, commentMatch.index).trimEnd();
+    }
+    return line;
+  }
+
+  function stripAllComments(text) {
+    const lines = text.split('\n');
+    const cleanedLines = lines.map(line => stripCommentsFromLine(line));
+    return cleanedLines.join('\n');
+  }
+
+  function cleanCommentsAction() {
+    const currentText = elements.input.value;
+    if (!currentText.trim()) return;
+    
+    const cleanedText = stripAllComments(currentText);
+    
+    // Only update if changed
+    if (cleanedText !== currentText) {
+      pushHistory(); // Save current state before changing
+      elements.input.value = cleanedText;
+      showSuccess('Comments removed. Click Parse to rebuild tree.');
+    } else {
+      showWarning('No comments found to clean.');
+    }
+  }
 
   // ========== UTILITIES ==========
   function clearMessages() {
@@ -852,48 +896,38 @@ my-project/
 
   // ========== PARSING ==========
   function parseLine(line, lineNumber) {
-  if (!line.trim()) return null;
-  
-  // Strip comments that appear after the tree content
-  // Look for # or // that has whitespace before it (likely a comment, not part of filename)
-  let content = line;
-  const commentMatch = content.match(/\s+[#\/]{1,2}\s+.+$/);
-  if (commentMatch) {
-    content = content.substring(0, commentMatch.index).trimEnd();
-  }
-  
-  const indent = content.search(/\S/);
-  const trimmed = content.trim();
-  
-  if (!trimmed.match(/^[├└]──/) && !trimmed.match(/^[│\s]/) && !trimmed.includes('/')) {
-    if (trimmed === 'aion.ai/' || trimmed === 'aion.ai') {
-      return { indent, name: trimmed.replace('/', ''), isFolder: true, isRoot: true };
+    if (!line.trim()) return null;
+    
+    // Strip comments first
+    let content = stripCommentsFromLine(line);
+    
+    const indent = content.search(/\S/);
+    const trimmed = content.trim();
+    
+    if (!trimmed.match(/^[├└]──/) && !trimmed.match(/^[│\s]/) && !trimmed.includes('/')) {
+      if (trimmed === 'aion.ai/' || trimmed === 'aion.ai') {
+        return { indent, name: trimmed.replace('/', ''), isFolder: true, isRoot: true };
+      }
+      if (!trimmed.includes(' ') && trimmed.match(/^[a-zA-Z0-9_-]+(\/)?$/)) {
+        return { indent, name: trimmed.replace('/', ''), isFolder: trimmed.endsWith('/'), isRoot: true };
+      }
+      throw new Error(`Invalid tree format — expected ├──, └──, or │`);
     }
-    // Check if it might be a root without tree characters
-    if (!trimmed.includes(' ') && trimmed.match(/^[a-zA-Z0-9_-]+(\/)?$/)) {
-      return { indent, name: trimmed.replace('/', ''), isFolder: trimmed.endsWith('/'), isRoot: true };
+    
+    let name = trimmed.replace(/^[├└]──\s*/, '').replace(/^[│\s]*/, '');
+    
+    // Strip any remaining comments from the name itself
+    name = stripCommentsFromLine(name);
+    
+    const isFolder = name.endsWith('/');
+    if (isFolder) name = name.slice(0, -1);
+    
+    if (name.match(/[<>:"|?*]/)) {
+      throw new Error(`Invalid characters in name: '${name}' at line ${lineNumber}`);
     }
-    throw new Error(`Invalid tree format — expected ├──, └──, or │`);
+    
+    return { indent, name, isFolder, isRoot: false };
   }
-  
-  let name = trimmed.replace(/^[├└]──\s*/, '').replace(/^[│\s]*/, '');
-  
-  // Strip any trailing comments from the name itself
-  const nameCommentMatch = name.match(/\s+[#\/]{1,2}\s+.+$/);
-  if (nameCommentMatch) {
-    name = name.substring(0, nameCommentMatch.index).trimEnd();
-  }
-  
-  const isFolder = name.endsWith('/');
-  if (isFolder) name = name.slice(0, -1);
-  
-  // Validate name doesn't contain invalid filesystem characters
-  if (name.match(/[<>:"|?*]/)) {
-    throw new Error(`Invalid characters in name: '${name}' at line ${lineNumber}`);
-  }
-  
-  return { indent, name, isFolder, isRoot: false };
-}
 
   function validateInput(lines) {
     const warnings = [];
@@ -906,107 +940,102 @@ my-project/
   }
 
   function buildTree(lines) {
-  const root = { name: 'project', type: 'folder', children: [] };
-  const stack = [{ node: root, indent: -1 }];
-  const pathMap = new Map();
-  let fileCount = 0, folderCount = 0;
-  let hasRoot = false;
-  const warnings = [];
+    const root = { name: 'project', type: 'folder', children: [] };
+    const stack = [{ node: root, indent: -1 }];
+    const pathMap = new Map();
+    let fileCount = 0, folderCount = 0;
+    let hasRoot = false;
+    const warnings = [];
 
-  function getOrCreateFolder(parentPath, name) {
-    const fullPath = parentPath ? `${parentPath}/${name}` : name;
-    if (pathMap.has(fullPath)) {
-      const existing = pathMap.get(fullPath);
-      if (existing.type !== 'folder') {
-        throw new Error(`Cannot create folder '${fullPath}' — a file with this path already exists.`);
-      }
-      warnings.push(`Merged duplicate folder: ${fullPath}`);
-      return existing;
-    }
-    const folder = { name, type: 'folder', children: [] };
-    pathMap.set(fullPath, folder);
-    folderCount++;
-    if (folderCount > CONFIG.MAX_FOLDERS) throw new Error(`Too many folders (max ${CONFIG.MAX_FOLDERS})`);
-    return folder;
-  }
-
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    if (!line.trim()) continue;
-    
-    // Strip comments before processing
-    let processedLine = line;
-    const commentMatch = processedLine.match(/\s+[#\/]{1,2}\s+.+$/);
-    if (commentMatch) {
-      processedLine = processedLine.substring(0, commentMatch.index).trimEnd();
-    }
-    
-    const parsed = parseLine(processedLine, i + 1);
-    if (!parsed) continue;
-    
-    const { indent, name, isFolder, isRoot } = parsed;
-
-    if (isRoot) {
-      root.name = name;
-      hasRoot = true;
-      pathMap.set(name, root);
-      continue;
-    }
-
-    while (stack.length > 1 && stack[stack.length - 1].indent >= indent) {
-      stack.pop();
-    }
-    
-    const parentNode = stack[stack.length - 1].node;
-    const parentPath = parentNode === root ? root.name : getNodePath(parentNode, root);
-    
-    if (isFolder) {
-      const folder = getOrCreateFolder(parentPath, name);
-      if (!parentNode.children.some(c => c.type === 'folder' && c.name === name)) {
-        parentNode.children.push(folder);
-      }
-      stack.push({ node: folder, indent });
-    } else {
-      const fullPath = parentPath ? `${parentPath}/${name}` : `${root.name}/${name}`;
+    function getOrCreateFolder(parentPath, name) {
+      const fullPath = parentPath ? `${parentPath}/${name}` : name;
       if (pathMap.has(fullPath)) {
-        throw new Error(`Duplicate file: ${fullPath} at line ${i + 1}`);
-      }
-      const file = { name, type: 'file' };
-      pathMap.set(fullPath, file);
-      parentNode.children.push(file);
-      fileCount++;
-      if (fileCount > CONFIG.MAX_FILES) throw new Error(`Too many files (max ${CONFIG.MAX_FILES})`);
-    }
-  }
-
-  function getNodePath(node, rootNode, currentPath = '') {
-    if (node === rootNode) return rootNode.name;
-    function findPath(n, target, path) {
-      if (n === target) return path;
-      if (n.type === 'folder' && n.children) {
-        for (const child of n.children) {
-          const found = findPath(child, target, path ? `${path}/${n.name}` : n.name);
-          if (found) return found;
+        const existing = pathMap.get(fullPath);
+        if (existing.type !== 'folder') {
+          throw new Error(`Cannot create folder '${fullPath}' — a file with this path already exists.`);
         }
+        warnings.push(`Merged duplicate folder: ${fullPath}`);
+        return existing;
       }
-      return null;
+      const folder = { name, type: 'folder', children: [] };
+      pathMap.set(fullPath, folder);
+      folderCount++;
+      if (folderCount > CONFIG.MAX_FOLDERS) throw new Error(`Too many folders (max ${CONFIG.MAX_FOLDERS})`);
+      return folder;
     }
-    return findPath(rootNode, node, '') || rootNode.name;
-  }
 
-  if (!hasRoot) {
-    const firstLine = lines.find(l => l.trim());
-    if (firstLine) {
-      let rootName = firstLine.trim();
-      const commentMatch = rootName.match(/\s+[#\/]{1,2}\s+.+$/);
-      if (commentMatch) rootName = rootName.substring(0, commentMatch.index).trimEnd();
-      rootName = rootName.replace(/^[├└]──\s*/, '').replace(/[\/]$/, '');
-      if (rootName && !rootName.includes(' ')) root.name = rootName;
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      if (!line.trim()) continue;
+      
+      // Strip comments before processing
+      const processedLine = stripCommentsFromLine(line);
+      if (!processedLine.trim()) continue;
+      
+      const parsed = parseLine(processedLine, i + 1);
+      if (!parsed) continue;
+      
+      const { indent, name, isFolder, isRoot } = parsed;
+
+      if (isRoot) {
+        root.name = name;
+        hasRoot = true;
+        pathMap.set(name, root);
+        continue;
+      }
+
+      while (stack.length > 1 && stack[stack.length - 1].indent >= indent) {
+        stack.pop();
+      }
+      
+      const parentNode = stack[stack.length - 1].node;
+      const parentPath = parentNode === root ? root.name : getNodePath(parentNode, root);
+      
+      if (isFolder) {
+        const folder = getOrCreateFolder(parentPath, name);
+        if (!parentNode.children.some(c => c.type === 'folder' && c.name === name)) {
+          parentNode.children.push(folder);
+        }
+        stack.push({ node: folder, indent });
+      } else {
+        const fullPath = parentPath ? `${parentPath}/${name}` : `${root.name}/${name}`;
+        if (pathMap.has(fullPath)) {
+          throw new Error(`Duplicate file: ${fullPath} at line ${i + 1}`);
+        }
+        const file = { name, type: 'file' };
+        pathMap.set(fullPath, file);
+        parentNode.children.push(file);
+        fileCount++;
+        if (fileCount > CONFIG.MAX_FILES) throw new Error(`Too many files (max ${CONFIG.MAX_FILES})`);
+      }
     }
-  }
 
-  return { root, fileCount, folderCount, warnings };
-}
+    function getNodePath(node, rootNode) {
+      if (node === rootNode) return rootNode.name;
+      function findPath(n, target, path) {
+        if (n === target) return path;
+        if (n.type === 'folder' && n.children) {
+          for (const child of n.children) {
+            const found = findPath(child, target, path ? `${path}/${n.name}` : n.name);
+            if (found) return found;
+          }
+        }
+        return null;
+      }
+      return findPath(rootNode, node, '') || rootNode.name;
+    }
+
+    if (!hasRoot) {
+      const firstLine = lines.find(l => l.trim());
+      if (firstLine) {
+        let rootName = stripCommentsFromLine(firstLine).trim();
+        rootName = rootName.replace(/^[├└]──\s*/, '').replace(/[\/]$/, '');
+        if (rootName && !rootName.includes(' ')) root.name = rootName;
+      }
+    }
+
+    return { root, fileCount, folderCount, warnings };
+  }
 
   // ========== PLACEHOLDER GENERATION ==========
   function generatePlaceholderContent(name, path) {
@@ -1016,7 +1045,7 @@ my-project/
     if (baseName === 'index' && (ext === 'ts' || ext === 'js')) return `// ${path}\n// Barrel export\n\nexport * from './types';\nexport * from './processor';\n`;
     if (name === 'package.json') return JSON.stringify({ name: path.replace(/\//g, '-').replace(/[^a-z0-9-]/g, '-') || 'project', version: "1.0.0", private: true, scripts: { build: "tsc", dev: "tsc --watch" } }, null, 2);
     if (name === 'tsconfig.json') return JSON.stringify({ compilerOptions: { target: "ES2022", module: "ESNext", strict: true, esModuleInterop: true, skipLibCheck: true }, include: ["src/**/*"], exclude: ["node_modules", "dist"] }, null, 2);
-    if (ext === 'md') return `# ${baseName.replace(/-/g, ' ').toUpperCase()}\n\n## Overview\n\n[Generated by AION Scaffold v2.0]\n`;
+    if (ext === 'md') return `# ${baseName.replace(/-/g, ' ').toUpperCase()}\n\n## Overview\n\n[Generated by AION Scaffold v2.1]\n`;
     if (ext === 'ts' || ext === 'js') return `/**\n * ${path}\n * @module ${baseName}\n */\n\nexport {};\n`;
     if (ext === 'yaml' || ext === 'yml') return `# ${path}\nversion: "1.0"\n`;
     if (ext === 'sql') return `-- ${path}\n-- TODO: Define schema\n`;
@@ -1051,42 +1080,36 @@ my-project/
 
   // ========== PARSE ACTION ==========
   function parseTreeAction() {
-  clearMessages();
-  const input = elements.input.value;
-  if (!input.trim()) { showError('Paste a tree structure first.'); return; }
-  
-  try {
-    const lines = input.split('\n');
-    const validationWarnings = validateInput(lines);
-    const result = buildTree(lines);
-    
-    state.parsedTree = result.root;
-    state.fileCount = result.fileCount;
-    state.folderCount = result.folderCount;
-    
-    renderPreview(state.parsedTree);
-    updateStats();
-    
-    // Show validation warnings
-    if (validationWarnings.length) {
-      showWarning(validationWarnings.join(' '));
+    clearMessages();
+    const input = elements.input.value;
+    if (!input.trim()) { showError('Paste a tree structure first.'); return; }
+    try {
+      const lines = input.split('\n');
+      const warnings = validateInput(lines);
+      const result = buildTree(lines);
+      
+      state.parsedTree = result.root;
+      state.fileCount = result.fileCount;
+      state.folderCount = result.folderCount;
+      
+      renderPreview(state.parsedTree);
+      updateStats();
+      
+      if (warnings.length) showWarning(warnings.join(' '));
+      if (result.warnings && result.warnings.length) {
+        setTimeout(() => showWarning(result.warnings.join(' ')), 100);
+      }
+      
+      const binaryCount = result.root.children?.filter(c => c.type === 'file' && isBinaryFile(c.name)).length || 0;
+      const mergeNote = result.warnings?.length ? ` (${result.warnings.length} folder(s) merged)` : '';
+      showSuccess(`Parsed — ${result.folderCount} folders, ${result.fileCount} files${binaryCount ? ` (${binaryCount} binary)` : ''}${mergeNote}.`);
+      
+      pushHistory();
+    } catch (e) {
+      showError(e.message);
+      state.parsedTree = null;
     }
-    
-    // Show merge warnings (if any)
-    if (result.warnings && result.warnings.length) {
-      setTimeout(() => showWarning(result.warnings.join(' ')), 100);
-    }
-    
-    const binaryCount = result.root.children?.filter(c => c.type === 'file' && isBinaryFile(c.name)).length || 0;
-    const mergeNote = result.warnings?.length ? ` (${result.warnings.length} folder(s) merged)` : '';
-    showSuccess(`Parsed — ${result.folderCount} folders, ${result.fileCount} files${binaryCount ? ` (${binaryCount} binary)` : ''}${mergeNote}.`);
-    
-    pushHistory();
-  } catch (e) {
-    showError(e.message);
-    state.parsedTree = null;
   }
-}
 
   // ========== EXPORT ==========
   function addToZip(zip, node, path = '') {
@@ -1116,7 +1139,7 @@ my-project/
 
   function generateScript() {
     if (!state.parsedTree) { showError('Parse a tree first.'); return; }
-    let script = '#!/bin/bash\n# Generated by AION Scaffold v2.0\n\n';
+    let script = '#!/bin/bash\n# Generated by AION Scaffold v2.1\n\n';
     function add(n, path = '') {
       const full = path ? `${path}/${n.name}` : n.name;
       if (n.type === 'folder') { script += `mkdir -p "${full}"\n`; if (n.children) n.children.forEach(c => add(c, full)); }
@@ -1176,6 +1199,7 @@ my-project/
   elements.parseBtn.addEventListener('click', parseTreeAction);
   elements.generateBtn.addEventListener('click', handleExport);
   elements.clearBtn.addEventListener('click', clearAll);
+  elements.cleanCommentsBtn.addEventListener('click', cleanCommentsAction);
   elements.undoBtn.addEventListener('click', undo);
   elements.redoBtn.addEventListener('click', redo);
 
