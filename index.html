@@ -94,14 +94,14 @@ body::after {
   border-color: var(--amber);
   box-shadow: 0 0 25px var(--amber), 0 0 50px rgba(240,165,0,0.5);
 }
-/* Stage 3: Magnify — rectangular loupe with actual zoom */
 .custom-cursor.magnify {
   width: 320px;
   height: 140px;
   border-radius: 12px;
   border-color: var(--red);
-  background: rgba(8,9,11,0.9);
-  backdrop-filter: none;
+  background: rgba(8,9,11,0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   box-shadow: 0 0 30px var(--red), 0 0 60px rgba(255,77,77,0.5);
   overflow: hidden;
   transition: width 0.3s ease, height 0.3s ease, border-radius 0.2s ease;
@@ -121,17 +121,10 @@ body::after {
   word-break: break-word;
   opacity: 0;
   transition: opacity 0.2s;
-  transform: scale(1);
-  background: transparent;
+  text-shadow: 0 0 2px rgba(0,0,0,0.8);
 }
 .custom-cursor.magnify .magnify-content {
   opacity: 1;
-}
-.magnify-content code {
-  color: var(--cyan);
-  background: rgba(0,212,255,0.1);
-  padding: 2px 4px;
-  border-radius: 4px;
 }
 
 .cursor-trail {
@@ -335,9 +328,13 @@ nav {
   border-color: var(--amber);
   color: var(--amber);
 }
-.icon-btn.warning:hover {
-  background: rgba(240,165,0,0.1);
-  text-shadow: 0 0 5px var(--amber);
+.icon-btn.primary-action {
+  border-color: var(--green);
+  color: var(--green);
+}
+.icon-btn.primary-action:hover {
+  background: rgba(74,222,128,0.1);
+  text-shadow: 0 0 5px var(--green);
 }
 textarea {
   width: 100%;
@@ -357,12 +354,6 @@ textarea:focus {
   border-color: var(--cyan);
   box-shadow: 0 0 15px rgba(0,212,255,0.2);
 }
-textarea.error {
-  border-color: var(--red);
-}
-textarea.warning {
-  border-color: var(--amber);
-}
 .preview {
   height: 400px;
   overflow-y: auto;
@@ -378,7 +369,7 @@ textarea.warning {
 .message-bar {
   margin-bottom: 20px;
 }
-.error-message, .warning-message, .success-message {
+.error-message, .warning-message, .success-message, .info-message {
   padding: 12px 18px;
   border-radius: 8px;
   font-family: var(--mono);
@@ -401,9 +392,52 @@ textarea.warning {
   border: 1px solid var(--green);
   color: var(--green);
 }
-.error-message.visible, .warning-message.visible, .success-message.visible {
+.info-message {
+  background: rgba(0,212,255,0.1);
+  border: 1px solid var(--cyan);
+  color: var(--cyan);
+}
+.error-message.visible, .warning-message.visible, .success-message.visible, .info-message.visible {
   display: block;
 }
+
+.audit-panel {
+  background: rgba(0,0,0,0.3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 16px;
+  display: none;
+}
+.audit-panel.visible {
+  display: block;
+}
+.audit-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.audit-title {
+  font-family: var(--mono);
+  color: var(--cyan);
+  text-transform: uppercase;
+  font-size: 11px;
+}
+.audit-list {
+  max-height: 200px;
+  overflow-y: auto;
+  font-family: var(--jmono);
+  font-size: 10px;
+  margin-bottom: 16px;
+}
+.audit-item {
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+  color: var(--muted);
+}
+.audit-item.fixable { color: var(--amber); }
+.audit-item.fixed { color: var(--green); text-decoration: line-through; }
 
 .action-bar {
   display: flex;
@@ -459,10 +493,6 @@ textarea.warning {
   cursor: pointer;
   backdrop-filter: blur(8px);
 }
-.export-select:focus {
-  outline: none;
-  border-color: var(--cyan);
-}
 
 .stats-bar {
   display: flex;
@@ -490,15 +520,6 @@ textarea.warning {
   background: rgba(168,85,247,0.1);
   border: 1px solid var(--purple);
   color: var(--purple);
-}
-.recovery-hint {
-  color: var(--green);
-  cursor: pointer;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-.recovery-hint:hover {
-  color: var(--cyan);
 }
 
 footer {
@@ -557,9 +578,9 @@ footer {
 </nav>
 
 <div class="page-header">
-  <div class="hero-eyebrow">Developer Tool · v2.3</div>
+  <div class="hero-eyebrow">Developer Tool · v2.4</div>
   <h1 class="page-title">AION<em>Scaffold</em></h1>
-  <p class="page-sub">Paste a tree structure. Download a complete folder hierarchy — ZIP, shell script, or tree export.</p>
+  <p class="page-sub">Paste a tree structure. Fix issues. Download a complete folder hierarchy.</p>
 </div>
 
 <div class="tool-container">
@@ -567,6 +588,7 @@ footer {
     <div class="error-message" id="errorMessage" role="alert"></div>
     <div class="warning-message" id="warningMessage" role="status"></div>
     <div class="success-message" id="successMessage" role="status"></div>
+    <div class="info-message" id="infoMessage" role="status"></div>
   </div>
 
   <div class="editor-grid">
@@ -575,13 +597,26 @@ footer {
         <span class="panel-label">INPUT — Tree Structure</span>
         <div class="panel-actions">
           <button class="icon-btn" id="loadExampleBtn" title="Load example tree">📋 Example</button>
-          <button class="icon-btn warning" id="cleanCommentsBtn" title="Remove all inline comments from tree">🧹 Clean</button>
+          <button class="icon-btn warning" id="cleanCommentsBtn" title="Remove all inline comments">🧹 Clean</button>
+          <button class="icon-btn primary-action" id="auditAndFixBtn" title="Analyze tree and fix issues">🔧 Fix & Merge</button>
           <button class="icon-btn" id="undoBtn" disabled>↩ Undo</button>
           <button class="icon-btn" id="redoBtn" disabled>↪ Redo</button>
           <button class="icon-btn" id="clearBtn">Clear</button>
         </div>
       </div>
       <textarea id="input" placeholder="Paste your tree structure here..."></textarea>
+      
+      <!-- Audit Panel -->
+      <div class="audit-panel" id="auditPanel">
+        <div class="audit-header">
+          <span class="audit-title">🔍 AUDIT REPORT</span>
+          <div class="panel-actions">
+            <button class="icon-btn" id="applyFixesBtn" style="border-color:var(--green);color:var(--green);">✅ Apply Fixes</button>
+            <button class="icon-btn" id="dismissAuditBtn">✕ Dismiss</button>
+          </div>
+        </div>
+        <div class="audit-list" id="auditList"></div>
+      </div>
     </div>
     <div class="editor-panel">
       <div class="panel-header">
@@ -591,7 +626,7 @@ footer {
         </div>
       </div>
       <div class="preview" id="preview" role="region" aria-label="Tree structure preview">
-        <span style="color: var(--dim);">Click "Example" to load a sample tree, then "Parse"...</span>
+        <span style="color: var(--dim);">Click "Example" to load, or paste your tree and click "Fix & Merge"...</span>
       </div>
     </div>
   </div>
@@ -610,7 +645,7 @@ footer {
     <div class="badge-group">
       <span id="recoveryHint" class="recovery-hint"></span>
       <span class="fqi-badge">FQI: 0.88</span>
-      <span class="version-badge">v2.3</span>
+      <span class="version-badge">v2.4</span>
     </div>
   </div>
 </div>
@@ -638,37 +673,24 @@ footer {
     MAX_FOLDERS: 5000,
     BINARY_EXTENSIONS: ['gguf', 'safetensors', 'png', 'jpg', 'jpeg', 'gif', 'ico', 'db', 'sqlite', 'bin', 'wasm', 'zip', 'tar', 'gz', 'webp', 'svg', 'mp4', 'mp3', 'wav'],
     MAX_HISTORY: 20,
-    AUTO_SAVE_KEY: 'aion-scaffold-backup-v2_3',
+    AUTO_SAVE_KEY: 'aion-scaffold-backup-v2_4',
     IDLE_MAGNIFY_DELAY: 1800
   };
 
   const EXAMPLE_TREE = `aion.ai/
 ├── README.md
 ├── package.json
-├── tsconfig.json
-├── .gitignore
 ├── apps/
-│   ├── assistant/
-│   │   ├── index.html
-│   │   ├── assistant.js
-│   │   └── styles.css
-│   └── web/
-│       └── index.html
+│   └── assistant/
+│       ├── index.html
+│       └── assistant.js
 ├── packages/
-│   ├── idl/
-│   │   ├── IDL-v2.0-SPEC.md
-│   │   ├── index.ts
-│   │   └── processor/
-│   │       ├── types.ts
-│   │       └── event-store.ts
-│   └── praxis/
-│       ├── PRAXIS-v0.5-complete.md
-│       └── FTT-1-lovelace.ts
-├── memory/
-│   ├── ALBEDO-CORE-v4.4.md
-│   └── perma-memories.js
-└── models/
-    └── brain.gguf`;
+│   └── idl/
+│       ├── index.ts
+│       └── processor/
+│           └── types.ts
+└── memory/
+    └── ALBEDO-CORE.md`;
 
   // ========== DOM ELEMENTS ==========
   const elements = {
@@ -678,22 +700,30 @@ footer {
     error: document.getElementById('errorMessage'),
     warning: document.getElementById('warningMessage'),
     success: document.getElementById('successMessage'),
+    info: document.getElementById('infoMessage'),
     parseBtn: document.getElementById('parseBtn'),
     generateBtn: document.getElementById('generateBtn'),
     clearBtn: document.getElementById('clearBtn'),
     cleanCommentsBtn: document.getElementById('cleanCommentsBtn'),
     loadExampleBtn: document.getElementById('loadExampleBtn'),
+    auditAndFixBtn: document.getElementById('auditAndFixBtn'),
+    applyFixesBtn: document.getElementById('applyFixesBtn'),
+    dismissAuditBtn: document.getElementById('dismissAuditBtn'),
     undoBtn: document.getElementById('undoBtn'),
     redoBtn: document.getElementById('redoBtn'),
     exportFormat: document.getElementById('exportFormat'),
-    recoveryHint: document.getElementById('recoveryHint')
+    recoveryHint: document.getElementById('recoveryHint'),
+    auditPanel: document.getElementById('auditPanel'),
+    auditList: document.getElementById('auditList')
   };
 
   // ========== STATE ==========
   const state = {
     parsedTree: null,
     fileCount: 0,
-    folderCount: 0
+    folderCount: 0,
+    pendingFixes: [],
+    originalInput: ''
   };
 
   const history = {
@@ -772,7 +802,7 @@ footer {
   resizeCanvas();
   drawSymbols();
 
-  // ========== THREE-STAGE CUSTOM CURSOR ==========
+  // ========== CURSOR ==========
   const cursor = document.getElementById('custom-cursor');
   const magnifyContent = document.getElementById('magnifyContent');
   const trailContainer = document.getElementById('cursor-trail-container');
@@ -789,8 +819,6 @@ footer {
       let text = '';
       if (el.tagName === 'TEXTAREA' || el.tagName === 'INPUT') {
         text = el.value?.slice(0, 300) || '';
-      } else if (el.classList.contains('preview')) {
-        text = el.textContent?.slice(0, 300) || '';
       } else {
         text = el.textContent?.slice(0, 300) || el.tagName;
       }
@@ -857,65 +885,20 @@ footer {
 
   resetIdleTimer();
 
-  // ========== COMMENT STRIPPING ==========
-  function stripCommentsFromLine(line) {
-    const commentMatch = line.match(/\s+[#\/]{1,2}\s+.+$/);
-    if (commentMatch) return line.substring(0, commentMatch.index).trimEnd();
-    return line;
-  }
-
-  function stripAllComments(text) {
-    return text.split('\n').map(stripCommentsFromLine).join('\n');
-  }
-
-  function cleanCommentsAction() {
-    const currentText = elements.input.value;
-    if (!currentText.trim()) return;
-    const cleanedText = stripAllComments(currentText);
-    if (cleanedText !== currentText) {
-      pushHistory();
-      elements.input.value = cleanedText;
-      showSuccess('Comments removed. Click Parse to rebuild tree.');
-    } else {
-      showWarning('No comments found to clean.');
-    }
-  }
-
-  function loadExample() {
-    pushHistory();
-    elements.input.value = EXAMPLE_TREE;
-    showSuccess('Example tree loaded. Click Parse to preview.');
-  }
-
   // ========== UTILITIES ==========
   function clearMessages() {
     elements.error.classList.remove('visible');
     elements.warning.classList.remove('visible');
     elements.success.classList.remove('visible');
-    elements.input.classList.remove('error', 'warning');
+    elements.info.classList.remove('visible');
   }
 
-  function showError(message) {
-    elements.error.textContent = `⚠️ ${message}`;
-    elements.error.classList.add('visible');
-    elements.input.classList.add('error');
-    elements.success.classList.remove('visible');
-    elements.warning.classList.remove('visible');
-  }
+  function showError(msg) { elements.error.textContent = `⚠️ ${msg}`; elements.error.classList.add('visible'); }
+  function showWarning(msg) { elements.warning.textContent = `⚡ ${msg}`; elements.warning.classList.add('visible'); }
+  function showSuccess(msg) { elements.success.textContent = `✅ ${msg}`; elements.success.classList.add('visible'); }
+  function showInfo(msg) { elements.info.textContent = `ℹ️ ${msg}`; elements.info.classList.add('visible'); }
 
-  function showWarning(message) {
-    elements.warning.textContent = `⚡ ${message}`;
-    elements.warning.classList.add('visible');
-    elements.input.classList.add('warning');
-  }
-
-  function showSuccess(message) {
-    elements.success.textContent = `✅ ${message}`;
-    elements.success.classList.add('visible');
-    elements.error.classList.remove('visible');
-    elements.warning.classList.remove('visible');
-    elements.input.classList.remove('error', 'warning');
-  }
+  function stripComments(line) { const m = line.match(/\s+[#\/]{1,2}\s+.+$/); return m ? line.substring(0, m.index).trimEnd() : line; }
 
   function isBinaryFile(name) {
     const ext = name.split('.').pop()?.toLowerCase();
@@ -927,13 +910,276 @@ footer {
     return icons[ext] || '📄';
   }
 
-  function updateStats() {
-    elements.statsText.innerHTML = `📁 ${state.folderCount} folders · 📄 ${state.fileCount} files · Total: ${state.folderCount + state.fileCount} items`;
+  // ========== AUDIT & FIX ==========
+  function auditTree(input) {
+    const issues = [];
+    const lines = input.split('\n');
+    const seenPaths = new Map();
+    const folderPaths = new Set();
+    let rootName = 'project';
+    
+    const stack = [{ name: '', indent: -1 }];
+    
+    lines.forEach((line, idx) => {
+      const raw = line;
+      let processed = stripComments(line);
+      if (!processed.trim()) return;
+      
+      const indent = processed.search(/\S/);
+      let content = processed.trim();
+      
+      // Check for mixed tabs/spaces
+      if (raw.includes('\t') && raw.includes('    ')) {
+        issues.push({ type: 'mixed_indent', line: idx+1, fixable: true, fix: 'convert_tabs' });
+      }
+      
+      // Check for inline comments
+      if (raw.match(/\s+[#\/]{1,2}\s+.+$/)) {
+        issues.push({ type: 'has_comments', line: idx+1, fixable: true, fix: 'strip_comments' });
+      }
+      
+      // Check root
+      if (!content.match(/^[├└│]/) && !content.includes('─')) {
+        if (content.match(/^[a-zA-Z0-9_-]+(\/)?$/)) {
+          rootName = content.replace(/\/$/, '');
+          stack[0] = { name: rootName, indent: -1 };
+          const path = rootName;
+          seenPaths.set(path, { type: 'folder', line: idx+1 });
+        }
+        return;
+      }
+      
+      // Remove tree characters
+      content = content.replace(/^[├└]──\s*/, '').replace(/^[│]\s*/, '');
+      const isFolder = content.endsWith('/');
+      const name = isFolder ? content.slice(0, -1).trim() : content.trim();
+      if (!name) return;
+      
+      // Pop to correct indent
+      while (stack.length > 1 && stack[stack.length - 1].indent >= indent) stack.pop();
+      
+      const parent = stack[stack.length - 1];
+      const parentPath = parent.name || rootName;
+      const fullPath = parentPath ? `${parentPath}/${name}` : name;
+      
+      // Check for invalid characters
+      if (name.match(/[<>:"|?*]/)) {
+        issues.push({ type: 'invalid_chars', line: idx+1, name, fixable: false });
+      }
+      
+      // Check for duplicate
+      if (seenPaths.has(fullPath)) {
+        const existing = seenPaths.get(fullPath);
+        if (existing.type === (isFolder ? 'folder' : 'file')) {
+          issues.push({ 
+            type: isFolder ? 'duplicate_folder' : 'duplicate_file', 
+            line: idx+1, 
+            path: fullPath, 
+            existingLine: existing.line,
+            fixable: isFolder, // Folders can merge, files cannot
+            fix: 'merge_folder'
+          });
+        } else {
+          issues.push({ 
+            type: 'type_conflict', 
+            line: idx+1, 
+            path: fullPath, 
+            existingType: existing.type,
+            fixable: false 
+          });
+        }
+      }
+      
+      seenPaths.set(fullPath, { type: isFolder ? 'folder' : 'file', line: idx+1 });
+      if (isFolder) folderPaths.add(fullPath);
+      
+      if (isFolder) {
+        stack.push({ name: fullPath, indent });
+      }
+    });
+    
+    return { issues, rootName };
   }
 
-  function updateUndoRedoButtons() {
-    elements.undoBtn.disabled = history.past.length === 0;
-    elements.redoBtn.disabled = history.future.length === 0;
+  function applyFixes(input, issues) {
+    let fixed = input;
+    const lines = fixed.split('\n');
+    const fixes = [];
+    
+    // Strip comments (do this first)
+    if (issues.some(i => i.type === 'has_comments')) {
+      fixed = lines.map(l => stripComments(l)).join('\n');
+      fixes.push('Stripped inline comments');
+    }
+    
+    // Convert tabs to spaces
+    if (issues.some(i => i.type === 'mixed_indent')) {
+      fixed = fixed.replace(/\t/g, '    ');
+      fixes.push('Converted tabs to spaces');
+    }
+    
+    // Merge duplicate folders (remove duplicate lines)
+    const dupFolders = issues.filter(i => i.type === 'duplicate_folder');
+    if (dupFolders.length) {
+      const newLines = fixed.split('\n');
+      const toRemove = new Set();
+      dupFolders.forEach(d => { if (d.line) toRemove.add(d.line - 1); });
+      fixed = newLines.filter((_, i) => !toRemove.has(i)).join('\n');
+      fixes.push(`Merged ${dupFolders.length} duplicate folder(s)`);
+    }
+    
+    return { fixed, fixes };
+  }
+
+  function runAudit() {
+    const input = elements.input.value;
+    if (!input.trim()) { showError('Paste a tree first.'); return; }
+    
+    state.originalInput = input;
+    const { issues } = auditTree(input);
+    state.pendingFixes = issues.filter(i => i.fixable);
+    
+    if (issues.length === 0) {
+      showSuccess('No issues found! Tree is clean.');
+      elements.auditPanel.classList.remove('visible');
+      parseTreeAction();
+      return;
+    }
+    
+    // Display audit
+    let html = '';
+    issues.forEach(issue => {
+      const fixable = issue.fixable ? 'fixable' : '';
+      html += `<div class="audit-item ${fixable}">`;
+      html += `Line ${issue.line}: `;
+      switch (issue.type) {
+        case 'mixed_indent': html += 'Mixed tabs and spaces'; break;
+        case 'has_comments': html += 'Inline comments detected'; break;
+        case 'invalid_chars': html += `Invalid characters in "${issue.name}"`; break;
+        case 'duplicate_folder': html += `Duplicate folder "${issue.path}" (also at line ${issue.existingLine}) — will merge`; break;
+        case 'duplicate_file': html += `Duplicate file "${issue.path}" (also at line ${issue.existingLine}) — CANNOT FIX`; break;
+        case 'type_conflict': html += `Path "${issue.path}" conflicts with existing ${issue.existingType}`; break;
+        default: html += issue.type;
+      }
+      html += '</div>';
+    });
+    
+    elements.auditList.innerHTML = html;
+    elements.auditPanel.classList.add('visible');
+    
+    const fixableCount = issues.filter(i => i.fixable).length;
+    const unfixableCount = issues.filter(i => !i.fixable).length;
+    
+    if (unfixableCount > 0) {
+      showWarning(`${issues.length} issues found (${fixableCount} fixable, ${unfixableCount} require manual fix)`);
+    } else {
+      showInfo(`${issues.length} issues found — all fixable. Click "Apply Fixes" to repair.`);
+    }
+  }
+
+  function applyFixesAction() {
+    if (!state.pendingFixes.length) {
+      showInfo('No fixable issues to apply.');
+      return;
+    }
+    
+    const { fixed, fixes } = applyFixes(state.originalInput, state.pendingFixes);
+    
+    pushHistory();
+    elements.input.value = fixed;
+    elements.auditPanel.classList.remove('visible');
+    
+    showSuccess(`Applied fixes: ${fixes.join('; ')}. Click Parse to rebuild.`);
+    state.pendingFixes = [];
+  }
+
+  // ========== PARSER ==========
+  function parseTree(input) {
+    const lines = input.split('\n').map(l => stripComments(l)).filter(l => l.trim());
+    if (!lines.length) throw new Error('Empty input');
+    
+    let rootName = 'project';
+    const root = { name: rootName, type: 'folder', children: [] };
+    const stack = [{ node: root, indent: -1 }];
+    let fileCount = 0, folderCount = 1;
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const indent = line.search(/\S/);
+      let content = line.trim();
+      
+      if (!content.match(/^[├└│]/) && !content.includes('─')) {
+        if (content.match(/^[a-zA-Z0-9_-]+(\/)?$/)) {
+          rootName = content.replace(/\/$/, '');
+          root.name = rootName;
+          continue;
+        }
+      }
+      
+      content = content.replace(/^[├└]──\s*/, '').replace(/^[│]\s*/, '');
+      const isFolder = content.endsWith('/');
+      const name = isFolder ? content.slice(0, -1).trim() : content.trim();
+      if (!name) continue;
+      
+      while (stack.length > 1 && stack[stack.length - 1].indent >= indent) stack.pop();
+      
+      const parent = stack[stack.length - 1].node;
+      
+      if (isFolder) {
+        let folder = parent.children.find(c => c.type === 'folder' && c.name === name);
+        if (!folder) {
+          folder = { name, type: 'folder', children: [] };
+          parent.children.push(folder);
+          folderCount++;
+        }
+        stack.push({ node: folder, indent });
+      } else {
+        if (parent.children.some(c => c.type === 'file' && c.name === name)) {
+          throw new Error(`Duplicate file "${name}"`);
+        }
+        parent.children.push({ name, type: 'file' });
+        fileCount++;
+      }
+    }
+    
+    return { root, fileCount, folderCount: folderCount - 1 };
+  }
+
+  function renderPreview(tree) {
+    if (!tree) return;
+    let html = '';
+    function walk(node, depth) {
+      const indent = '  '.repeat(depth);
+      if (node.type === 'folder') {
+        html += `<div>${indent}<span class="preview-folder">📁 ${node.name}/</span></div>`;
+        if (node.children) node.children.forEach(c => walk(c, depth+1));
+      } else {
+        const binary = isBinaryFile(node.name);
+        const icon = binary ? '📦' : getFileIcon(node.name.split('.').pop());
+        const cls = binary ? 'preview-binary' : 'preview-file';
+        html += `<div>${indent}<span class="${cls}">${icon} ${node.name}</span></div>`;
+      }
+    }
+    walk(tree, 0);
+    elements.preview.innerHTML = html;
+  }
+
+  function parseTreeAction() {
+    clearMessages();
+    const input = elements.input.value;
+    if (!input.trim()) { showError('Paste a tree first.'); return; }
+    try {
+      const result = parseTree(input);
+      state.parsedTree = result.root;
+      state.fileCount = result.fileCount;
+      state.folderCount = result.folderCount;
+      renderPreview(state.parsedTree);
+      elements.statsText.innerHTML = `📁 ${result.folderCount} folders · 📄 ${result.fileCount} files`;
+      showSuccess(`Parsed — ${result.folderCount} folders, ${result.fileCount} files.`);
+      pushHistory();
+    } catch (e) {
+      showError(e.message);
+    }
   }
 
   // ========== HISTORY ==========
@@ -947,178 +1193,49 @@ footer {
     history.past.push(snapshot);
     if (history.past.length > CONFIG.MAX_HISTORY) history.past.shift();
     history.future = [];
-    updateUndoRedoButtons();
-    saveToStorage();
+    elements.undoBtn.disabled = history.past.length === 0;
+    elements.redoBtn.disabled = true;
   }
 
   function undo() {
     if (history.past.length < 2) return;
     const current = history.past.pop();
     history.future.push(current);
-    restoreSnapshot(history.past[history.past.length - 1]);
-    updateUndoRedoButtons();
+    const prev = history.past[history.past.length - 1];
+    elements.input.value = prev.input;
+    state.parsedTree = prev.tree;
+    state.fileCount = prev.fileCount;
+    state.folderCount = prev.folderCount;
+    if (state.parsedTree) { renderPreview(state.parsedTree); elements.statsText.innerHTML = `📁 ${state.folderCount} folders · 📄 ${state.fileCount} files`; }
+    elements.undoBtn.disabled = history.past.length === 0;
+    elements.redoBtn.disabled = false;
   }
 
   function redo() {
     if (history.future.length === 0) return;
     const next = history.future.pop();
     history.past.push(next);
-    restoreSnapshot(next);
-    updateUndoRedoButtons();
-  }
-
-  function restoreSnapshot(snapshot) {
-    elements.input.value = snapshot.input;
-    state.parsedTree = snapshot.tree;
-    state.fileCount = snapshot.fileCount;
-    state.folderCount = snapshot.folderCount;
-    if (state.parsedTree) { renderPreview(state.parsedTree); updateStats(); }
-  }
-
-  function saveToStorage() {
-    try {
-      localStorage.setItem(CONFIG.AUTO_SAVE_KEY, JSON.stringify({
-        input: elements.input.value, tree: state.parsedTree, fileCount: state.fileCount, folderCount: state.folderCount, timestamp: Date.now()
-      }));
-    } catch (e) {}
-  }
-
-  function checkRecovery() {
-    try {
-      const backup = localStorage.getItem(CONFIG.AUTO_SAVE_KEY);
-      if (!backup) return;
-      const data = JSON.parse(backup);
-      if (Date.now() - data.timestamp < 24 * 60 * 60 * 1000) {
-        elements.recoveryHint.textContent = `💾 Restore session`;
-        elements.recoveryHint.onclick = () => {
-          if (confirm('Restore previous session?')) {
-            elements.input.value = data.input;
-            if (data.tree) { state.parsedTree = data.tree; state.fileCount = data.fileCount; state.folderCount = data.folderCount; renderPreview(state.parsedTree); updateStats(); showSuccess('Session restored.'); }
-            pushHistory();
-          }
-        };
-      }
-    } catch (e) {}
-  }
-
-  // ========== FIXED PARSER ==========
-  function parseTree(input) {
-    const lines = input.split('\n').map(l => stripCommentsFromLine(l)).filter(l => l.trim());
-    if (!lines.length) throw new Error('Empty input');
-    
-    let rootName = 'project';
-    const root = { name: rootName, type: 'folder', children: [] };
-    const stack = [{ node: root, indent: -1 }];
-    let fileCount = 0, folderCount = 1;
-    
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      const indent = line.search(/\S/);
-      let content = line.trim();
-      
-      // Check if root declaration (no tree characters)
-      if (!content.match(/^[├└│]/) && !content.includes('─')) {
-        if (content.match(/^[a-zA-Z0-9_-]+(\/)?$/)) {
-          rootName = content.replace(/\/$/, '');
-          root.name = rootName;
-          continue;
-        }
-      }
-      
-      // Remove tree characters
-      content = content.replace(/^[├└]──\s*/, '').replace(/^[│]\s*/, '');
-      const isFolder = content.endsWith('/');
-      const name = isFolder ? content.slice(0, -1).trim() : content.trim();
-      
-      if (!name) continue;
-      
-      // Pop stack to correct indent level
-      while (stack.length > 1 && stack[stack.length - 1].indent >= indent) {
-        stack.pop();
-      }
-      
-      const parent = stack[stack.length - 1].node;
-      
-      if (isFolder) {
-        let folder = parent.children.find(c => c.type === 'folder' && c.name === name);
-        if (!folder) {
-          folder = { name, type: 'folder', children: [] };
-          parent.children.push(folder);
-          folderCount++;
-          if (folderCount > CONFIG.MAX_FOLDERS) throw new Error(`Too many folders (max ${CONFIG.MAX_FOLDERS})`);
-        }
-        stack.push({ node: folder, indent });
-      } else {
-        if (parent.children.some(c => c.type === 'file' && c.name === name)) {
-          throw new Error(`Duplicate file "${name}" in folder "${parent.name || rootName}"`);
-        }
-        parent.children.push({ name, type: 'file' });
-        fileCount++;
-        if (fileCount > CONFIG.MAX_FILES) throw new Error(`Too many files (max ${CONFIG.MAX_FILES})`);
-      }
-    }
-    
-    return { root, fileCount, folderCount: folderCount - 1 };
-  }
-
-  // ========== PLACEHOLDER GENERATION ==========
-  function generatePlaceholderContent(name, path) {
-    if (isBinaryFile(name)) return `# ${path}\n# BINARY PLACEHOLDER — replace with actual ${name.split('.').pop()?.toUpperCase()} file\n`;
-    const ext = name.split('.').pop();
-    const baseName = name.replace(/\.[^/.]+$/, '');
-    if (baseName === 'index' && (ext === 'ts' || ext === 'js')) return `// ${path}\n// Barrel export\n\nexport * from './types';\nexport * from './processor';\n`;
-    if (name === 'package.json') return JSON.stringify({ name: path.replace(/\//g, '-').replace(/[^a-z0-9-]/g, '-') || 'project', version: "1.0.0", private: true, scripts: { build: "tsc", dev: "tsc --watch" } }, null, 2);
-    if (name === 'tsconfig.json') return JSON.stringify({ compilerOptions: { target: "ES2022", module: "ESNext", strict: true, esModuleInterop: true, skipLibCheck: true }, include: ["src/**/*"], exclude: ["node_modules", "dist"] }, null, 2);
-    if (ext === 'md') return `# ${baseName.replace(/-/g, ' ').toUpperCase()}\n\n## Overview\n\n[Generated by AION Scaffold v2.3]\n`;
-    if (ext === 'ts' || ext === 'js') return `/**\n * ${path}\n * @module ${baseName}\n */\n\nexport {};\n`;
-    if (ext === 'yaml' || ext === 'yml') return `# ${path}\nversion: "1.0"\n`;
-    if (ext === 'sql') return `-- ${path}\n-- TODO: Define schema\n`;
-    if (ext === 'html') return `<!DOCTYPE html>\n<html>\n<head><meta charset="UTF-8"><title>${baseName}</title></head>\n<body><!-- ${path} --></body>\n</html>\n`;
-    if (ext === 'css') return `/* ${path} */\n:root { --amber: #f0a500; --cyan: #00d4ff; }\n`;
-    if (name === '.gitignore') return `node_modules/\ndist/\n.env\n*.gguf\n*.safetensors\n`;
-    return `# ${path}\n# AION Scaffold placeholder\n`;
-  }
-
-  // ========== RENDERING ==========
-  function renderPreview(tree) {
-    if (!tree) { elements.preview.innerHTML = '<span style="color: var(--dim);">Parse the tree to see preview...</span>'; return; }
-    let html = '';
-    function renderNode(node, depth = 0) {
-      const indent = '  '.repeat(depth);
-      if (node.type === 'folder') {
-        html += `<div>${indent}<span class="preview-folder">📁 ${node.name}/</span></div>`;
-        if (node.children) node.children.forEach(c => renderNode(c, depth + 1));
-      } else {
-        const binary = isBinaryFile(node.name);
-        const icon = binary ? '📦' : getFileIcon(node.name.split('.').pop());
-        const cls = binary ? 'preview-binary' : 'preview-file';
-        html += `<div>${indent}<span class="${cls}">${icon} ${node.name}</span></div>`;
-      }
-    }
-    tree.children?.forEach(c => renderNode(c, 0));
-    elements.preview.innerHTML = html || '<span style="color: var(--dim);">Empty tree</span>';
-  }
-
-  // ========== PARSE ACTION ==========
-  function parseTreeAction() {
-    clearMessages();
-    const input = elements.input.value;
-    if (!input.trim()) { showError('Paste a tree structure first.'); return; }
-    try {
-      const result = parseTree(input);
-      state.parsedTree = result.root;
-      state.fileCount = result.fileCount;
-      state.folderCount = result.folderCount;
-      renderPreview(state.parsedTree);
-      updateStats();
-      showSuccess(`Parsed — ${result.folderCount} folders, ${result.fileCount} files.`);
-      pushHistory();
-    } catch (e) {
-      showError(e.message);
-    }
+    elements.input.value = next.input;
+    state.parsedTree = next.tree;
+    state.fileCount = next.fileCount;
+    state.folderCount = next.folderCount;
+    if (state.parsedTree) { renderPreview(state.parsedTree); elements.statsText.innerHTML = `📁 ${state.folderCount} folders · 📄 ${state.fileCount} files`; }
+    elements.undoBtn.disabled = false;
+    elements.redoBtn.disabled = history.future.length === 0;
   }
 
   // ========== EXPORT ==========
+  function generatePlaceholderContent(name, path) {
+    if (isBinaryFile(name)) return `# ${path}\n# BINARY PLACEHOLDER\n`;
+    const ext = name.split('.').pop();
+    const baseName = name.replace(/\.[^/.]+$/, '');
+    if (baseName === 'index' && (ext === 'ts' || ext === 'js')) return `// ${path}\n// Barrel export\n\nexport * from './types';\n`;
+    if (name === 'package.json') return JSON.stringify({ name: path.replace(/\//g, '-').replace(/[^a-z0-9-]/g, '-') || 'project', version: "1.0.0", private: true }, null, 2);
+    if (name === 'tsconfig.json') return JSON.stringify({ compilerOptions: { target: "ES2022", module: "ESNext", strict: true } }, null, 2);
+    if (ext === 'md') return `# ${baseName}\n`;
+    return '';
+  }
+
   function addToZip(zip, node, path = '') {
     const full = path ? `${path}/${node.name}` : node.name;
     if (node.type === 'folder') {
@@ -1141,13 +1258,13 @@ footer {
       a.href = URL.createObjectURL(blob); a.download = `${rootName}.zip`; a.click();
       showSuccess(`${rootName}.zip generated.`);
     } catch (e) {
-      showError('ZIP failed — tree too large?');
+      showError('ZIP failed.');
     } finally { elements.generateBtn.disabled = false; }
   }
 
   function generateScript() {
     if (!state.parsedTree) { showError('Parse a tree first.'); return; }
-    let script = '#!/bin/bash\n# Generated by AION Scaffold v2.3\n\n';
+    let script = '#!/bin/bash\n';
     function add(n, path = '') {
       const full = path ? `${path}/${n.name}` : n.name;
       if (n.type === 'folder') { script += `mkdir -p "${full}"\n`; if (n.children) n.children.forEach(c => add(c, full)); }
@@ -1156,7 +1273,6 @@ footer {
     const root = state.parsedTree.name || 'project';
     script += `mkdir -p "${root}"\ncd "${root}"\n`;
     state.parsedTree.children?.forEach(c => add(c, ''));
-    script += `\necho "✅ ${state.folderCount} folders, ${state.fileCount} files created."\n`;
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([script])); a.download = `${root}.sh`; a.click();
     showSuccess(`${root}.sh generated.`);
@@ -1188,12 +1304,26 @@ footer {
 
   function clearAll() {
     elements.input.value = '';
-    elements.preview.innerHTML = '<span style="color: var(--dim);">Click "Example" to load a sample tree...</span>';
+    elements.preview.innerHTML = '<span style="color: var(--dim);">Click "Example" to load, or paste your tree...</span>';
     elements.statsText.innerHTML = '📁 0 folders · 📄 0 files';
     clearMessages();
+    elements.auditPanel.classList.remove('visible');
     state.parsedTree = null; state.fileCount = 0; state.folderCount = 0;
-    history.past = []; history.future = [];
-    updateUndoRedoButtons();
+  }
+
+  function cleanCommentsAction() {
+    const cleaned = elements.input.value.split('\n').map(l => stripComments(l)).join('\n');
+    if (cleaned !== elements.input.value) {
+      pushHistory();
+      elements.input.value = cleaned;
+      showSuccess('Comments stripped.');
+    }
+  }
+
+  function loadExample() {
+    pushHistory();
+    elements.input.value = EXAMPLE_TREE;
+    showInfo('Example loaded. Click "Fix & Merge" to audit, or "Parse" directly.');
   }
 
   // ========== EVENT BINDING ==========
@@ -1202,6 +1332,9 @@ footer {
   elements.clearBtn.addEventListener('click', clearAll);
   elements.cleanCommentsBtn.addEventListener('click', cleanCommentsAction);
   elements.loadExampleBtn.addEventListener('click', loadExample);
+  elements.auditAndFixBtn.addEventListener('click', runAudit);
+  elements.applyFixesBtn.addEventListener('click', applyFixesAction);
+  elements.dismissAuditBtn.addEventListener('click', () => elements.auditPanel.classList.remove('visible'));
   elements.undoBtn.addEventListener('click', undo);
   elements.redoBtn.addEventListener('click', redo);
 
@@ -1215,7 +1348,6 @@ footer {
   const hamburger = document.getElementById('hamburger');
   const mobileNav = document.createElement('div');
   mobileNav.className = 'mobile-nav';
-  mobileNav.id = 'mobileNav';
   document.body.appendChild(mobileNav);
   if (hamburger) {
     document.querySelectorAll('.nav-links a').forEach(link => mobileNav.appendChild(link.cloneNode(true)));
@@ -1223,8 +1355,22 @@ footer {
     mobileNav.addEventListener('click', (e) => { if (e.target.tagName === 'A') { mobileNav.classList.remove('open'); hamburger.classList.remove('open'); } });
   }
 
-  // ========== INIT ==========
-  checkRecovery();
+  // ========== RECOVERY ==========
+  try {
+    const backup = localStorage.getItem(CONFIG.AUTO_SAVE_KEY);
+    if (backup) {
+      const data = JSON.parse(backup);
+      if (Date.now() - data.timestamp < 24 * 60 * 60 * 1000) {
+        elements.recoveryHint.textContent = `💾 Restore session`;
+        elements.recoveryHint.onclick = () => {
+          if (confirm('Restore previous session?')) {
+            elements.input.value = data.input;
+            if (data.tree) { state.parsedTree = data.tree; state.fileCount = data.fileCount; state.folderCount = data.folderCount; renderPreview(state.parsedTree); updateStats(); showSuccess('Session restored.'); }
+          }
+        };
+      }
+    }
+  } catch (e) {}
 })();
 </script>
 </body>
