@@ -37,7 +37,6 @@
   --font-size-base: clamp(16px, 1vw + 8px, 20px);
   --glow-amber: 0 0 5px #f0a500, 0 0 10px #f0a500, 0 0 20px rgba(240,165,0,0.5);
   --glow-cyan: 0 0 5px #00d4ff, 0 0 10px #00d4ff, 0 0 20px rgba(0,212,255,0.4);
-  --glow-red: 0 0 5px #ff4d4d, 0 0 10px #ff4d4d, 0 0 30px rgba(255,77,77,0.6);
 }
 body {
   background: var(--bg);
@@ -84,11 +83,10 @@ body::after {
   pointer-events: none;
   z-index: 9999;
   mix-blend-mode: screen;
-  transition: transform 0.15s ease, background 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, width 0.3s ease, height 0.3s ease;
+  transition: all 0.15s ease;
   transform: translate(-50%, -50%);
   box-shadow: 0 0 15px var(--cyan), 0 0 30px rgba(0,212,255,0.3);
 }
-/* Stage 2: Interactive (hover) */
 .custom-cursor.hover {
   width: 36px;
   height: 36px;
@@ -96,27 +94,44 @@ body::after {
   border-color: var(--amber);
   box-shadow: 0 0 25px var(--amber), 0 0 50px rgba(240,165,0,0.5);
 }
-/* Stage 3: Magnify (idle) */
+/* Stage 3: Magnify — rectangular loupe with actual zoom */
 .custom-cursor.magnify {
-  width: 180px;
-  height: 180px;
+  width: 320px;
+  height: 140px;
+  border-radius: 12px;
   border-color: var(--red);
-  background: rgba(255,77,77,0.05);
-  backdrop-filter: blur(4px) brightness(1.1);
-  -webkit-backdrop-filter: blur(4px) brightness(1.1);
-  box-shadow: var(--glow-red), 0 0 60px rgba(255,77,77,0.4);
-  transition: width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), height 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), backdrop-filter 0.3s ease;
-  transform: translate(-50%, -50%) scale(1);
+  background: rgba(8,9,11,0.9);
+  backdrop-filter: none;
+  box-shadow: 0 0 30px var(--red), 0 0 60px rgba(255,77,77,0.5);
+  overflow: hidden;
+  transition: width 0.3s ease, height 0.3s ease, border-radius 0.2s ease;
 }
-.custom-cursor.magnify::after {
-  content: '🔍';
+.magnify-content {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 24px;
-  opacity: 0.6;
-  text-shadow: 0 0 15px var(--red);
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  padding: 16px;
+  color: var(--text);
+  font-family: var(--jmono);
+  font-size: 18px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+  opacity: 0;
+  transition: opacity 0.2s;
+  transform: scale(1);
+  background: transparent;
+}
+.custom-cursor.magnify .magnify-content {
+  opacity: 1;
+}
+.magnify-content code {
+  color: var(--cyan);
+  background: rgba(0,212,255,0.1);
+  padding: 2px 4px;
+  border-radius: 4px;
 }
 
 .cursor-trail {
@@ -129,7 +144,7 @@ body::after {
   z-index: 9998;
   opacity: 0.6;
   box-shadow: 0 0 10px var(--cyan);
-  transition: opacity 0.3s ease;
+  transition: opacity 0.3s ease, background 0.2s, box-shadow 0.2s;
 }
 .cursor-trail.magnify-trail {
   background: var(--red);
@@ -518,7 +533,9 @@ footer {
 
 <canvas id="hero-canvas"></canvas>
 
-<div class="custom-cursor" id="custom-cursor"></div>
+<div class="custom-cursor" id="custom-cursor">
+  <div class="magnify-content" id="magnifyContent"></div>
+</div>
 <div id="cursor-trail-container"></div>
 
 <nav>
@@ -540,7 +557,7 @@ footer {
 </nav>
 
 <div class="page-header">
-  <div class="hero-eyebrow">Developer Tool · v2.2</div>
+  <div class="hero-eyebrow">Developer Tool · v2.3</div>
   <h1 class="page-title">AION<em>Scaffold</em></h1>
   <p class="page-sub">Paste a tree structure. Download a complete folder hierarchy — ZIP, shell script, or tree export.</p>
 </div>
@@ -592,8 +609,8 @@ footer {
     <span id="statsText">📁 0 folders · 📄 0 files</span>
     <div class="badge-group">
       <span id="recoveryHint" class="recovery-hint"></span>
-      <span class="fqi-badge">FQI: 0.86</span>
-      <span class="version-badge">v2.2</span>
+      <span class="fqi-badge">FQI: 0.88</span>
+      <span class="version-badge">v2.3</span>
     </div>
   </div>
 </div>
@@ -621,7 +638,7 @@ footer {
     MAX_FOLDERS: 5000,
     BINARY_EXTENSIONS: ['gguf', 'safetensors', 'png', 'jpg', 'jpeg', 'gif', 'ico', 'db', 'sqlite', 'bin', 'wasm', 'zip', 'tar', 'gz', 'webp', 'svg', 'mp4', 'mp3', 'wav'],
     MAX_HISTORY: 20,
-    AUTO_SAVE_KEY: 'aion-scaffold-backup-v2_2',
+    AUTO_SAVE_KEY: 'aion-scaffold-backup-v2_3',
     IDLE_MAGNIFY_DELAY: 1800
   };
 
@@ -757,11 +774,29 @@ footer {
 
   // ========== THREE-STAGE CUSTOM CURSOR ==========
   const cursor = document.getElementById('custom-cursor');
+  const magnifyContent = document.getElementById('magnifyContent');
   const trailContainer = document.getElementById('cursor-trail-container');
   let trailPositions = [];
   const MAX_TRAIL = 8;
   let idleTimer = null;
   let isIdle = false;
+
+  function updateMagnifyContent() {
+    const x = parseFloat(cursor.style.left) || 0;
+    const y = parseFloat(cursor.style.top) || 0;
+    const el = document.elementFromPoint(x, y);
+    if (el) {
+      let text = '';
+      if (el.tagName === 'TEXTAREA' || el.tagName === 'INPUT') {
+        text = el.value?.slice(0, 300) || '';
+      } else if (el.classList.contains('preview')) {
+        text = el.textContent?.slice(0, 300) || '';
+      } else {
+        text = el.textContent?.slice(0, 300) || el.tagName;
+      }
+      magnifyContent.textContent = text || '[No text]';
+    }
+  }
 
   function resetIdleTimer() {
     if (idleTimer) clearTimeout(idleTimer);
@@ -772,6 +807,7 @@ footer {
       cursor.classList.add('magnify');
       document.querySelectorAll('.cursor-trail').forEach(t => t.classList.add('magnify-trail'));
       isIdle = true;
+      updateMagnifyContent();
     }, CONFIG.IDLE_MAGNIFY_DELAY);
   }
 
@@ -797,6 +833,7 @@ footer {
       trailContainer.appendChild(dot);
     });
     
+    if (isIdle) updateMagnifyContent();
     resetIdleTimer();
   });
 
@@ -964,98 +1001,82 @@ footer {
     } catch (e) {}
   }
 
-  // ========== PARSING (FIXED) ==========
-  function parseLine(line, lineNumber) {
-    if (!line.trim()) return null;
-    let content = stripCommentsFromLine(line);
-    const indent = content.search(/\S/);
-    const trimmed = content.trim();
+  // ========== FIXED PARSER ==========
+  function parseTree(input) {
+    const lines = input.split('\n').map(l => stripCommentsFromLine(l)).filter(l => l.trim());
+    if (!lines.length) throw new Error('Empty input');
     
-    if (!trimmed.match(/^[├└]──/) && !trimmed.match(/^[│\s]/) && !trimmed.includes('/')) {
-      if (trimmed.match(/^[a-zA-Z0-9_-]+(\/)?$/)) {
-        return { indent, name: trimmed.replace(/\/$/, ''), isFolder: trimmed.endsWith('/'), isRoot: true };
-      }
-      throw new Error(`Invalid format at line ${lineNumber}`);
-    }
-    
-    let name = trimmed.replace(/^[├└]──\s*/, '').replace(/^[│\s]*/, '');
-    name = stripCommentsFromLine(name);
-    const isFolder = name.endsWith('/');
-    if (isFolder) name = name.slice(0, -1);
-    if (name.match(/[<>:"|?*]/)) throw new Error(`Invalid characters in '${name}' at line ${lineNumber}`);
-    return { indent, name, isFolder, isRoot: false };
-  }
-
-  function buildTree(lines) {
-    const root = { name: 'project', type: 'folder', children: [] };
-    const stack = [{ node: root, indent: -1, path: 'project' }];
-    const pathMap = new Map([['project', root]]);
+    let rootName = 'project';
+    const root = { name: rootName, type: 'folder', children: [] };
+    const stack = [{ node: root, indent: -1 }];
     let fileCount = 0, folderCount = 1;
-    const warnings = [];
-
+    
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
-      if (!line.trim()) continue;
+      const indent = line.search(/\S/);
+      let content = line.trim();
       
-      const processedLine = stripCommentsFromLine(line);
-      if (!processedLine.trim()) continue;
-      
-      const parsed = parseLine(processedLine, i + 1);
-      if (!parsed) continue;
-      
-      const { indent, name, isFolder, isRoot } = parsed;
-
-      if (isRoot) {
-        root.name = name;
-        pathMap.delete('project');
-        pathMap.set(name, root);
-        stack[0].path = name;
-        continue;
-      }
-
-      while (stack.length > 1 && stack[stack.length - 1].indent >= indent) stack.pop();
-      
-      const parent = stack[stack.length - 1];
-      const fullPath = `${parent.path}/${name}`;
-      
-      if (isFolder) {
-        if (pathMap.has(fullPath)) {
-          const existing = pathMap.get(fullPath);
-          if (existing.type !== 'folder') throw new Error(`Cannot create folder '${fullPath}' — file exists`);
-          warnings.push(`Merged: ${fullPath}`);
-          stack.push({ node: existing, indent, path: fullPath });
+      // Check if root declaration (no tree characters)
+      if (!content.match(/^[├└│]/) && !content.includes('─')) {
+        if (content.match(/^[a-zA-Z0-9_-]+(\/)?$/)) {
+          rootName = content.replace(/\/$/, '');
+          root.name = rootName;
           continue;
         }
-        const folder = { name, type: 'folder', children: [] };
-        pathMap.set(fullPath, folder);
-        parent.node.children.push(folder);
-        folderCount++;
-        if (folderCount > CONFIG.MAX_FOLDERS) throw new Error(`Too many folders (max ${CONFIG.MAX_FOLDERS})`);
-        stack.push({ node: folder, indent, path: fullPath });
+      }
+      
+      // Remove tree characters
+      content = content.replace(/^[├└]──\s*/, '').replace(/^[│]\s*/, '');
+      const isFolder = content.endsWith('/');
+      const name = isFolder ? content.slice(0, -1).trim() : content.trim();
+      
+      if (!name) continue;
+      
+      // Pop stack to correct indent level
+      while (stack.length > 1 && stack[stack.length - 1].indent >= indent) {
+        stack.pop();
+      }
+      
+      const parent = stack[stack.length - 1].node;
+      
+      if (isFolder) {
+        let folder = parent.children.find(c => c.type === 'folder' && c.name === name);
+        if (!folder) {
+          folder = { name, type: 'folder', children: [] };
+          parent.children.push(folder);
+          folderCount++;
+          if (folderCount > CONFIG.MAX_FOLDERS) throw new Error(`Too many folders (max ${CONFIG.MAX_FOLDERS})`);
+        }
+        stack.push({ node: folder, indent });
       } else {
-        if (pathMap.has(fullPath)) throw new Error(`Duplicate file: ${fullPath} at line ${i + 1}`);
-        const file = { name, type: 'file' };
-        pathMap.set(fullPath, file);
-        parent.node.children.push(file);
+        if (parent.children.some(c => c.type === 'file' && c.name === name)) {
+          throw new Error(`Duplicate file "${name}" in folder "${parent.name || rootName}"`);
+        }
+        parent.children.push({ name, type: 'file' });
         fileCount++;
         if (fileCount > CONFIG.MAX_FILES) throw new Error(`Too many files (max ${CONFIG.MAX_FILES})`);
       }
     }
-    return { root, fileCount, folderCount, warnings };
+    
+    return { root, fileCount, folderCount: folderCount - 1 };
   }
 
   // ========== PLACEHOLDER GENERATION ==========
   function generatePlaceholderContent(name, path) {
-    if (isBinaryFile(name)) return `# ${path}\n# BINARY PLACEHOLDER\n`;
+    if (isBinaryFile(name)) return `# ${path}\n# BINARY PLACEHOLDER — replace with actual ${name.split('.').pop()?.toUpperCase()} file\n`;
     const ext = name.split('.').pop();
     const baseName = name.replace(/\.[^/.]+$/, '');
-    if (baseName === 'index' && (ext === 'ts' || ext === 'js')) return `// ${path}\n// Barrel export\n\nexport * from './types';\n`;
-    if (name === 'package.json') return JSON.stringify({ name: path.replace(/\//g, '-').replace(/[^a-z0-9-]/g, '-') || 'project', version: "1.0.0", private: true }, null, 2);
-    if (name === 'tsconfig.json') return JSON.stringify({ compilerOptions: { target: "ES2022", module: "ESNext", strict: true } }, null, 2);
-    if (ext === 'md') return `# ${baseName}\n`;
-    if (ext === 'ts' || ext === 'js') return `// ${path}\n`;
-    if (name === '.gitignore') return `node_modules/\n.env\n`;
-    return '';
+    if (baseName === 'index' && (ext === 'ts' || ext === 'js')) return `// ${path}\n// Barrel export\n\nexport * from './types';\nexport * from './processor';\n`;
+    if (name === 'package.json') return JSON.stringify({ name: path.replace(/\//g, '-').replace(/[^a-z0-9-]/g, '-') || 'project', version: "1.0.0", private: true, scripts: { build: "tsc", dev: "tsc --watch" } }, null, 2);
+    if (name === 'tsconfig.json') return JSON.stringify({ compilerOptions: { target: "ES2022", module: "ESNext", strict: true, esModuleInterop: true, skipLibCheck: true }, include: ["src/**/*"], exclude: ["node_modules", "dist"] }, null, 2);
+    if (ext === 'md') return `# ${baseName.replace(/-/g, ' ').toUpperCase()}\n\n## Overview\n\n[Generated by AION Scaffold v2.3]\n`;
+    if (ext === 'ts' || ext === 'js') return `/**\n * ${path}\n * @module ${baseName}\n */\n\nexport {};\n`;
+    if (ext === 'yaml' || ext === 'yml') return `# ${path}\nversion: "1.0"\n`;
+    if (ext === 'sql') return `-- ${path}\n-- TODO: Define schema\n`;
+    if (ext === 'html') return `<!DOCTYPE html>\n<html>\n<head><meta charset="UTF-8"><title>${baseName}</title></head>\n<body><!-- ${path} --></body>\n</html>\n`;
+    if (ext === 'css') return `/* ${path} */\n:root { --amber: #f0a500; --cyan: #00d4ff; }\n`;
+    if (name === '.gitignore') return `node_modules/\ndist/\n.env\n*.gguf\n*.safetensors\n`;
+    return `# ${path}\n# AION Scaffold placeholder\n`;
   }
 
   // ========== RENDERING ==========
@@ -1084,13 +1105,12 @@ footer {
     const input = elements.input.value;
     if (!input.trim()) { showError('Paste a tree structure first.'); return; }
     try {
-      const result = buildTree(input.split('\n'));
+      const result = parseTree(input);
       state.parsedTree = result.root;
       state.fileCount = result.fileCount;
       state.folderCount = result.folderCount;
       renderPreview(state.parsedTree);
       updateStats();
-      if (result.warnings?.length) showWarning(result.warnings.join(' · '));
       showSuccess(`Parsed — ${result.folderCount} folders, ${result.fileCount} files.`);
       pushHistory();
     } catch (e) {
@@ -1127,7 +1147,7 @@ footer {
 
   function generateScript() {
     if (!state.parsedTree) { showError('Parse a tree first.'); return; }
-    let script = '#!/bin/bash\n';
+    let script = '#!/bin/bash\n# Generated by AION Scaffold v2.3\n\n';
     function add(n, path = '') {
       const full = path ? `${path}/${n.name}` : n.name;
       if (n.type === 'folder') { script += `mkdir -p "${full}"\n`; if (n.children) n.children.forEach(c => add(c, full)); }
@@ -1136,6 +1156,7 @@ footer {
     const root = state.parsedTree.name || 'project';
     script += `mkdir -p "${root}"\ncd "${root}"\n`;
     state.parsedTree.children?.forEach(c => add(c, ''));
+    script += `\necho "✅ ${state.folderCount} folders, ${state.fileCount} files created."\n`;
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([script])); a.download = `${root}.sh`; a.click();
     showSuccess(`${root}.sh generated.`);
