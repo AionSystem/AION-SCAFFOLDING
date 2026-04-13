@@ -876,55 +876,114 @@ my-project/
   }
 
   function buildTree(lines) {
-    const root = { name: 'project', type: 'folder', children: [] };
-    const stack = [{ node: root, indent: -1 }];
-    const pathSet = new Set();
-    let fileCount = 0, folderCount = 0;
-    let hasRoot = false;
+  const root = { name: 'project', type: 'folder', children: [] };
+  const stack = [{ node: root, indent: -1 }];
+  const pathMap = new Map(); // path -> node (for merging)
+  let fileCount = 0, folderCount = 0;
+  let hasRoot = false;
+  const warnings = [];
 
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      if (!line.trim()) continue;
-      const parsed = parseLine(line, i + 1);
-      if (!parsed) continue;
-      const { indent, name, isFolder, isRoot } = parsed;
-
-      if (isRoot) {
-        root.name = name;
-        hasRoot = true;
-        continue;
+  // Helper to find or create folder at path
+  function getOrCreateFolder(parentPath, name) {
+    const fullPath = parentPath ? `${parentPath}/${name}` : name;
+    
+    if (pathMap.has(fullPath)) {
+      const existing = pathMap.get(fullPath);
+      if (existing.type !== 'folder') {
+        throw new Error(`Cannot create folder '${fullPath}' — a file with this path already exists.`);
       }
-
-      const parentPath = stack[stack.length - 1].node.name;
-      const fullPath = `${parentPath}/${name}`;
-      if (pathSet.has(fullPath)) throw new Error(`Duplicate path: ${fullPath} at line ${i + 1}`);
-      pathSet.add(fullPath);
-
-      if (isFolder) {
-        folderCount++;
-        if (folderCount > CONFIG.MAX_FOLDERS) throw new Error(`Too many folders (max ${CONFIG.MAX_FOLDERS})`);
-      } else {
-        fileCount++;
-        if (fileCount > CONFIG.MAX_FILES) throw new Error(`Too many files (max ${CONFIG.MAX_FILES})`);
-      }
-
-      const node = { name, type: isFolder ? 'folder' : 'file', children: isFolder ? [] : undefined };
-      while (stack.length > 1 && stack[stack.length - 1].indent >= indent) stack.pop();
-      const parent = stack[stack.length - 1].node;
-      if (parent.type !== 'folder') throw new Error(`Cannot place '${name}' under file '${parent.name}' at line ${i + 1}`);
-      parent.children.push(node);
-      if (isFolder) stack.push({ node, indent });
+      warnings.push(`Merged duplicate folder: ${fullPath}`);
+      return existing;
     }
-
-    if (!hasRoot && lines.some(l => l.trim())) {
-      const firstLine = lines.find(l => l.trim());
-      if (firstLine && !firstLine.includes('/')) {
-        root.name = firstLine.trim().replace(/^[├└]──\s*/, '').replace(/[\/]$/, '');
-      }
+    
+    const folder = { name, type: 'folder', children: [] };
+    pathMap.set(fullPath, folder);
+    folderCount++;
+    if (folderCount > CONFIG.MAX_FOLDERS) {
+      throw new Error(`Too many folders (max ${CONFIG.MAX_FOLDERS})`);
     }
-
-    return { root, fileCount, folderCount };
+    return folder;
   }
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (!line.trim()) continue;
+    
+    const parsed = parseLine(line, i + 1);
+    if (!parsed) continue;
+    
+    const { indent, name, isFolder, isRoot } = parsed;
+
+    if (isRoot) {
+      root.name = name;
+      hasRoot = true;
+      pathMap.set(name, root);
+      continue;
+    }
+
+    // Find parent based on indent
+    while (stack.length > 1 && stack[stack.length - 1].indent >= indent) {
+      stack.pop();
+    }
+    
+    const parentNode = stack[stack.length - 1].node;
+    const parentPath = parentNode === root ? root.name : getNodePath(parentNode, root);
+    
+    if (isFolder) {
+      const folder = getOrCreateFolder(parentPath, name);
+      
+      // Add to parent's children if not already there
+      if (!parentNode.children.some(c => c.type === 'folder' && c.name === name)) {
+        parentNode.children.push(folder);
+      }
+      
+      stack.push({ node: folder, indent });
+    } else {
+      const fullPath = parentPath ? `${parentPath}/${name}` : `${root.name}/${name}`;
+      
+      // Check for duplicate file
+      if (pathMap.has(fullPath)) {
+        throw new Error(`Duplicate file: ${fullPath} at line ${i + 1}`);
+      }
+      
+      const file = { name, type: 'file' };
+      pathMap.set(fullPath, file);
+      parentNode.children.push(file);
+      fileCount++;
+      
+      if (fileCount > CONFIG.MAX_FILES) {
+        throw new Error(`Too many files (max ${CONFIG.MAX_FILES})`);
+      }
+    }
+  }
+
+  // Helper to reconstruct path
+  function getNodePath(node, rootNode, currentPath = '') {
+    if (node === rootNode) return rootNode.name;
+    
+    function findPath(n, target, path) {
+      if (n === target) return path;
+      if (n.type === 'folder' && n.children) {
+        for (const child of n.children) {
+          const found = findPath(child, target, path ? `${path}/${n.name}` : n.name);
+          if (found) return found;
+        }
+      }
+      return null;
+    }
+    
+    return findPath(rootNode, node, '') || rootNode.name;
+  }
+
+  if (!hasRoot && lines.some(l => l.trim())) {
+    const firstLine = lines.find(l => l.trim());
+    if (firstLine && !firstLine.includes('/')) {
+      root.name = firstLine.trim().replace(/^[├└]──\s*/, '').replace(/[\/]$/, '');
+    }
+  }
+
+  return { root, fileCount, folderCount, warnings };
+}
 
   // ========== PLACEHOLDER GENERATION ==========
   function generatePlaceholderContent(name, path) {
@@ -969,27 +1028,42 @@ my-project/
 
   // ========== PARSE ACTION ==========
   function parseTreeAction() {
-    clearMessages();
-    const input = elements.input.value;
-    if (!input.trim()) { showError('Paste a tree structure first.'); return; }
-    try {
-      const lines = input.split('\n');
-      const warnings = validateInput(lines);
-      if (warnings.length) showWarning(warnings.join(' '));
-      const result = buildTree(lines);
-      state.parsedTree = result.root;
-      state.fileCount = result.fileCount;
-      state.folderCount = result.folderCount;
-      renderPreview(state.parsedTree);
-      updateStats();
-      const binaryCount = result.root.children?.filter(c => c.type === 'file' && isBinaryFile(c.name)).length || 0;
-      showSuccess(`Parsed — ${result.folderCount} folders, ${result.fileCount} files${binaryCount ? ` (${binaryCount} binary)` : ''}.`);
-      pushHistory();
-    } catch (e) {
-      showError(e.message);
-      state.parsedTree = null;
+  clearMessages();
+  const input = elements.input.value;
+  if (!input.trim()) { showError('Paste a tree structure first.'); return; }
+  
+  try {
+    const lines = input.split('\n');
+    const validationWarnings = validateInput(lines);
+    const result = buildTree(lines);
+    
+    state.parsedTree = result.root;
+    state.fileCount = result.fileCount;
+    state.folderCount = result.folderCount;
+    
+    renderPreview(state.parsedTree);
+    updateStats();
+    
+    // Show validation warnings
+    if (validationWarnings.length) {
+      showWarning(validationWarnings.join(' '));
     }
+    
+    // Show merge warnings (if any)
+    if (result.warnings && result.warnings.length) {
+      setTimeout(() => showWarning(result.warnings.join(' ')), 100);
+    }
+    
+    const binaryCount = result.root.children?.filter(c => c.type === 'file' && isBinaryFile(c.name)).length || 0;
+    const mergeNote = result.warnings?.length ? ` (${result.warnings.length} folder(s) merged)` : '';
+    showSuccess(`Parsed — ${result.folderCount} folders, ${result.fileCount} files${binaryCount ? ` (${binaryCount} binary)` : ''}${mergeNote}.`);
+    
+    pushHistory();
+  } catch (e) {
+    showError(e.message);
+    state.parsedTree = null;
   }
+}
 
   // ========== EXPORT ==========
   function addToZip(zip, node, path = '') {
