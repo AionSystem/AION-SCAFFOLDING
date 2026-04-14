@@ -451,89 +451,95 @@ footer {
 // They shall never appear in file or folder names.
 // ============================================================
 function parseTree(input, projectName) {
-  const TREE_CHARS = /[├└│─]/g; // Constitutional: stripped from all names
+  const TREE_CHARS = /[├└│─]/g;
   
   const rawLines = input.split('\n');
   const parsedLines = [];
   
-  // First pass: calculate true indentation from tree characters
   for (let i = 0; i < rawLines.length; i++) {
     const line = rawLines[i];
-    const trimmed = line.trim();
-    if (!trimmed) continue;
+    if (!line.trim()) continue;
     
-    // Calculate indent based on position of tree branch
-    let indent = 0;
-    for (let j = 0; j < line.length; j++) {
+    // Count the visual depth by looking at tree structure
+    let depth = 0;
+    let j = 0;
+    
+    while (j < line.length) {
       const ch = line[j];
-      if (ch === '│' || ch === ' ' || ch === '\t') {
-        indent += (ch === '\t') ? 4 : 1;
+      
+      if (ch === '│') {
+        depth++;
+        j += 4;
+      } else if (ch === ' ') {
+        if (line.substr(j, 4) === ' ') {
+          depth++;
+          j += 4;
+        } else {
+          j++;
+        }
       } else if (ch === '├' || ch === '└') {
         break;
+      } else if (ch === '\t') {
+        depth++;
+        j++;
       } else {
         break;
       }
     }
     
-    const indentLevel = Math.floor(indent / 4);
-    
-    // AGGRESSIVE CLEANING: Remove ALL tree characters from the entire line
     let cleanedLine = line.replace(TREE_CHARS, '');
     let content = cleanedLine.trim();
-    
-    // Skip if empty after cleaning
     if (!content) continue;
     
-    // Strip inline comments
     content = stripComments(content);
     
     const isFolder = content.endsWith('/');
     const rawName = isFolder ? content.slice(0, -1).trim() : content.trim();
     if (!rawName) continue;
     
-    // Sanitize name — remove any remaining special characters
     let name = sanitizeFileName(rawName);
-    // EXTRA SAFETY: One more pass to ensure no tree characters survive
     name = name.replace(TREE_CHARS, '');
     if (!name) continue;
     
-    parsedLines.push({ indent: indentLevel, name, isFolder, rawName });
+    parsedLines.push({ depth, name, isFolder, rawName });
   }
   
   if (!parsedLines.length) throw new Error('Empty input');
   
-  // Detect root from first line if it has indent 0
   let rootName = sanitizeProjectName(projectName);
-  if (parsedLines[0] && parsedLines[0].indent === 0 && parsedLines[0].isFolder) {
+  if (parsedLines[0] && parsedLines[0].depth === 0 && parsedLines[0].isFolder) {
     rootName = parsedLines[0].name;
-    parsedLines.shift(); // Remove root from processing
+    parsedLines.shift();
   }
   
   const root = { name: rootName, type: 'folder', children: [] };
-  const stack = [{ node: root, indent: -1 }];
+  const stack = [{ node: root, depth: -1 }];
   let fileCount = 0, folderCount = 1;
   const warnings = [];
   
   for (let i = 0; i < parsedLines.length; i++) {
     const item = parsedLines[i];
-    let { indent, name, isFolder, rawName } = item;
+    let { depth, name, isFolder, rawName } = item;
     
-    // FINAL SAFETY: Strip any tree characters that might have snuck through
     name = name.replace(TREE_CHARS, '');
     
-    // Pop stack to find parent
-    while (stack.length > 1 && stack[stack.length - 1].indent >= indent) {
+    while (stack.length > 1 && stack[stack.length - 1].depth >= depth) {
       stack.pop();
     }
     
     const parent = stack[stack.length - 1].node;
+    
+    if (depth > 0 && stack[stack.length - 1].depth !== depth - 1) {
+      warnings.push(`Line ${i+1}: Indentation mismatch — expected depth ${stack[stack.length - 1].depth + 1}, got ${depth}`);
+      depth = stack[stack.length - 1].depth + 1;
+    }
     
     if (isFolder) {
       let folder = parent.children.find(c => c.type === 'folder' && c.name === name);
       if (!folder) {
         if (parent.children.some(c => c.type === 'file' && c.name === name)) {
           name = name + '_folder';
-          warnings.push(`Line ${i+1}: Type conflict — renamed folder to "${name}"`);
+          warnings.push(`Type conflict — renamed folder to "${name}"`);
         }
         folder = { name, type: 'folder', children: [] };
         parent.children.push(folder);
@@ -541,7 +547,7 @@ function parseTree(input, projectName) {
       } else {
         warnings.push(`Merged duplicate folder "${name}"`);
       }
-      stack.push({ node: folder, indent });
+      stack.push({ node: folder, depth });
     } else {
       if (parent.children.some(c => c.type === 'folder' && c.name === name)) {
         name = name + '.txt';
