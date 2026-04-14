@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-<meta name="description" content="AION Scaffold v2.6.3 — Intelligent Tree to Filesystem Generator. Fixed nesting, cursor toggle, audit, fix, and generate.">
-<meta property="og:title" content="AION Scaffold v2.6.3 — Intelligent Scaffolding Tool">
+<meta name="description" content="AION Scaffold v2.6.5 — Intelligent Tree to Filesystem Generator. Fixed nesting, cursor toggle, audit, fix, and generate.">
+<meta property="og:title" content="AION Scaffold v2.6.5 — Intelligent Scaffolding Tool">
 <meta property="og:description" content="The most intelligent browser-based scaffolding tool. Fixed tree nesting. Sovereign Cursor with toggle.">
 <meta property="og:type" content="website">
-<title>AION Scaffold v2.6.3 · AionSystem</title>
+<title>AION Scaffold v2.6.5 · AionSystem</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:ital,wght@0,300;0,400;0,600;0,700;0,900;1,300&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
@@ -450,6 +450,19 @@ footer {
 // HARD RULE: Tree characters (├└│─) exist ONLY for visual structure.
 // They shall never appear in file or folder names.
 // ============================================================
+/**
+ * FORGE-HARDENED parseTree — v2.6.5
+ * Converts ASCII tree structure to nested folder/file hierarchy.
+ * 
+ * @param {string} input - Raw tree text
+ * @param {string} projectName - Fallback root name
+ * @returns {{
+ * root: { name: string, type: 'folder', children: Array },
+ * fileCount: number,
+ * folderCount: number,
+ * warnings: Array<{ severity: 'info'|'warn'|'error', type: string, line?: number, message: string }>
+ * }}
+ */
 function parseTree(input, projectName) {
   const TREE_CHARS = /[├└│─]/g;
   
@@ -460,27 +473,19 @@ function parseTree(input, projectName) {
     const line = rawLines[i];
     if (!line.trim()) continue;
     
-    // Count the visual depth by looking at tree structure
+    // FORGE FIX EL-001: Robust depth counting — handles variable spacing after "│"
     let depth = 0;
     let j = 0;
-    
     while (j < line.length) {
       const ch = line[j];
-      
       if (ch === '│') {
         depth++;
-        j += 4;
-      } else if (ch === ' ') {
-        if (line.substr(j, 4) === ' ') {
-          depth++;
-          j += 4;
-        } else {
-          j++;
-        }
+        // Skip the "│" and any following spaces up to the next structural character
+        j++;
+        while (j < line.length && line[j] === ' ') j++;
       } else if (ch === '├' || ch === '└') {
         break;
-      } else if (ch === '\t') {
-        depth++;
+      } else if (ch === ' ' || ch === '\t') {
         j++;
       } else {
         break;
@@ -501,11 +506,20 @@ function parseTree(input, projectName) {
     name = name.replace(TREE_CHARS, '');
     if (!name) continue;
     
-    parsedLines.push({ depth, name, isFolder, rawName });
+    parsedLines.push({ depth, name, isFolder, rawName, lineNumber: i + 1 });
   }
   
-  if (!parsedLines.length) throw new Error('Empty input');
+  if (!parsedLines.length) {
+    return {
+      root: { name: sanitizeProjectName(projectName), type: 'folder', children: [] },
+      fileCount: 0,
+      folderCount: 0,
+      warnings: [{ severity: 'error', type: 'empty_input', message: 'No valid lines found in input' }]
+    };
+  }
   
+  // FORGE FIX EL-002: Documented asymmetry — root is pre-counted
+  // folderCount starts at 1 to include the root folder itself
   let rootName = sanitizeProjectName(projectName);
   if (parsedLines[0] && parsedLines[0].depth === 0 && parsedLines[0].isFolder) {
     rootName = parsedLines[0].name;
@@ -513,64 +527,110 @@ function parseTree(input, projectName) {
   }
   
   const root = { name: rootName, type: 'folder', children: [] };
-  const stack = [{ node: root, depth: -1 }];
-  let fileCount = 0, folderCount = 1;
+  
+  // FORGE FIX SA-002: Clear comment explaining stack pop logic
+  // Stack tracks { node, depth, path }
+  // We pop while stack top depth >= current depth to return to the correct parent
+  // This correctly handles both siblings (equal depth) and moving up levels (greater depth)
+  const stack = [{ node: root, depth: -1, path: rootName }];
+  
+  // FORGE FIX SA-003: pathMap tracks full paths for duplicate detection
+  // Using string keys is acceptable for expected tree sizes (<100 depth, <15000 files)
+  const pathMap = new Map();
+  
+  let fileCount = 0;
+  let folderCount = 1; // Root is pre-counted
   const warnings = [];
+  
+  // FORGE FIX EL-003 & CP-002: Structured warnings with severity
+  function addWarning(severity, type, lineNumber, message) {
+    warnings.push({ severity, type, line: lineNumber, message });
+  }
   
   for (let i = 0; i < parsedLines.length; i++) {
     const item = parsedLines[i];
-    let { depth, name, isFolder, rawName } = item;
+    let { depth, name, isFolder, rawName, lineNumber } = item;
     
     name = name.replace(TREE_CHARS, '');
     
+    // Pop stack to find parent — pops past siblings (>= depth) to reach parent
     while (stack.length > 1 && stack[stack.length - 1].depth >= depth) {
       stack.pop();
     }
     
     const parent = stack[stack.length - 1].node;
+    const parentPath = stack[stack.length - 1].path;
     
-    if (depth > 0 && stack[stack.length - 1].depth !== depth - 1) {
-      warnings.push(`Line ${i+1}: Indentation mismatch — expected depth ${stack[stack.length - 1].depth + 1}, got ${depth}`);
-      depth = stack[stack.length - 1].depth + 1;
-    }
+    // Build full path for duplicate detection
+    const fullPath = parentPath + '/' + name;
     
     if (isFolder) {
-      let folder = parent.children.find(c => c.type === 'folder' && c.name === name);
-      if (!folder) {
-        if (parent.children.some(c => c.type === 'file' && c.name === name)) {
-          name = name + '_folder';
-          warnings.push(`Type conflict — renamed folder to "${name}"`);
-        }
-        folder = { name, type: 'folder', children: [] };
-        parent.children.push(folder);
-        folderCount++;
-      } else {
-        warnings.push(`Merged duplicate folder "${name}"`);
+      // Check for duplicate folder at this exact path
+      if (pathMap.has(fullPath)) {
+        addWarning('info', 'duplicate_folder', lineNumber, `Merged duplicate folder "${rawName}" into existing`);
+        stack.push({ node: pathMap.get(fullPath), depth, path: fullPath });
+        continue;
       }
-      stack.push({ node: folder, depth });
-    } else {
-      if (parent.children.some(c => c.type === 'folder' && c.name === name)) {
-        name = name + '.txt';
-        warnings.push(`Type conflict — renamed file to "${name}"`);
-      }
-      const existingFile = parent.children.find(c => c.type === 'file' && c.name === name);
-      if (existingFile) {
-        const base = name.replace(/\.[^/.]+$/, '');
-        const ext = name.split('.').pop() || 'txt';
-        let counter = 1, newName = `${base}_${counter}.${ext}`;
-        while (parent.children.some(c => c.type === 'file' && c.name === newName)) {
-          counter++;
-          newName = `${base}_${counter}.${ext}`;
-        }
-        warnings.push(`Duplicate file "${rawName}" — renamed to "${newName}"`);
+      
+      // Check for type conflict (file exists at this path)
+      if (pathMap.has(fullPath) && pathMap.get(fullPath).type === 'file') {
+        const newName = name + '_folder';
+        addWarning('warn', 'type_conflict_folder', lineNumber, `"${rawName}" conflicts with existing file — renamed to "${newName}"`);
         name = newName;
       }
-      parent.children.push({ name, type: 'file' });
+      
+      const folder = { name, type: 'folder', children: [] };
+      parent.children.push(folder);
+      pathMap.set(fullPath, folder);
+      folderCount++;
+      stack.push({ node: folder, depth, path: fullPath });
+      
+    } else {
+      // Check for type conflict (folder exists at this path)
+      if (pathMap.has(fullPath)) {
+        const existing = pathMap.get(fullPath);
+        if (existing.type === 'folder') {
+          const newName = name + '.txt';
+          addWarning('warn', 'type_conflict_file', lineNumber, `"${rawName}" conflicts with existing folder — renamed to "${newName}"`);
+          name = newName;
+        } else {
+          // File already exists at this exact path — auto-rename
+          const base = name.replace(/\.[^/.]+$/, '');
+          const ext = name.split('.').pop() || 'txt';
+          let counter = 1;
+          let newName = `${base}_${counter}.${ext}`;
+          let newPath = parentPath + '/' + newName;
+          while (pathMap.has(newPath)) {
+            counter++;
+            newName = `${base}_${counter}.${ext}`;
+            newPath = parentPath + '/' + newName;
+          }
+          addWarning('info', 'duplicate_file', lineNumber, `"${rawName}" already exists — renamed to "${newName}"`);
+          name = newName;
+        }
+      }
+      
+      const finalPath = parentPath + '/' + name;
+      const file = { name, type: 'file' };
+      parent.children.push(file);
+      pathMap.set(finalPath, file);
       fileCount++;
     }
   }
   
-  return { root, fileCount, folderCount: folderCount - 1, warnings };
+  // Check for depth exceeded (if configured elsewhere)
+  const maxDepth = (typeof CONFIG !== 'undefined' && CONFIG.MAX_DEPTH) ? CONFIG.MAX_DEPTH : 100;
+  const actualDepth = Math.max(...parsedLines.map(l => l.depth), 0);
+  if (actualDepth > maxDepth) {
+    addWarning('warn', 'depth_exceeded', null, `Maximum depth ${maxDepth} exceeded (actual: ${actualDepth}) — tree may be truncated`);
+  }
+  
+  return { 
+    root, 
+    fileCount, 
+    folderCount: folderCount - 1, // Subtract root from count
+    warnings 
+  };
 }
 
   // ============================================================
