@@ -1,0 +1,25 @@
+{
+  "name": "aion-scaffold",
+  "version": "2.6.5",
+  "description": "Intelligent tree-to-filesystem scaffolding — FORGE-hardened",
+  "main": "cli.js",
+  "bin": {
+    "aion-scaffold": "./cli.js"
+  },
+  "files": [
+    "cli.js",
+    "parser.js"
+  ],
+  "keywords": [
+    "scaffold", "tree", "filesystem", "generator", "ai", "claude", "gpt", "project-structure"
+  ],
+  "author": "Sheldon K. Salmon <aionsystem@outlook.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AionSystem/AION-SCAFFOLDING"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
