@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-<meta name="description" content="AION Scaffold v2.6.2 — Intelligent Tree to Filesystem Generator. Sovereign Cursor. Audit, fix, and generate.">
-<meta property="og:title" content="AION Scaffold v2.6.2 — Intelligent Scaffolding Tool">
-<meta property="og:description" content="The most intelligent browser-based scaffolding tool. Zero install, audit & fix, undo/redo, binary detection. Sovereign Cursor.">
+<meta name="description" content="AION Scaffold v2.6.3 — Intelligent Tree to Filesystem Generator. Fixed nesting, cursor toggle, audit, fix, and generate.">
+<meta property="og:title" content="AION Scaffold v2.6.3 — Intelligent Scaffolding Tool">
+<meta property="og:description" content="The most intelligent browser-based scaffolding tool. Fixed tree nesting. Sovereign Cursor with toggle.">
 <meta property="og:type" content="website">
-<title>AION Scaffold v2.6.2 · AionSystem</title>
+<title>AION Scaffold v2.6.3 · AionSystem</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:ital,wght@0,300;0,400;0,600;0,700;0,900;1,300&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
@@ -140,8 +140,9 @@ textarea:focus { border-color: var(--cyan); box-shadow: 0 0 15px rgba(0,212,255,
 .project-name-input:focus { outline: none; border-color: var(--cyan); }
 .project-name-hint { font-family: var(--mono); font-size: 10px; color: var(--dim); }
 
-.placeholder-toggle { display: flex; align-items: center; gap: 8px; margin-left: auto; }
-.placeholder-toggle label { font-family: var(--mono); font-size: 10px; color: var(--muted); cursor: pointer; }
+.toggle-group { display: flex; align-items: center; gap: 16px; margin-left: auto; flex-wrap: wrap; }
+.placeholder-toggle, .cursor-toggle { display: flex; align-items: center; gap: 8px; }
+.placeholder-toggle label, .cursor-toggle label { font-family: var(--mono); font-size: 10px; color: var(--muted); cursor: pointer; }
 
 .action-bar { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
 .cta-btn {
@@ -200,7 +201,7 @@ footer {
   .page-header, .tool-container { padding-left: 20px; padding-right: 20px; }
   .panel-actions { justify-content: flex-start; }
   .stats-bar { flex-direction: column; align-items: flex-start; }
-  .placeholder-toggle { margin-left: 0; }
+  .toggle-group { margin-left: 0; }
 }
 </style>
 </head>
@@ -226,9 +227,9 @@ footer {
 </nav>
 
 <div class="page-header">
-  <div class="hero-eyebrow">Developer Tool · v2.6.2</div>
+  <div class="hero-eyebrow">Developer Tool · v2.6.3</div>
   <h1 class="page-title">AION<em>Scaffold</em></h1>
-  <p class="page-sub">Paste a tree. Audit issues. Fix automatically. Download structure. Sovereign Cursor.</p>
+  <p class="page-sub">Paste a tree. Audit issues. Fix automatically. Proper folder nesting. Cursor toggle.</p>
 </div>
 
 <div class="tool-container">
@@ -243,9 +244,15 @@ footer {
     <span class="project-name-label">📦 Project Name</span>
     <input type="text" id="projectNameInput" class="project-name-input" placeholder="my-awesome-project" value="my-awesome-project" maxlength="64" aria-label="Project name">
     <span class="project-name-hint">kebab-case · a-z, 0-9, hyphens</span>
-    <div class="placeholder-toggle">
-      <input type="checkbox" id="includePlaceholders" checked>
-      <label for="includePlaceholders">Include placeholder content</label>
+    <div class="toggle-group">
+      <div class="placeholder-toggle">
+        <input type="checkbox" id="includePlaceholders" checked>
+        <label for="includePlaceholders">📝 Placeholders</label>
+      </div>
+      <div class="cursor-toggle">
+        <input type="checkbox" id="enableSovereignCursor" checked>
+        <label for="enableSovereignCursor">🎯 Sovereign Cursor</label>
+      </div>
     </div>
   </div>
 
@@ -309,7 +316,7 @@ footer {
     <div class="badge-group">
       <span class="project-badge" id="projectNameDisplay">📦 my-awesome-project</span>
       <span class="fqi-badge" id="fqiBadge" title="Function Quality Index">FQI: 1.00</span>
-      <span class="version-badge" id="versionBadge" role="button" tabindex="0" aria-label="View version history">v2.6.2</span>
+      <span class="version-badge" id="versionBadge" role="button" tabindex="0" aria-label="View version history">v2.6.3</span>
       <span class="keyboard-hint">Ctrl+Enter Parse · Ctrl+Z Undo</span>
     </div>
   </div>
@@ -335,24 +342,25 @@ footer {
   const CONFIG = {
     MAX_FILES: 15000, MAX_FOLDERS: 7500, MAX_INPUT_SIZE: 500000, MAX_DEPTH: 100,
     BINARY_EXTENSIONS: ['gguf','safetensors','png','jpg','jpeg','gif','ico','db','sqlite','bin','wasm','zip','tar','gz','webp','svg','mp4','mp3','wav','pdf','doc','docx','xls','xlsx'],
-    MAX_HISTORY: 30, AUTO_SAVE_KEY: 'aion-scaffold-v2_6_2',
+    MAX_HISTORY: 30, AUTO_SAVE_KEY: 'aion-scaffold-v2_6_3',
     PREVIEW_MAX_NODES: 500, PREVIEW_MAX_DEPTH: 4
   };
 
   const CHANGELOG = [
+    { version: 'v2.6.3', date: '2026-04-14', changes: [
+      'Fixed tree nesting — folders now preserve hierarchy',
+      'Filename sanitization — removes symbols',
+      'Cursor toggle — switch between Sovereign and classic',
+      'Tree spacer handling — proper indent calculation'
+    ]},
     { version: 'v2.6.2', date: '2026-04-14', changes: [
       'Sovereign Cursor — 5-state physics-based cursor',
       'Tree spacer filtering — ignores │ lines',
-      'Full audit implementation restored',
-      'Magnetic aura gravitates toward interactive elements'
+      'Full audit implementation restored'
     ]},
-    { version: 'v2.6.1', date: '2026-04-14', changes: [
-      'Shared parser architecture', 'DocumentFragment preview', 'MAX_DEPTH=100'
-    ]},
-    { version: 'v2.6', date: '2026-04-13', changes: [
-      'Project name input', 'Version audit modal', 'Duplicate file auto-rename'
-    ]},
-    { version: 'v2.5', date: '2026-04-13', changes: ['Enhanced audit', 'JSON export', 'Dynamic tooltip']},
+    { version: 'v2.6.1', date: '2026-04-14', changes: ['Shared parser architecture', 'DocumentFragment preview', 'MAX_DEPTH=100']},
+    { version: 'v2.6', date: '2026-04-13', changes: ['Project name input', 'Version audit modal', 'Duplicate file auto-rename']},
+    { version: 'v2.5', date: '2026-04-13', changes: ['Enhanced audit', 'JSON export']},
     { version: 'v2.0', date: '2026-04-12', changes: ['Initial release', 'ZIP/Shell/Tree export', 'Undo/redo']}
   ];
 
@@ -390,7 +398,8 @@ footer {
     versionBadge: document.getElementById('versionBadge'), changelogModal: document.getElementById('changelogModal'),
     closeChangelogBtn: document.getElementById('closeChangelogBtn'), changelogContent: document.getElementById('changelogContent'),
     copyPreviewBtn: document.getElementById('copyPreviewBtn'), includePlaceholders: document.getElementById('includePlaceholders'),
-    downloadCleanTreeBtn: document.getElementById('downloadCleanTreeBtn')
+    downloadCleanTreeBtn: document.getElementById('downloadCleanTreeBtn'),
+    enableSovereignCursor: document.getElementById('enableSovereignCursor')
   };
 
   // ============================================================
@@ -420,6 +429,7 @@ footer {
   // UTILITIES
   // ============================================================
   function sanitizeProjectName(name) { return name.trim().toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'-').replace(/-+/g,'-').replace(/^-|-$/g,'')||'my-project'; }
+  function sanitizeFileName(name) { return name.replace(/[<>:"|?*\\\/]/g, '-').replace(/\s+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') || 'file'; }
   function stripComments(l) { const m=l.match(/\s+[#\/]{1,2}\s+.+$/); return m?l.substring(0,m.index).trimEnd():l; }
   function isBinary(n) { return CONFIG.BINARY_EXTENSIONS.includes(n.split('.').pop()?.toLowerCase()); }
   function showError(m) { elements.error.textContent='⚠️ '+m; elements.error.classList.add('visible'); elements.ariaLive.textContent='Error: '+m; }
@@ -436,16 +446,115 @@ footer {
   }
 
   // ============================================================
-  // TREE SPACER FILTER (ignores │ lines)
+  // FIXED PARSER — Proper nesting via indent levels
   // ============================================================
-  function filterTreeLines(input) {
-    return input.split('\n')
-      .map(stripComments)
-      .filter(l => {
-        const trimmed = l.trim();
-        if (trimmed === '│' || trimmed === '├──' || trimmed === '└──' || trimmed === '') return false;
-        return true;
-      });
+  function parseTree(input, projectName) {
+    const rawLines = input.split('\n');
+    const parsedLines = [];
+    
+    // First pass: calculate true indentation from tree characters
+    for (let i = 0; i < rawLines.length; i++) {
+      const line = rawLines[i];
+      const trimmed = line.trim();
+      if (!trimmed) continue;
+      
+      // Calculate indent based on position of tree branch
+      let indent = 0;
+      for (let j = 0; j < line.length; j++) {
+        const ch = line[j];
+        if (ch === '│' || ch === ' ' || ch === '\t') {
+          indent += (ch === '\t') ? 4 : 1;
+        } else if (ch === '├' || ch === '└') {
+          break;
+        } else {
+          break;
+        }
+      }
+      
+      const indentLevel = Math.floor(indent / 4);
+      
+      // Extract content
+      let content = trimmed;
+      content = content.replace(/^[├└]──\s*/, '').replace(/^[│]\s*/, '');
+      
+      // Skip pure connector lines
+      if (!content || content === '│' || content === '├──' || content === '└──') continue;
+      
+      // Strip inline comments
+      content = stripComments(content);
+      
+      const isFolder = content.endsWith('/');
+      const rawName = isFolder ? content.slice(0, -1).trim() : content.trim();
+      if (!rawName) continue;
+      
+      // Sanitize name
+      const name = sanitizeFileName(rawName);
+      
+      parsedLines.push({ indent: indentLevel, name, isFolder, rawName });
+    }
+    
+    if (!parsedLines.length) throw new Error('Empty input');
+    
+    // Detect root from first line if it has indent 0
+    let rootName = sanitizeProjectName(projectName);
+    if (parsedLines[0] && parsedLines[0].indent === 0 && parsedLines[0].isFolder) {
+      rootName = parsedLines[0].name;
+      parsedLines.shift(); // Remove root from processing
+    }
+    
+    const root = { name: rootName, type: 'folder', children: [] };
+    const stack = [{ node: root, indent: -1 }];
+    let fileCount = 0, folderCount = 1;
+    const warnings = [];
+    
+    for (let i = 0; i < parsedLines.length; i++) {
+      const item = parsedLines[i];
+      let { indent, name, isFolder, rawName } = item;
+      
+      // Pop stack to find parent
+      while (stack.length > 1 && stack[stack.length - 1].indent >= indent) {
+        stack.pop();
+      }
+      
+      const parent = stack[stack.length - 1].node;
+      
+      if (isFolder) {
+        let folder = parent.children.find(c => c.type === 'folder' && c.name === name);
+        if (!folder) {
+          if (parent.children.some(c => c.type === 'file' && c.name === name)) {
+            name = name + '_folder';
+            warnings.push(`Line ${i+1}: Type conflict — renamed folder to "${name}"`);
+          }
+          folder = { name, type: 'folder', children: [] };
+          parent.children.push(folder);
+          folderCount++;
+        } else {
+          warnings.push(`Merged duplicate folder "${name}"`);
+        }
+        stack.push({ node: folder, indent });
+      } else {
+        if (parent.children.some(c => c.type === 'folder' && c.name === name)) {
+          name = name + '.txt';
+          warnings.push(`Type conflict — renamed file to "${name}"`);
+        }
+        const existingFile = parent.children.find(c => c.type === 'file' && c.name === name);
+        if (existingFile) {
+          const base = name.replace(/\.[^/.]+$/, '');
+          const ext = name.split('.').pop() || 'txt';
+          let counter = 1, newName = `${base}_${counter}.${ext}`;
+          while (parent.children.some(c => c.type === 'file' && c.name === newName)) {
+            counter++;
+            newName = `${base}_${counter}.${ext}`;
+          }
+          warnings.push(`Duplicate file "${rawName}" — renamed to "${newName}"`);
+          name = newName;
+        }
+        parent.children.push({ name, type: 'file' });
+        fileCount++;
+      }
+    }
+    
+    return { root, fileCount, folderCount: folderCount - 1, warnings };
   }
 
   // ============================================================
@@ -453,45 +562,53 @@ footer {
   // ============================================================
   function auditTree(input, projectName) {
     const issues = [];
-    const lines = filterTreeLines(input);
-    const pathMap = new Map();
-    let rootFound = false;
+    const rawLines = input.split('\n');
+    const parsedLines = [];
     let fixableCount = 0, manualCount = 0;
     
-    lines.forEach((line, idx) => {
-      const raw = line;
-      const indent = line.search(/\S/);
-      let content = line.trim();
+    // First pass — parse lines with indent
+    for (let i = 0; i < rawLines.length; i++) {
+      const line = rawLines[i];
+      const trimmed = line.trim();
+      if (!trimmed) continue;
       
-      if (idx === 0 && !content.match(/^[├└│]/) && !content.includes('─')) rootFound = true;
-      if (raw.includes('\t') && raw.includes('    ')) { issues.push({ type: 'mixed_indent', line: idx+1, fixable: true }); fixableCount++; }
-      if (raw.match(/\s+[#\/]{1,2}\s+.+$/)) { issues.push({ type: 'has_comments', line: idx+1, fixable: true }); fixableCount++; }
-      if (!content.match(/^[├└│]/) && !content.includes('─') && !(idx === 0 && !rootFound)) {
-        if (!content.match(/^[a-zA-Z0-9_-]+(\/)?$/)) { issues.push({ type: 'missing_tree_chars', line: idx+1, fixable: true }); fixableCount++; }
+      if (line.includes('\t') && line.includes('    ')) { issues.push({ type: 'mixed_indent', line: i+1, fixable: true }); fixableCount++; }
+      if (line.match(/\s+[#\/]{1,2}\s+.+$/)) { issues.push({ type: 'has_comments', line: i+1, fixable: true }); fixableCount++; }
+      
+      let indent = 0;
+      for (let j = 0; j < line.length; j++) {
+        const ch = line[j];
+        if (ch === '│' || ch === ' ' || ch === '\t') { indent += (ch === '\t') ? 4 : 1; }
+        else if (ch === '├' || ch === '└') break;
+        else break;
       }
       
-      let name = content.replace(/^[├└]──\s*/, '').replace(/^[│]\s*/, '').trim();
-      const isFolder = name.endsWith('/');
-      name = isFolder ? name.slice(0, -1).trim() : name;
+      let content = trimmed;
+      content = content.replace(/^[├└]──\s*/, '').replace(/^[│]\s*/, '');
+      if (!content || content === '│' || content === '├──' || content === '└──') continue;
       
-      if (name && name.match(/[<>:"|?*]/)) { issues.push({ type: 'invalid_chars', line: idx+1, name, fixable: true }); fixableCount++; }
-      if (!isFolder && content.match(/[^\/]+\/$/)) { issues.push({ type: 'file_with_slash', line: idx+1, fixable: true }); fixableCount++; }
-    });
-    
-    if (!rootFound) { issues.push({ type: 'no_root', line: 1, fixable: false, message: `No root declared. Using "${projectName}" as root.` }); manualCount++; }
-    
-    const indentLevels = lines.map(l => l.search(/\S/)).filter(i => i > 0);
-    if (indentLevels.length && indentLevels.some(i => i % 4 !== 0)) { issues.push({ type: 'inconsistent_indent', fixable: true }); fixableCount++; }
-    
-    const stack = [{ indent: -1, path: sanitizeProjectName(projectName) }];
-    lines.forEach((line, idx) => {
-      const indent = line.search(/\S/); let content = line.trim();
-      if (!content.match(/^[├└│]/) && !content.includes('─')) return;
-      content = content.replace(/^[├└]──\s*/, '').replace(/^[│]\s*/, '').trim();
       const isFolder = content.endsWith('/');
-      let name = isFolder ? content.slice(0, -1).trim() : content.trim();
-      if (!name) return;
-      name = name.replace(/[<>:"|?*]/g, '-').trim();
+      const rawName = isFolder ? content.slice(0, -1).trim() : content.trim();
+      if (!rawName) continue;
+      
+      if (rawName.match(/[<>:"|?*\\\/]/)) { issues.push({ type: 'invalid_chars', line: i+1, name: rawName, fixable: true }); fixableCount++; }
+      if (!isFolder && content.match(/[^\/]+\/$/)) { issues.push({ type: 'file_with_slash', line: i+1, fixable: true }); fixableCount++; }
+      
+      parsedLines.push({ indent: Math.floor(indent/4), rawName, isFolder, lineNum: i+1 });
+    }
+    
+    // Check for root
+    if (parsedLines.length && parsedLines[0].indent !== 0) {
+      issues.push({ type: 'no_root', line: 1, fixable: false, message: `No root declared. Using "${projectName}" as root.` });
+      manualCount++;
+    }
+    
+    // Duplicate detection
+    const pathMap = new Map();
+    const stack = [{ indent: -1, path: sanitizeProjectName(projectName) }];
+    parsedLines.forEach(item => {
+      const { indent, rawName, isFolder, lineNum } = item;
+      const name = sanitizeFileName(rawName);
       while (stack.length > 1 && stack[stack.length - 1].indent >= indent) stack.pop();
       const parentPath = stack[stack.length - 1].path;
       const fullPath = parentPath + '/' + name;
@@ -499,10 +616,10 @@ footer {
       if (pathMap.has(fullPath)) {
         const existing = pathMap.get(fullPath);
         if (existing.type !== (isFolder ? 'folder' : 'file')) {
-          issues.push({ type: 'type_conflict', line: idx+1, path: fullPath, fixable: false, message: `"${name}" exists as ${existing.type}, cannot create ${isFolder?'folder':'file'}` });
+          issues.push({ type: 'type_conflict', line: lineNum, path: fullPath, fixable: false, message: `"${rawName}" exists as ${existing.type}` });
           manualCount++;
         } else if (!isFolder) {
-          issues.push({ type: 'duplicate_file', line: idx+1, path: fullPath, fixable: false, message: `Duplicate file "${name}" will be auto-renamed` });
+          issues.push({ type: 'duplicate_file', line: lineNum, path: fullPath, fixable: false, message: `Duplicate file "${rawName}" will be auto-renamed` });
           manualCount++;
         }
       } else {
@@ -524,13 +641,7 @@ footer {
     if (issues.some(i => i.type === 'has_comments')) { lines = lines.map(stripComments); fixes.push('Stripped comments'); }
     if (issues.some(i => i.type === 'mixed_indent')) { lines = lines.map(l => l.replace(/\t/g, '    ')); fixes.push('Converted tabs'); }
     issues.filter(i => i.type === 'file_with_slash').forEach(i => { if (lines[i.line - 1]) lines[i.line - 1] = lines[i.line - 1].replace(/([^\/\s]+)\/$/, '$1'); });
-    issues.filter(i => i.type === 'invalid_chars').forEach(i => { if (lines[i.line - 1] && i.name) lines[i.line - 1] = lines[i.line - 1].replace(i.name, i.name.replace(/[<>:"|?*]/g, '-')); });
-    issues.filter(i => i.type === 'missing_tree_chars').forEach(i => { const idx = i.line - 1; if (lines[idx]) { const l = lines[idx]; const indent = l.search(/\S/); lines[idx] = ' '.repeat(indent) + '├── ' + l.trim(); } });
-    if (issues.some(i => i.type === 'inconsistent_indent')) {
-      lines = lines.map(l => { const t = l.trimStart(); const indent = l.length - t.length; if (indent === 0) return l; return ' '.repeat(Math.round(indent / 4) * 4) + t; });
-      fixes.push('Normalized indentation');
-    }
-    lines = lines.filter(l => { const t = l.trim(); return t !== '│' && t !== '├──' && t !== '└──' && t !== ''; });
+    issues.filter(i => i.type === 'invalid_chars').forEach(i => { if (lines[i.line - 1] && i.name) lines[i.line - 1] = lines[i.line - 1].replace(i.name, sanitizeFileName(i.name)); });
     return { fixed: lines.join('\n'), fixes };
   }
 
@@ -568,65 +679,8 @@ footer {
   }
 
   // ============================================================
-  // PARSER
+  // RENDER PREVIEW
   // ============================================================
-  function parseTree(input, projectName) {
-    const lines = filterTreeLines(input);
-    if (!lines.length) throw new Error('Empty input');
-    
-    let rootName = sanitizeProjectName(projectName);
-    const root = { name: rootName, type: 'folder', children: [] };
-    const stack = [{ node: root, indent: -1 }];
-    let fc = 0, fd = 1, depth = 0;
-    const warnings = [];
-    
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      const indent = line.search(/\S/);
-      let content = line.trim();
-      
-      if (!content.match(/^[├└│]/) && !content.includes('─')) {
-        if (content.match(/^[a-zA-Z0-9_-]+(\/)?$/)) {
-          rootName = sanitizeProjectName(content.replace(/\/$/, ''));
-          root.name = rootName;
-        } else if (i === 0) warnings.push(`Line 1: Using "${rootName}" as root.`);
-        continue;
-      }
-      
-      content = content.replace(/^[├└]──\s*/, '').replace(/^[│]\s*/, '').trim();
-      const isFolder = content.endsWith('/');
-      let name = isFolder ? content.slice(0, -1).trim() : content.trim();
-      if (!name) continue;
-      name = name.replace(/[<>:"|?*]/g, '-').trim();
-      
-      while (stack.length > 1 && stack[stack.length - 1].indent >= indent) stack.pop();
-      const parent = stack[stack.length - 1].node;
-      depth = Math.max(depth, stack.length);
-      if (depth > CONFIG.MAX_DEPTH) { warnings.push(`Depth exceeds ${CONFIG.MAX_DEPTH}`); break; }
-      
-      if (isFolder) {
-        let folder = parent.children.find(c => c.type === 'folder' && c.name === name);
-        if (!folder) {
-          if (parent.children.some(c => c.type === 'file' && c.name === name)) { name += '_folder'; warnings.push(`Line ${i+1}: Type conflict — renamed folder to "${name}"`); }
-          folder = { name, type: 'folder', children: [] };
-          parent.children.push(folder); fd++;
-        } else warnings.push(`Line ${i+1}: Merged duplicate folder "${name}"`);
-        stack.push({ node: folder, indent });
-      } else {
-        if (parent.children.some(c => c.type === 'folder' && c.name === name)) { name += '.txt'; warnings.push(`Line ${i+1}: Type conflict — renamed file to "${name}"`); }
-        const ef = parent.children.find(c => c.type === 'file' && c.name === name);
-        if (ef) {
-          const b = name.replace(/\.[^/.]+$/, ''), e = name.split('.').pop();
-          let c = 1, nn = `${b}_${c}.${e}`;
-          while (parent.children.some(c => c.type === 'file' && c.name === nn)) { c++; nn = `${b}_${c}.${e}`; }
-          warnings.push(`Line ${i+1}: Duplicate file — renamed to "${nn}"`); name = nn;
-        }
-        parent.children.push({ name, type: 'file' }); fc++;
-      }
-    }
-    return { root, fileCount: fc, folderCount: fd - 1, warnings };
-  }
-
   function renderPreview(tree) {
     elements.preview.innerHTML = ''; if (!tree) return;
     const f = document.createDocumentFragment(); let n = 0;
@@ -746,124 +800,182 @@ footer {
 })();
 </script>
 
-<!-- SOVEREIGN CURSOR v1.0 -->
+<!-- SOVEREIGN CURSOR v1.0 — Toggleable -->
 <script>
-/**
- * SOVEREIGN CURSOR — v1.0
- * Sheldon K. Salmon & ALBEDO | April 14, 2026
- * AION Constitutional Stack
- */
-(function SovereignCursor() {
+(function(){
   "use strict";
+  
+  const cursorToggle = document.getElementById('enableSovereignCursor');
+  let cursorActive = true;
+  let cursorInstance = null;
+  
+  function initSovereignCursor() {
+    if (cursorInstance) return;
+    
+    const CFG = {
+      SPRING_K: 0.12, SPRING_D: 0.75, SPRING_K_HOVER: 0.22, SPRING_D_HOVER: 0.82,
+      MAG_STRENGTH: 0.22, MAG_RADIUS: 90,
+      MAX_PARTICLES: 22, PARTICLE_TTL: 550, PARTICLE_EMIT_MS: 16,
+      TRACKING_TO_DWELLING: 900, DWELLING_TO_IDLE: 1400,
+      AURA_R_TRACKING: 18, AURA_R_HOVERING: 28, AURA_R_DWELLING: 32, AURA_R_IDLE: 40,
+      CORE_R: 3,
+      C_TRACKING: '#00d4ff', C_HOVERING: '#4ade80', C_DWELLING: '#f0a500', C_IDLE: '#a855f7', C_GHOST: '#00d4ff',
+      MAG_SELECTORS: 'a,button,.icon-btn,.cta-btn,select,.version-badge',
+    };
 
-  const CFG = {
-    SPRING_K: 0.12, SPRING_D: 0.75, SPRING_K_HOVER: 0.22, SPRING_D_HOVER: 0.82,
-    MAG_STRENGTH: 0.22, MAG_RADIUS: 90,
-    MAX_PARTICLES: 22, PARTICLE_TTL: 550, PARTICLE_EMIT_MS: 16,
-    TRACKING_TO_DWELLING: 900, DWELLING_TO_IDLE: 1400,
-    AURA_R_TRACKING: 18, AURA_R_HOVERING: 28, AURA_R_DWELLING: 32, AURA_R_IDLE: 40,
-    CORE_R: 3,
-    C_TRACKING: '#00d4ff', C_HOVERING: '#4ade80', C_DWELLING: '#f0a500', C_IDLE: '#a855f7', C_GHOST: '#00d4ff',
-    MAG_SELECTORS: 'a,button,.icon-btn,.cta-btn,select,.version-badge',
-  };
+    const S = { TRACKING:'TRACKING', HOVERING:'HOVERING', DWELLING:'DWELLING', IDLE:'IDLE', GHOST:'GHOST' };
+    let state = S.GHOST, stateAt = 0, dwellTmr = null, idleTmr = null;
 
-  const S = { TRACKING:'TRACKING', HOVERING:'HOVERING', DWELLING:'DWELLING', IDLE:'IDLE', GHOST:'GHOST' };
-  let state = S.GHOST, stateAt = 0, dwellTmr = null, idleTmr = null;
+    const cvs = document.createElement('canvas');
+    cvs.setAttribute('aria-hidden','true');
+    cvs.id = 'sovereignCursorCanvas';
+    cvs.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:2147483647;';
+    document.body.appendChild(cvs);
+    const ctx = cvs.getContext('2d');
+    let W = window.innerWidth, H = window.innerHeight;
+    cvs.width = W; cvs.height = H;
+    
+    const resizeHandler = () => { W = cvs.width = window.innerWidth; H = cvs.height = window.innerHeight; };
+    window.addEventListener('resize', resizeHandler, {passive:true});
 
-  const cvs = document.createElement('canvas');
-  cvs.setAttribute('aria-hidden','true');
-  cvs.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:2147483647;';
-  document.body.appendChild(cvs);
-  const ctx = cvs.getContext('2d');
-  let W = window.innerWidth, H = window.innerHeight;
-  cvs.width = W; cvs.height = H;
-  window.addEventListener('resize',()=>{ W=cvs.width=window.innerWidth; H=cvs.height=window.innerHeight; },{passive:true});
+    const core = { x:-200, y:-200 };
+    const aura = { x:-200, y:-200, vx:0, vy:0, radius:CFG.AURA_R_TRACKING, tRadius:CFG.AURA_R_TRACKING, opacity:0, rotation:0 };
 
-  const core = { x:-200, y:-200 };
-  const aura = { x:-200, y:-200, vx:0, vy:0, radius:CFG.AURA_R_TRACKING, tRadius:CFG.AURA_R_TRACKING, opacity:0, rotation:0 };
+    let iX=-200, iY=-200, iVX=0, iVY=0, iActive=false, magTarget=null;
+    let phase=0, particles=[], lastEmitT=0;
 
-  let iX=-200, iY=-200, iVX=0, iVY=0, iActive=false, magTarget=null;
-  let phase=0, particles=[], lastEmitT=0;
+    function transition(n){ if(n===state)return; state=n; stateAt=Date.now(); if(dwellTmr){ clearTimeout(dwellTmr); dwellTmr=null; } if(idleTmr){ clearTimeout(idleTmr); idleTmr=null; }
+      switch(n){
+        case S.TRACKING: aura.tRadius=CFG.AURA_R_TRACKING; dwellTmr=setTimeout(()=>{ if(state===S.TRACKING)transition(S.DWELLING); },CFG.TRACKING_TO_DWELLING); break;
+        case S.HOVERING: aura.tRadius=CFG.AURA_R_HOVERING; break;
+        case S.DWELLING: aura.tRadius=CFG.AURA_R_DWELLING; idleTmr=setTimeout(()=>{ if(state===S.DWELLING)transition(S.IDLE); },CFG.DWELLING_TO_IDLE); break;
+        case S.IDLE: aura.tRadius=CFG.AURA_R_IDLE; break;
+        case S.GHOST: aura.tRadius=CFG.AURA_R_TRACKING; magTarget=null; break;
+      }
+    }
 
-  document.addEventListener('mousemove',(e)=>{
-    iVX=e.clientX-iX; iVY=e.clientY-iY; iX=e.clientX; iY=e.clientY; iActive=true;
-    if(state===S.DWELLING||state===S.IDLE) transition(S.TRACKING);
-    else if(state===S.GHOST) transition(S.TRACKING);
-    else if(state===S.TRACKING){ if(dwellTmr)clearTimeout(dwellTmr); dwellTmr=setTimeout(()=>{ if(state===S.TRACKING)transition(S.DWELLING); },CFG.TRACKING_TO_DWELLING); }
-  },{passive:true});
+    function stepPhysics(){
+      core.x=iX; core.y=iY;
+      let tX=core.x, tY=core.y;
+      if(state===S.HOVERING&&magTarget){ const dx=magTarget.x-core.x, dy=magTarget.y-core.y, dist=Math.sqrt(dx*dx+dy*dy)||1; if(dist<CFG.MAG_RADIUS){ const pull=CFG.MAG_STRENGTH*(1-dist/CFG.MAG_RADIUS); tX+=dx*pull; tY+=dy*pull; } }
+      const k=state===S.HOVERING?CFG.SPRING_K_HOVER:CFG.SPRING_K, d=state===S.HOVERING?CFG.SPRING_D_HOVER:CFG.SPRING_D;
+      aura.vx+=-k*(aura.x-tX)-d*aura.vx; aura.vy+=-k*(aura.y-tY)-d*aura.vy; aura.x+=aura.vx; aura.y+=aura.vy;
+      aura.radius+=(aura.tRadius-aura.radius)*0.09;
+      const tOpacity=state===S.GHOST?0:1; aura.opacity+=(tOpacity-aura.opacity)*0.07;
+      aura.rotation+=0.009; phase+=0.04;
+    }
 
-  document.addEventListener('mouseleave',()=>{ iActive=false; transition(S.GHOST); },{passive:true});
-  document.addEventListener('mouseover',(e)=>{ const el=e.target.closest(CFG.MAG_SELECTORS); if(el&&state!==S.GHOST){ const r=el.getBoundingClientRect(); magTarget={x:r.left+r.width*0.5,y:r.top+r.height*0.5}; transition(S.HOVERING); } },{passive:true});
-  document.addEventListener('mouseout',(e)=>{ const el=e.target.closest(CFG.MAG_SELECTORS); if(el&&state===S.HOVERING){ magTarget=null; transition(S.TRACKING); } },{passive:true});
-  document.addEventListener('visibilitychange',()=>{ if(document.hidden){ particles.length=0; iVX=0; iVY=0; } });
+    function stateColor(){ switch(state){ case S.HOVERING:return CFG.C_HOVERING; case S.DWELLING:return CFG.C_DWELLING; case S.IDLE:return CFG.C_IDLE; default:return CFG.C_TRACKING; } }
+    function rgb(h){ return [parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)].join(','); }
 
-  function transition(n){ if(n===state)return; state=n; stateAt=Date.now(); if(dwellTmr){ clearTimeout(dwellTmr); dwellTmr=null; } if(idleTmr){ clearTimeout(idleTmr); idleTmr=null; }
-    switch(n){
-      case S.TRACKING: aura.tRadius=CFG.AURA_R_TRACKING; dwellTmr=setTimeout(()=>{ if(state===S.TRACKING)transition(S.DWELLING); },CFG.TRACKING_TO_DWELLING); break;
-      case S.HOVERING: aura.tRadius=CFG.AURA_R_HOVERING; break;
-      case S.DWELLING: aura.tRadius=CFG.AURA_R_DWELLING; idleTmr=setTimeout(()=>{ if(state===S.DWELLING)transition(S.IDLE); },CFG.DWELLING_TO_IDLE); break;
-      case S.IDLE: aura.tRadius=CFG.AURA_R_IDLE; break;
-      case S.GHOST: aura.tRadius=CFG.AURA_R_TRACKING; magTarget=null; break;
+    const mousemoveHandler = (e) => {
+      iVX=e.clientX-iX; iVY=e.clientY-iY; iX=e.clientX; iY=e.clientY; iActive=true;
+      if(state===S.DWELLING||state===S.IDLE) transition(S.TRACKING);
+      else if(state===S.GHOST) transition(S.TRACKING);
+      else if(state===S.TRACKING){ if(dwellTmr)clearTimeout(dwellTmr); dwellTmr=setTimeout(()=>{ if(state===S.TRACKING)transition(S.DWELLING); },CFG.TRACKING_TO_DWELLING); }
+    };
+    
+    const mouseleaveHandler = () => { iActive=false; transition(S.GHOST); };
+    
+    const mouseoverHandler = (e) => {
+      const el=e.target.closest(CFG.MAG_SELECTORS);
+      if(el&&state!==S.GHOST){ const r=el.getBoundingClientRect(); magTarget={x:r.left+r.width*0.5,y:r.top+r.height*0.5}; transition(S.HOVERING); }
+    };
+    
+    const mouseoutHandler = (e) => {
+      const el=e.target.closest(CFG.MAG_SELECTORS);
+      if(el&&state===S.HOVERING){ magTarget=null; transition(S.TRACKING); }
+    };
+
+    document.addEventListener('mousemove', mousemoveHandler, {passive:true});
+    document.addEventListener('mouseleave', mouseleaveHandler, {passive:true});
+    document.addEventListener('mouseover', mouseoverHandler, {passive:true});
+    document.addEventListener('mouseout', mouseoutHandler, {passive:true});
+
+    let lastT=performance.now();
+    function loop(now){ 
+      if (!cursorActive) {
+        ctx.clearRect(0,0,W,H);
+        requestAnimationFrame(loop);
+        return;
+      }
+      const dt=Math.min(32,now-lastT); lastT=now; const wallTime=Date.now(); 
+      stepPhysics(); 
+      if(iActive && state !== S.GHOST && state !== S.HOVERING) {
+        if(wallTime-lastEmitT >= CFG.PARTICLE_EMIT_MS) {
+          lastEmitT = wallTime;
+          const speed=Math.sqrt(iVX*iVX+iVY*iVY);
+          particles.push({ x:core.x, y:core.y, vx:iVX*0.07, vy:iVY*0.07, speed, angle:Math.atan2(iVY,iVX), birthTime:wallTime });
+          if(particles.length>CFG.MAX_PARTICLES)particles.shift();
+        }
+      }
+      particles=particles.filter(p=>(wallTime-p.birthTime)<CFG.PARTICLE_TTL);
+      particles.forEach(p=>{ p.x+=p.vx; p.y+=p.vy; p.vx*=0.91; p.vy*=0.91; });
+      
+      ctx.clearRect(0,0,W,H);
+      
+      // Draw particles
+      particles.forEach(p=>{ const age=wallTime-p.birthTime, life=1-age/CFG.PARTICLE_TTL, alpha=life*life*0.55, color=stateColor(), c=rgb(color), sn=Math.min(1,p.speed/18), rMaj=Math.max(1.5,5.5*sn), rMin=Math.max(1.5,2.0-sn*0.8);
+        ctx.save(); ctx.globalAlpha=alpha*aura.opacity; ctx.shadowColor=color; ctx.shadowBlur=5; ctx.fillStyle=`rgba(${c},${life*0.7})`; ctx.translate(p.x,p.y); ctx.rotate(p.angle); ctx.beginPath(); ctx.ellipse(0,0,rMaj,rMin,0,0,Math.PI*2); ctx.fill(); ctx.restore();
+      });
+      
+      // Draw aura and core (simplified for toggle)
+      if(aura.opacity>0.01){
+        const color=stateColor(), c=rgb(color), r=aura.radius, ax=aura.x, ay=aura.y;
+        ctx.save(); ctx.globalAlpha=aura.opacity; ctx.shadowColor=color; ctx.shadowBlur=22;
+        ctx.beginPath(); ctx.arc(ax,ay,r,0,Math.PI*2); ctx.strokeStyle=`rgba(${c},0.5)`; ctx.lineWidth=1.5; ctx.stroke();
+        ctx.beginPath(); ctx.arc(core.x,core.y,CFG.CORE_R,0,Math.PI*2); ctx.fillStyle=`rgba(${c},0.9)`; ctx.shadowBlur=18; ctx.fill();
+        ctx.restore();
+      }
+      
+      requestAnimationFrame(loop);
+    }
+    requestAnimationFrame(loop);
+
+    const styleEl = document.createElement('style');
+    styleEl.id = 'sovereignCursorStyle';
+    styleEl.textContent = `*,*::before,*::after{cursor:none!important;}`;
+    document.head.appendChild(styleEl);
+
+    cursorInstance = {
+      destroy: () => {
+        document.removeEventListener('mousemove', mousemoveHandler);
+        document.removeEventListener('mouseleave', mouseleaveHandler);
+        document.removeEventListener('mouseover', mouseoverHandler);
+        document.removeEventListener('mouseout', mouseoutHandler);
+        window.removeEventListener('resize', resizeHandler);
+        if (cvs.parentNode) cvs.parentNode.removeChild(cvs);
+        const style = document.getElementById('sovereignCursorStyle');
+        if (style) style.parentNode.removeChild(style);
+        cursorInstance = null;
+      }
+    };
+  }
+  
+  function destroySovereignCursor() {
+    if (cursorInstance) {
+      cursorInstance.destroy();
+      cursorInstance = null;
     }
   }
-
-  function stepPhysics(){
-    core.x=iX; core.y=iY;
-    let tX=core.x, tY=core.y;
-    if(state===S.HOVERING&&magTarget){ const dx=magTarget.x-core.x, dy=magTarget.y-core.y, dist=Math.sqrt(dx*dx+dy*dy)||1; if(dist<CFG.MAG_RADIUS){ const pull=CFG.MAG_STRENGTH*(1-dist/CFG.MAG_RADIUS); tX+=dx*pull; tY+=dy*pull; } }
-    const k=state===S.HOVERING?CFG.SPRING_K_HOVER:CFG.SPRING_K, d=state===S.HOVERING?CFG.SPRING_D_HOVER:CFG.SPRING_D;
-    aura.vx+=-k*(aura.x-tX)-d*aura.vx; aura.vy+=-k*(aura.y-tY)-d*aura.vy; aura.x+=aura.vx; aura.y+=aura.vy;
-    aura.radius+=(aura.tRadius-aura.radius)*0.09;
-    const tOpacity=state===S.GHOST?0:1; aura.opacity+=(tOpacity-aura.opacity)*0.07;
-    aura.rotation+=0.009; phase+=0.04;
+  
+  function toggleCursor(enabled) {
+    cursorActive = enabled;
+    if (enabled) {
+      initSovereignCursor();
+    } else {
+      destroySovereignCursor();
+    }
   }
-
-  function emitParticle(now){ if(now-lastEmitT<CFG.PARTICLE_EMIT_MS)return; if(!iActive||state===S.GHOST||state===S.HOVERING)return; lastEmitT=now;
-    const speed=Math.sqrt(iVX*iVX+iVY*iVY); particles.push({ x:core.x, y:core.y, vx:iVX*0.07, vy:iVY*0.07, speed, angle:Math.atan2(iVY,iVX), birthTime:now });
-    if(particles.length>CFG.MAX_PARTICLES)particles.shift();
+  
+  cursorToggle.addEventListener('change', (e) => {
+    toggleCursor(e.target.checked);
+  });
+  
+  // Initialize on load
+  if (cursorToggle.checked) {
+    initSovereignCursor();
   }
-  function updateParticles(now){ particles=particles.filter(p=>(now-p.birthTime)<CFG.PARTICLE_TTL); particles.forEach(p=>{ p.x+=p.vx; p.y+=p.vy; p.vx*=0.91; p.vy*=0.91; }); }
-
-  function stateColor(){ switch(state){ case S.HOVERING:return CFG.C_HOVERING; case S.DWELLING:return CFG.C_DWELLING; case S.IDLE:return CFG.C_IDLE; default:return CFG.C_TRACKING; } }
-  function rgb(h){ return [parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)].join(','); }
-
-  function drawParticles(now){ particles.forEach(p=>{ const age=now-p.birthTime, life=1-age/CFG.PARTICLE_TTL, alpha=life*life*0.55, color=stateColor(), c=rgb(color), sn=Math.min(1,p.speed/18), rMaj=Math.max(1.5,5.5*sn), rMin=Math.max(1.5,2.0-sn*0.8);
-    ctx.save(); ctx.globalAlpha=alpha*aura.opacity; ctx.shadowColor=color; ctx.shadowBlur=5; ctx.fillStyle=`rgba(${c},${life*0.7})`; ctx.translate(p.x,p.y); ctx.rotate(p.angle); ctx.beginPath(); ctx.ellipse(0,0,rMaj,rMin,0,0,Math.PI*2); ctx.fill(); ctx.restore();
-  }); }
-
-  function drawAura(){ if(aura.opacity<0.01)return; const color=stateColor(), c=rgb(color), r=aura.radius, ax=aura.x, ay=aura.y;
-    const grad=ctx.createRadialGradient(ax,ay,0,ax,ay,r*2.2); grad.addColorStop(0,`rgba(${c},0.09)`); grad.addColorStop(0.45,`rgba(${c},0.04)`); grad.addColorStop(1,`rgba(${c},0)`);
-    ctx.save(); ctx.globalAlpha=aura.opacity; ctx.shadowColor=color; ctx.shadowBlur=22; ctx.beginPath(); ctx.arc(ax,ay,r*2.2,0,Math.PI*2); ctx.fillStyle=grad; ctx.fill();
-    ctx.beginPath(); ctx.arc(ax,ay,r,0,Math.PI*2); ctx.strokeStyle=`rgba(${c},0.38)`; ctx.lineWidth=1.2; ctx.shadowBlur=14; ctx.stroke();
-    if(state===S.HOVERING){ ctx.shadowBlur=12; for(let i=0;i<4;i++){ const a=(i/4)*Math.PI*2+phase*0.8, x1=ax+Math.cos(a)*(r-4), y1=ay+Math.sin(a)*(r-4), x2=ax+Math.cos(a)*(r+8), y2=ay+Math.sin(a)*(r+8); ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.strokeStyle=`rgba(${c},0.70)`; ctx.lineWidth=1.5; ctx.stroke(); } }
-    if(state===S.DWELLING||state===S.IDLE){ ctx.save(); ctx.translate(ax,ay); ctx.rotate(aura.rotation); ctx.beginPath(); ctx.arc(0,0,r+11,0,Math.PI*1.3); ctx.strokeStyle=`rgba(${c},0.22)`; ctx.lineWidth=1; ctx.shadowBlur=8; ctx.stroke(); ctx.rotate(Math.PI); ctx.beginPath(); ctx.arc(0,0,r+11,0,Math.PI*0.9); ctx.strokeStyle=`rgba(${c},0.14)`; ctx.stroke(); ctx.restore(); }
-    ctx.restore();
-  }
-
-  function drawCore(){ if(aura.opacity<0.01)return; const color=stateColor(), c=rgb(color), pulse=1+0.12*Math.sin(phase*2.5);
-    ctx.save(); ctx.globalAlpha=aura.opacity; ctx.shadowColor=color; ctx.shadowBlur=18;
-    if(state===S.IDLE){ ctx.beginPath(); ctx.arc(core.x,core.y,CFG.CORE_R*2.2*pulse,0,Math.PI*2); ctx.strokeStyle=`rgba(${c},0.90)`; ctx.lineWidth=1.5; ctx.stroke(); }
-    else if(state===S.DWELLING){ const cGrad=ctx.createRadialGradient(core.x,core.y,0,core.x,core.y,CFG.CORE_R*3); cGrad.addColorStop(0,`rgba(${c},1)`); cGrad.addColorStop(1,`rgba(${c},0)`); ctx.beginPath(); ctx.arc(core.x,core.y,CFG.CORE_R*pulse,0,Math.PI*2); ctx.fillStyle=cGrad; ctx.fill(); }
-    else { const cGrad=ctx.createRadialGradient(core.x,core.y,0,core.x,core.y,CFG.CORE_R*3.5); cGrad.addColorStop(0,`rgba(${c},1)`); cGrad.addColorStop(1,`rgba(${c},0)`); ctx.beginPath(); ctx.arc(core.x,core.y,CFG.CORE_R*pulse,0,Math.PI*2); ctx.fillStyle=cGrad; ctx.fill(); }
-    ctx.restore();
-  }
-
-  function drawTooltip(now){ if(state!==S.DWELLING&&state!==S.IDLE)return; const elapsed=now-stateAt, delay=state===S.IDLE?0:350, fadeIn=Math.min(1,Math.max(0,(elapsed-delay)/380)); if(fadeIn<0.02)return;
-    const el=document.elementFromPoint(core.x,core.y); if(!el)return; let text=''; if(el.tagName==='INPUT'||el.tagName==='TEXTAREA') text=el.value?.slice(0,64)||el.placeholder?.slice(0,64)||''; else text=el.textContent?.replace(/[├└│─]/g,'').replace(/\s+/g,' ').trim().slice(0,64)||''; if(!text||text.length<3)return; if(text.length>52)text=text.slice(0,49)+'…';
-    const color=stateColor(), c=rgb(color), edgeAngle=Math.atan2(core.y-H*0.5,core.x-W*0.5)+Math.PI, anchorX=aura.x+Math.cos(edgeAngle)*(aura.radius+16), anchorY=aura.y+Math.sin(edgeAngle)*(aura.radius+16);
-    ctx.save(); ctx.font="9px 'JetBrains Mono','Share Tech Mono',monospace"; ctx.textBaseline='middle'; const tw=ctx.measureText(text).width, padX=10, padY=5, bw=tw+padX*2, bh=20;
-    let bx=anchorX, by=anchorY-bh*0.5; if(bx+bw>W-12)bx=anchorX-bw; if(bx<8)bx=8; if(by<8)by=8; if(by+bh>H-8)by=H-8-bh;
-    ctx.globalAlpha=fadeIn*aura.opacity*0.35; ctx.strokeStyle=`rgba(${c},0.5)`; ctx.lineWidth=0.8; ctx.setLineDash([2,3]); ctx.beginPath(); ctx.moveTo(anchorX,anchorY); ctx.lineTo(bx+(anchorX<bx?0:bw),by+bh*0.5); ctx.stroke(); ctx.setLineDash([]);
-    ctx.globalAlpha=fadeIn*aura.opacity*0.92; ctx.fillStyle='rgba(2,4,8,0.88)'; ctx.strokeStyle=`rgba(${c},0.28)`; ctx.lineWidth=1; ctx.shadowColor=color; ctx.shadowBlur=10; ctx.beginPath(); ctx.roundRect(bx,by,bw,bh,5); ctx.fill(); ctx.stroke();
-    ctx.shadowBlur=0; ctx.fillStyle=`rgba(${c},0.88)`; ctx.fillText(text,bx+padX,by+bh*0.5); ctx.restore();
-  }
-  CanvasRenderingContext2D.prototype.roundRect=function(x,y,w,h,r){ if(w<2*r)r=w/2; if(h<2*r)r=h/2; this.moveTo(x+r,y); this.lineTo(x+w-r,y); this.quadraticCurveTo(x+w,y,x+w,y+r); this.lineTo(x+w,y+h-r); this.quadraticCurveTo(x+w,y+h,x+w-r,y+h); this.lineTo(x+r,y+h); this.quadraticCurveTo(x,y+h,x,y+h-r); this.lineTo(x,y+r); this.quadraticCurveTo(x,y,x+r,y); return this; };
-
-  let lastT=performance.now();
-  function loop(now){ const dt=Math.min(32,now-lastT); lastT=now; const wallTime=Date.now(); stepPhysics(); emitParticle(wallTime); updateParticles(wallTime); ctx.clearRect(0,0,W,H); drawParticles(wallTime); drawAura(); drawCore(); drawTooltip(wallTime); requestAnimationFrame(loop); }
-  requestAnimationFrame(loop);
-
-  const styleEl=document.createElement('style'); styleEl.textContent=`*,*::before,*::after{cursor:none!important;}`; document.head.appendChild(styleEl);
 })();
 </script>
 </body>
