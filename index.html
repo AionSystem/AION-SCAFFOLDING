@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-<meta name="description" content="AION Scaffold v2.6 — Intelligent Tree to Filesystem Generator. Audit, fix, and generate complete project structures.">
-<meta property="og:title" content="AION Scaffold v2.6 — Intelligent Scaffolding Tool">
+<meta name="description" content="AION Scaffold v2.6.1 — Intelligent Tree to Filesystem Generator. Audit, fix, and generate complete project structures.">
+<meta property="og:title" content="AION Scaffold v2.6.1 — Intelligent Scaffolding Tool">
 <meta property="og:description" content="The most intelligent browser-based scaffolding tool. Zero install, audit & fix, undo/redo, binary detection.">
 <meta property="og:type" content="website">
-<title>AION Scaffold v2.6 · AionSystem</title>
+<title>AION Scaffold v2.6.1 · AionSystem</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:ital,wght@0,300;0,400;0,600;0,700;0,900;1,300&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
@@ -36,7 +36,9 @@ body {
   font-family: var(--sans);
   line-height: 1.5;
   overflow-x: hidden;
-  cursor: none;
+}
+@media (prefers-reduced-motion: no-preference) {
+  body { cursor: none; }
 }
 body::before {
   content: ''; position: fixed; inset: 0;
@@ -55,20 +57,22 @@ body::after {
   overflow: hidden; clip: rect(0,0,0,0); border: 0;
 }
 
-/* Cursor */
-.custom-cursor {
-  width: 20px; height: 20px; border: 2px solid var(--cyan); border-radius: 50%;
-  position: fixed; pointer-events: none; z-index: 9999; mix-blend-mode: screen;
-  transition: all 0.15s ease; transform: translate(-50%, -50%);
-  box-shadow: 0 0 15px var(--cyan), 0 0 30px rgba(0,212,255,0.3);
-}
-.custom-cursor.hover {
-  width: 36px; height: 36px; background: rgba(0,212,255,0.08);
-  border-color: var(--amber); box-shadow: 0 0 25px var(--amber), 0 0 50px rgba(240,165,0,0.5);
-}
-.cursor-trail {
-  position: fixed; width: 6px; height: 6px; border-radius: 50%; background: var(--cyan);
-  pointer-events: none; z-index: 9998; opacity: 0.6; box-shadow: 0 0 10px var(--cyan);
+/* Cursor - only if no preference for reduced motion */
+@media (prefers-reduced-motion: no-preference) {
+  .custom-cursor {
+    width: 20px; height: 20px; border: 2px solid var(--cyan); border-radius: 50%;
+    position: fixed; pointer-events: none; z-index: 9999; mix-blend-mode: screen;
+    transition: all 0.15s ease; transform: translate(-50%, -50%);
+    box-shadow: 0 0 15px var(--cyan), 0 0 30px rgba(0,212,255,0.3);
+  }
+  .custom-cursor.hover {
+    width: 36px; height: 36px; background: rgba(0,212,255,0.08);
+    border-color: var(--amber); box-shadow: 0 0 25px var(--amber), 0 0 50px rgba(240,165,0,0.5);
+  }
+  .cursor-trail {
+    position: fixed; width: 6px; height: 6px; border-radius: 50%; background: var(--cyan);
+    pointer-events: none; z-index: 9998; opacity: 0.6; box-shadow: 0 0 10px var(--cyan);
+  }
 }
 
 .magnify-tooltip {
@@ -171,6 +175,13 @@ textarea:focus { border-color: var(--cyan); box-shadow: 0 0 15px rgba(0,212,255,
   font-family: var(--mono); font-size: 10px; color: var(--dim);
 }
 
+.placeholder-toggle {
+  display: flex; align-items: center; gap: 8px; margin-left: auto;
+}
+.placeholder-toggle label {
+  font-family: var(--mono); font-size: 10px; color: var(--muted); cursor: pointer;
+}
+
 .action-bar { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
 .cta-btn {
   display: inline-flex; align-items: center; gap: 10px; font-family: var(--mono);
@@ -186,7 +197,8 @@ textarea:focus { border-color: var(--cyan); box-shadow: 0 0 15px rgba(0,212,255,
 }
 
 .stats-bar { display: flex; justify-content: space-between; align-items: center; font-family: var(--mono); font-size: 11px; color: var(--muted); flex-wrap: wrap; gap: 8px; }
-.badge-group { display: flex; gap: 12px; align-items: center; }
+.stats-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.badge-group { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
 .fqi-badge, .version-badge { padding: 4px 10px; border-radius: 4px; font-size: 10px; cursor: pointer; }
 .fqi-badge { background: rgba(74,222,128,0.1); border: 1px solid var(--green); color: var(--green); }
 .version-badge { background: rgba(168,85,247,0.1); border: 1px solid var(--purple); color: var(--purple); }
@@ -196,7 +208,6 @@ textarea:focus { border-color: var(--cyan); box-shadow: 0 0 15px rgba(0,212,255,
   background: rgba(0,212,255,0.1); border: 1px solid var(--cyan); color: var(--cyan);
 }
 
-/* Changelog Modal */
 .modal-overlay {
   position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
   z-index: 1000; display: none; align-items: center; justify-content: center;
@@ -234,6 +245,8 @@ footer {
   .nav-links { display: none; }
   .page-header, .tool-container { padding-left: 20px; padding-right: 20px; }
   .panel-actions { justify-content: flex-start; }
+  .stats-bar { flex-direction: column; align-items: flex-start; }
+  .placeholder-toggle { margin-left: 0; }
 }
 </style>
 </head>
@@ -246,7 +259,6 @@ footer {
 <div id="cursor-trail-container"></div>
 <div class="magnify-tooltip" id="magnifyTooltip"></div>
 
-<!-- Changelog Modal -->
 <div class="modal-overlay" id="changelogModal">
   <div class="modal-content">
     <button class="modal-close" id="closeChangelogBtn">&times;</button>
@@ -264,7 +276,7 @@ footer {
 </nav>
 
 <div class="page-header">
-  <div class="hero-eyebrow">Developer Tool · v2.6</div>
+  <div class="hero-eyebrow">Developer Tool · v2.6.1</div>
   <h1 class="page-title">AION<em>Scaffold</em></h1>
   <p class="page-sub">Paste a tree. Audit issues. Fix automatically. Download structure.</p>
 </div>
@@ -281,6 +293,10 @@ footer {
     <span class="project-name-label">📦 Project Name</span>
     <input type="text" id="projectNameInput" class="project-name-input" placeholder="my-awesome-project" value="my-awesome-project" maxlength="64" aria-label="Project name">
     <span class="project-name-hint">kebab-case · a-z, 0-9, hyphens</span>
+    <div class="placeholder-toggle">
+      <input type="checkbox" id="includePlaceholders" checked>
+      <label for="includePlaceholders">Include placeholder content</label>
+    </div>
   </div>
 
   <div class="editor-grid">
@@ -316,6 +332,7 @@ footer {
         <div class="panel-actions">
           <button class="icon-btn" id="parseBtn" aria-label="Parse tree">⟳ Parse</button>
           <button class="icon-btn" id="copyPreviewBtn" aria-label="Copy as markdown">📋 Copy MD</button>
+          <button class="icon-btn" id="downloadCleanTreeBtn" aria-label="Download clean tree">⬇ Clean Tree</button>
         </div>
       </div>
       <div class="preview" id="preview" role="region" aria-label="Tree structure preview">
@@ -335,12 +352,14 @@ footer {
   </div>
 
   <div class="stats-bar">
-    <span id="statsText">📁 0 folders · 📄 0 files</span>
-    <div class="badge-group">
+    <div class="stats-row">
+      <span id="statsText">📁 0 folders · 📄 0 files</span>
       <span id="recoveryHint" class="recovery-hint" style="color:var(--green);cursor:pointer;" role="button" tabindex="0"></span>
+    </div>
+    <div class="badge-group">
       <span class="project-badge" id="projectNameDisplay">📦 my-awesome-project</span>
       <span class="fqi-badge" id="fqiBadge" title="Function Quality Index - dynamic based on issues">FQI: 1.00</span>
-      <span class="version-badge" id="versionBadge" role="button" tabindex="0" aria-label="View version history">v2.6</span>
+      <span class="version-badge" id="versionBadge" role="button" tabindex="0" aria-label="View version history">v2.6.1</span>
       <span class="keyboard-hint">Ctrl+Enter Parse · Ctrl+Z Undo</span>
     </div>
   </div>
@@ -364,51 +383,40 @@ footer {
   // CONFIGURATION
   // ============================================================
   const CONFIG = {
-    MAX_FILES: 15000, MAX_FOLDERS: 7500, MAX_INPUT_SIZE: 500000,
+    MAX_FILES: 15000, MAX_FOLDERS: 7500, MAX_INPUT_SIZE: 500000, MAX_DEPTH: 100,
     BINARY_EXTENSIONS: ['gguf','safetensors','png','jpg','jpeg','gif','ico','db','sqlite','bin','wasm','zip','tar','gz','webp','svg','mp4','mp3','wav'],
-    MAX_HISTORY: 30, AUTO_SAVE_KEY: 'aion-scaffold-v2_6',
+    MAX_HISTORY: 30, AUTO_SAVE_KEY: 'aion-scaffold-v2_6_1',
     PREVIEW_MAX_NODES: 500, PREVIEW_MAX_DEPTH: 4
   };
 
   const CHANGELOG = [
+    { version: 'v2.6.1', date: '2026-04-14', changes: [
+      'Audit now pre-detects duplicate files & type conflicts',
+      'DocumentFragment preview rendering (zero XSS risk)',
+      'MAX_DEPTH=100 with truncation warning',
+      'Nuanced FQI: manual issues penalize more than fixable',
+      'Shell script adds set -e for robustness',
+      'Include placeholders toggle',
+      'Download clean tree button',
+      'Accessibility: reduced motion disables custom cursor',
+      'Changelog auto-show only on major version bumps'
+    ]},
     { version: 'v2.6', date: '2026-04-13', changes: [
       'Project name input field (kebab-case sanitization)',
       'Version audit modal with full changelog',
-      'Fixed tree characters in exported file/folder names',
-      'Duplicate file handling — auto-rename with warning',
-      'Type conflict detection (file vs folder at same path)',
-      'Dynamic FQI scoring based on issue count',
-      'Preview performance — virtual scroll with depth limit',
-      'Copy preview as Markdown',
-      'Keyboard shortcut hints in UI',
-      'Improved root detection and warning'
+      'Fixed tree characters in exported names',
+      'Duplicate file auto-rename with warning',
+      'Type conflict detection',
+      'Dynamic FQI scoring',
+      'Preview performance limits',
+      'Copy preview as Markdown'
     ]},
     { version: 'v2.5', date: '2026-04-13', changes: [
-      'Enhanced audit auto-fix (indentation, missing chars, invalid names)',
-      'JSON export format',
-      'Dynamic tooltip that follows scroll',
-      'Touch targets increased to 44px',
-      'Screen reader live region announcements',
-      'Audit panel summary counts'
+      'Enhanced audit auto-fix', 'JSON export', 'Dynamic tooltip', 'Touch targets 44px', 'Screen reader support'
     ]},
-    { version: 'v2.4', date: '2026-04-13', changes: [
-      'Fix & Merge button with audit panel',
-      'Duplicate folder merging',
-      'Mixed tab/space conversion',
-      'Comment stripping'
-    ]},
-    { version: 'v2.3', date: '2026-04-13', changes: [
-      'Three-stage custom cursor',
-      'Magnification tooltip',
-      'Example tree loader'
-    ]},
-    { version: 'v2.0', date: '2026-04-12', changes: [
-      'Initial public release',
-      'Tree parsing with duplicate detection',
-      'ZIP, Shell, Tree export',
-      'Undo/redo with localStorage recovery',
-      'Binary file detection'
-    ]}
+    { version: 'v2.4', date: '2026-04-13', changes: ['Fix & Merge button', 'Duplicate folder merging', 'Tab conversion']},
+    { version: 'v2.3', date: '2026-04-13', changes: ['Three-stage cursor', 'Magnification tooltip', 'Example loader']},
+    { version: 'v2.0', date: '2026-04-12', changes: ['Initial release', 'ZIP/Shell/Tree export', 'Undo/redo', 'Binary detection']}
   ];
 
   const EXAMPLE_TREE = `my-saas/
@@ -444,7 +452,8 @@ footer {
     projectNameDisplay: document.getElementById('projectNameDisplay'), fqiBadge: document.getElementById('fqiBadge'),
     versionBadge: document.getElementById('versionBadge'), changelogModal: document.getElementById('changelogModal'),
     closeChangelogBtn: document.getElementById('closeChangelogBtn'), changelogContent: document.getElementById('changelogContent'),
-    copyPreviewBtn: document.getElementById('copyPreviewBtn')
+    copyPreviewBtn: document.getElementById('copyPreviewBtn'), includePlaceholders: document.getElementById('includePlaceholders'),
+    downloadCleanTreeBtn: document.getElementById('downloadCleanTreeBtn')
   };
 
   // ============================================================
@@ -452,18 +461,27 @@ footer {
   // ============================================================
   const state = {
     parsedTree: null, fileCount: 0, folderCount: 0, pendingFixes: [], originalInput: '',
-    projectName: 'my-awesome-project', issueCount: 0
+    projectName: 'my-awesome-project', issueCount: 0, manualIssueCount: 0, fixableIssueCount: 0
   };
   const history = { past: [], future: [] };
 
   // ============================================================
-  // CANVAS
+  // CANVAS (Low-power mode detection)
   // ============================================================
   const canvas = document.getElementById('hero-canvas'), ctx = canvas.getContext('2d');
   let width, height, symbols = [], mouse = { x: null, y: null, radius: 150 };
+  let lowPowerMode = false;
   const SYMBOL_SET = ['∇','Σ','∫','∂','λ','⊕','⊗','∈','∀','∃','⊢','⊨','→','↔','∧','∨','¬','≡','≈','≠'];
+  
+  if ('getBattery' in navigator) {
+    (navigator as any).getBattery().then((b: any) => {
+      if (b.level < 0.2 || b.charging === false) lowPowerMode = true;
+      initSymbols();
+    });
+  }
+  
   function resizeCanvas() { width = window.innerWidth; height = window.innerHeight; canvas.width = width; canvas.height = height; initSymbols(); }
-  function initSymbols() { const count = Math.floor(width*height/8000); symbols = []; for(let i=0;i<count;i++) symbols.push({ symbol: SYMBOL_SET[Math.floor(Math.random()*SYMBOL_SET.length)], x: Math.random()*width, y: Math.random()*height, vx: (Math.random()-0.5)*0.15, vy: (Math.random()-0.5)*0.15, size: Math.random()*16+10, color: Math.random()>0.5?'#00d4ff':'#f0a500', opacity: 0.1 }); }
+  function initSymbols() { const count = Math.floor(width*height/(lowPowerMode?12000:8000)); symbols = []; for(let i=0;i<count;i++) symbols.push({ symbol: SYMBOL_SET[Math.floor(Math.random()*SYMBOL_SET.length)], x: Math.random()*width, y: Math.random()*height, vx: (Math.random()-0.5)*0.15, vy: (Math.random()-0.5)*0.15, size: Math.random()*16+10, color: Math.random()>0.5?'#00d4ff':'#f0a500', opacity: 0.1 }); }
   function drawSymbols() { ctx.clearRect(0,0,width,height); symbols.forEach(s => { s.x+=s.vx; s.y+=s.vy; if(s.x<0)s.x=width; if(s.x>width)s.x=0; if(s.y<0)s.y=height; if(s.y>height)s.y=0; ctx.font = `${s.size}px 'JetBrains Mono'`; ctx.fillStyle=s.color; ctx.globalAlpha=s.opacity; ctx.fillText(s.symbol,s.x,s.y); }); requestAnimationFrame(drawSymbols); }
   window.addEventListener('resize', resizeCanvas); resizeCanvas(); drawSymbols();
 
@@ -480,7 +498,7 @@ footer {
     let text = '';
     if (el.tagName === 'TEXTAREA' || el.tagName === 'INPUT') text = el.value?.slice(0, 400) || '';
     else text = el.textContent?.slice(0, 400) || el.tagName;
-    return text.replace(/[├└│─]/g, '').trim() || '[No text]';
+    return text.replace(/[├└│─]/g, '').replace(/\s+/g, ' ').trim() || '[No text]';
   }
   
   function positionTooltip(x, y) {
@@ -495,29 +513,31 @@ footer {
     idleTimer = setTimeout(() => { const x = parseFloat(cursor.style.left)||0, y = parseFloat(cursor.style.top)||0; positionTooltip(x, y); tooltip.classList.add('visible'); isIdle = true; }, 1200);
   }
   
-  document.addEventListener('mousemove', (e) => {
-    cursor.style.left = e.clientX + 'px'; cursor.style.top = e.clientY + 'px';
-    trailPositions.push({ x: e.clientX, y: e.clientY, time: Date.now() });
-    if(trailPositions.length > MAX_TRAIL) trailPositions.shift();
-    trailContainer.innerHTML = '';
-    trailPositions.forEach((pos, i) => {
-      const dot = document.createElement('div'); dot.className = 'cursor-trail';
-      dot.style.left = pos.x + 'px'; dot.style.top = pos.y + 'px';
-      dot.style.opacity = Math.max(0, 0.6 - (Date.now()-pos.time)/1000*0.8);
-      dot.style.transform = `translate(-50%, -50%) scale(${1 - i*0.1})`;
-      trailContainer.appendChild(dot);
+  if (cursor) {
+    document.addEventListener('mousemove', (e) => {
+      cursor.style.left = e.clientX + 'px'; cursor.style.top = e.clientY + 'px';
+      trailPositions.push({ x: e.clientX, y: e.clientY, time: Date.now() });
+      if(trailPositions.length > MAX_TRAIL) trailPositions.shift();
+      trailContainer.innerHTML = '';
+      trailPositions.forEach((pos, i) => {
+        const dot = document.createElement('div'); dot.className = 'cursor-trail';
+        dot.style.left = pos.x + 'px'; dot.style.top = pos.y + 'px';
+        dot.style.opacity = Math.max(0, 0.6 - (Date.now()-pos.time)/1000*0.8);
+        dot.style.transform = `translate(-50%, -50%) scale(${1 - i*0.1})`;
+        trailContainer.appendChild(dot);
+      });
+      if(isIdle) positionTooltip(e.clientX, e.clientY);
+      resetIdleTimer();
     });
-    if(isIdle) positionTooltip(e.clientX, e.clientY);
+    
+    document.addEventListener('scroll', () => { if(isIdle) { const x = parseFloat(cursor.style.left)||0, y = parseFloat(cursor.style.top)||0; positionTooltip(x, y); } }, { passive: true });
+    document.addEventListener('mouseleave', () => { if(idleTimer) clearTimeout(idleTimer); tooltip.classList.remove('visible'); });
+    document.querySelectorAll('a, button, .icon-btn, .cta-btn, select, .version-badge').forEach(el => {
+      el.addEventListener('mouseenter', () => { cursor.classList.add('hover'); if(idleTimer) clearTimeout(idleTimer); tooltip.classList.remove('visible'); });
+      el.addEventListener('mouseleave', () => { cursor.classList.remove('hover'); resetIdleTimer(); });
+    });
     resetIdleTimer();
-  });
-  
-  document.addEventListener('scroll', () => { if(isIdle) { const x = parseFloat(cursor.style.left)||0, y = parseFloat(cursor.style.top)||0; positionTooltip(x, y); } }, { passive: true });
-  document.addEventListener('mouseleave', () => { if(idleTimer) clearTimeout(idleTimer); tooltip.classList.remove('visible'); });
-  document.querySelectorAll('a, button, .icon-btn, .cta-btn, select, .version-badge').forEach(el => {
-    el.addEventListener('mouseenter', () => { cursor.classList.add('hover'); if(idleTimer) clearTimeout(idleTimer); tooltip.classList.remove('visible'); });
-    el.addEventListener('mouseleave', () => { cursor.classList.remove('hover'); resetIdleTimer(); });
-  });
-  resetIdleTimer();
+  }
 
   // ============================================================
   // UTILITIES
@@ -535,16 +555,18 @@ footer {
   function showInfo(m) { elements.info.textContent = `ℹ️ ${m}`; elements.info.classList.add('visible'); }
   function clearMessages() { elements.error.classList.remove('visible'); elements.warning.classList.remove('visible'); elements.success.classList.remove('visible'); elements.info.classList.remove('visible'); }
 
-  function updateFQI(issueCount, fileCount) {
+  function updateFQI() {
     let fqi = 1.0;
-    if (issueCount > 20) fqi = 0.70;
-    else if (issueCount > 10) fqi = 0.80;
-    else if (issueCount > 5) fqi = 0.88;
-    else if (issueCount > 0) fqi = 0.95;
-    if (fileCount > 5000) fqi = Math.min(fqi, 0.85);
+    const totalIssues = state.manualIssueCount * 2 + state.fixableIssueCount;
+    if (totalIssues > 30) fqi = 0.65;
+    else if (totalIssues > 20) fqi = 0.75;
+    else if (totalIssues > 10) fqi = 0.82;
+    else if (totalIssues > 5) fqi = 0.88;
+    else if (totalIssues > 0) fqi = 0.94;
+    if (state.fileCount > 5000) fqi = Math.min(fqi, 0.85);
+    if (state.manualIssueCount > 3) fqi = Math.min(fqi, 0.80);
     elements.fqiBadge.textContent = `FQI: ${fqi.toFixed(2)}`;
     elements.fqiBadge.style.color = fqi >= 0.90 ? 'var(--green)' : (fqi >= 0.80 ? 'var(--amber)' : 'var(--red)');
-    return fqi;
   }
 
   // ============================================================
@@ -559,130 +581,81 @@ footer {
     elements.changelogContent.innerHTML = html;
   }
 
-  // ============================================================
-  // ENHANCED PARSER (with duplicate file renaming + type conflict)
-  // ============================================================
-  function parseTree(input, projectName) {
-    const lines = input.split('\n').map(stripComments).filter(l => l.trim());
-    if (!lines.length) throw new Error('Empty input');
-    if (input.length > CONFIG.MAX_INPUT_SIZE) throw new Error(`Input too large (max ${CONFIG.MAX_INPUT_SIZE/1000}KB)`);
-    
-    let rootName = sanitizeProjectName(projectName);
-    const root = { name: rootName, type: 'folder', children: [] };
-    const stack = [{ node: root, indent: -1 }];
-    const pathMap = new Map();
-    let fileCount = 0, folderCount = 1, issueCount = 0;
-    const warnings = [];
-    
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      const indent = line.search(/\S/);
-      let content = line.trim();
-      
-      // Root detection
-      if (!content.match(/^[├└│]/) && !content.includes('─')) {
-        if (content.match(/^[a-zA-Z0-9_-]+(\/)?$/)) {
-          rootName = sanitizeProjectName(content.replace(/\/$/, ''));
-          root.name = rootName;
-        } else if (i === 0) {
-          warnings.push(`Line 1: Using "${rootName}" as root. Add "my-app/" as first line to specify.`);
-        }
-        continue;
-      }
-      
-      // Strip tree characters
-      content = content.replace(/^[├└]──\s*/, '').replace(/^[│]\s*/, '').trim();
-      const isFolder = content.endsWith('/');
-      let name = isFolder ? content.slice(0, -1).trim() : content.trim();
-      if (!name) continue;
-      
-      // Sanitize name
-      name = name.replace(/[<>:"|?*]/g, '-').replace(/^\s+|\s+$/g, '');
-      
-      // Pop stack
-      while (stack.length > 1 && stack[stack.length - 1].indent >= indent) stack.pop();
-      const parent = stack[stack.length - 1].node;
-      
-      if (isFolder) {
-        let folder = parent.children.find(c => c.type === 'folder' && c.name === name);
-        if (!folder) {
-          // Check for type conflict (file exists at this path)
-          if (parent.children.some(c => c.type === 'file' && c.name === name)) {
-            issueCount++;
-            warnings.push(`Line ${i+1}: Type conflict — "${name}" exists as file, cannot create folder. Renaming folder to "${name}_folder".`);
-            name = name + '_folder';
-          }
-          folder = { name, type: 'folder', children: [] };
-          parent.children.push(folder);
-          folderCount++;
-        } else {
-          warnings.push(`Line ${i+1}: Merged duplicate folder "${name}"`);
-        }
-        stack.push({ node: folder, indent });
-      } else {
-        // Check for type conflict (folder exists at this path)
-        if (parent.children.some(c => c.type === 'folder' && c.name === name)) {
-          issueCount++;
-          warnings.push(`Line ${i+1}: Type conflict — "${name}" exists as folder, cannot create file. Renaming file to "${name}.txt".`);
-          name = name + '.txt';
-        }
-        // Check for duplicate file
-        const existingFile = parent.children.find(c => c.type === 'file' && c.name === name);
-        if (existingFile) {
-          issueCount++;
-          const base = name.replace(/\.[^/.]+$/, '');
-          const ext = name.split('.').pop();
-          let counter = 1;
-          let newName = `${base}_${counter}.${ext}`;
-          while (parent.children.some(c => c.type === 'file' && c.name === newName)) {
-            counter++;
-            newName = `${base}_${counter}.${ext}`;
-          }
-          warnings.push(`Line ${i+1}: Duplicate file "${name}" — renamed to "${newName}"`);
-          name = newName;
-        }
-        parent.children.push({ name, type: 'file' });
-        fileCount++;
-      }
+  function checkChangelogAutoShow() {
+    const lastViewed = localStorage.getItem('aion-scaffold-last-version');
+    const currentMajor = '2.6';
+    if (lastViewed !== currentMajor) {
+      renderChangelog();
+      elements.changelogModal.classList.add('visible');
+      localStorage.setItem('aion-scaffold-last-version', currentMajor);
     }
-    
-    if (fileCount > CONFIG.MAX_FILES) throw new Error(`Too many files (max ${CONFIG.MAX_FILES})`);
-    if (folderCount > CONFIG.MAX_FOLDERS) throw new Error(`Too many folders (max ${CONFIG.MAX_FOLDERS})`);
-    
-    state.issueCount = issueCount + warnings.length;
-    updateFQI(state.issueCount, fileCount);
-    
-    return { root, fileCount, folderCount: folderCount - 1, warnings };
   }
 
   // ============================================================
-  // AUDIT ENGINE
+  // ENHANCED AUDIT (Pre-detects all conflicts)
   // ============================================================
   function auditTree(input) {
     const issues = [], lines = input.split('\n');
     const seenPaths = new Map();
     let rootFound = false;
+    state.fixableIssueCount = 0; state.manualIssueCount = 0;
     
     lines.forEach((line, idx) => {
       const raw = line; let p = stripComments(line); if(!p.trim()) return;
       const indent = p.search(/\S/); let content = p.trim();
       
       if (idx === 0 && !content.match(/^[├└│]/) && !content.includes('─')) rootFound = true;
-      if (raw.includes('\t') && raw.includes('    ')) issues.push({ type: 'mixed_indent', line: idx+1, fixable: true });
-      if (raw.match(/\s+[#\/]{1,2}\s+.+$/)) issues.push({ type: 'has_comments', line: idx+1, fixable: true });
+      if (raw.includes('\t') && raw.includes('    ')) { issues.push({ type: 'mixed_indent', line: idx+1, fixable: true }); state.fixableIssueCount++; }
+      if (raw.match(/\s+[#\/]{1,2}\s+.+$/)) { issues.push({ type: 'has_comments', line: idx+1, fixable: true }); state.fixableIssueCount++; }
       if (!content.match(/^[├└│]/) && !content.includes('─') && !(idx===0 && !rootFound)) {
-        if (!content.match(/^[a-zA-Z0-9_-]+(\/)?$/)) issues.push({ type: 'missing_tree_chars', line: idx+1, fixable: true });
+        if (!content.match(/^[a-zA-Z0-9_-]+(\/)?$/)) { issues.push({ type: 'missing_tree_chars', line: idx+1, fixable: true }); state.fixableIssueCount++; }
       }
       let name = content.replace(/^[├└]──\s*/, '').replace(/^[│]\s*/, '').trim();
       const isFolder = name.endsWith('/'); name = isFolder ? name.slice(0,-1).trim() : name;
-      if (name && name.match(/[<>:"|?*]/)) issues.push({ type: 'invalid_chars', line: idx+1, name, fixable: true });
-      if (!isFolder && content.match(/[^\/]+\/$/)) issues.push({ type: 'file_with_slash', line: idx+1, fixable: true });
+      if (name && name.match(/[<>:"|?*]/)) { issues.push({ type: 'invalid_chars', line: idx+1, name, fixable: true }); state.fixableIssueCount++; }
+      if (!isFolder && content.match(/[^\/]+\/$/)) { issues.push({ type: 'file_with_slash', line: idx+1, fixable: true }); state.fixableIssueCount++; }
     });
     
-    if (!rootFound) issues.push({ type: 'no_root', line: 1, fixable: false, message: 'No root declared. First line should be project name (e.g., "my-app/")' });
+    if (!rootFound) { issues.push({ type: 'no_root', line: 1, fixable: false, message: 'No root declared. First line should be project name (e.g., "my-app/")' }); state.manualIssueCount++; }
     
     const indentLevels = lines.map(l => stripComments(l)).filter(l => l.trim()).map(l => l.search(/\S/)).filter(i => i>0);
-    if (indentLevels.length && indentLevels.some(i => i%4 !== 0)) issues.push({ type: 'inconsistent_indent', fixable: true });
+    if (indentLevels.length && indentLevels.some(i => i%4 !== 0)) { issues.push({ type: 'inconsistent_indent', fixable: true }); state.fixableIssueCount++; }
+    
+    // Pre-detect duplicate files and type conflicts using same pathMap logic as parser
+    const pathMap = new Map();
+    const stack = [{ indent: -1 }];
+    let rootName = sanitizeProjectName(elements.projectNameInput.value);
+    
+    lines.forEach((line, idx) => {
+      const p = stripComments(line); if(!p.trim()) return;
+      const indent = p.search(/\S/); let content = p.trim();
+      if (!content.match(/^[├└│]/) && !content.includes('─')) return;
+      
+      content = content.replace(/^[├└]──\s*/, '').replace(/^[│]\s*/, '').trim();
+      const isFolder = content.endsWith('/');
+      let name = isFolder ? content.slice(0, -1).trim() : content.trim();
+      if (!name) return;
+      name = name.replace(/[<>:"|?*]/g, '-').trim();
+      
+      while (stack.length > 1 && stack[stack.length-1].indent >= indent) stack.pop();
+      const parentPath = stack[stack.length-1].path || rootName;
+      const fullPath = parentPath + '/' + name;
+      
+      if (pathMap.has(fullPath)) {
+        const existing = pathMap.get(fullPath);
+        if (existing.type !== (isFolder ? 'folder' : 'file')) {
+          issues.push({ type: 'type_conflict', line: idx+1, path: fullPath, fixable: false, message: `"${name}" exists as ${existing.type}, cannot create ${isFolder?'folder':'file'}` });
+          state.manualIssueCount++;
+        } else if (!isFolder) {
+          issues.push({ type: 'duplicate_file', line: idx+1, path: fullPath, fixable: false, message: `Duplicate file "${name}" will be auto-renamed` });
+          state.manualIssueCount++;
+        }
+      } else {
+        pathMap.set(fullPath, { type: isFolder ? 'folder' : 'file' });
+      }
+      
+      if (isFolder) stack.push({ indent, path: fullPath });
+    });
     
     return { issues };
   }
@@ -717,6 +690,7 @@ footer {
     elements.auditPanel.classList.add('visible');
     elements.ariaLive.textContent = `Audit complete. ${fixable.length} fixable issues, ${manual.length} require manual fix.`;
     
+    updateFQI();
     if (manual.length) showWarning(`${manual.length} issues need manual attention.`);
     else if (fixable.length) showInfo(`${fixable.length} issues — all fixable.`);
     else showSuccess('Tree is clean!');
@@ -727,6 +701,91 @@ footer {
     const { fixed, fixes } = applyFixes(state.originalInput, state.pendingFixes);
     pushHistory(); elements.input.value = fixed; elements.auditPanel.classList.remove('visible');
     showSuccess(`Applied: ${fixes.join('; ')}. Click Parse.`); state.pendingFixes = [];
+  }
+
+  // ============================================================
+  // PARSER
+  // ============================================================
+  function parseTree(input, projectName) {
+    const lines = input.split('\n').map(stripComments).filter(l => l.trim());
+    if (!lines.length) throw new Error('Empty input');
+    if (input.length > CONFIG.MAX_INPUT_SIZE) throw new Error(`Input too large (max ${CONFIG.MAX_INPUT_SIZE/1000}KB)`);
+    
+    let rootName = sanitizeProjectName(projectName);
+    const root = { name: rootName, type: 'folder', children: [] };
+    const stack = [{ node: root, indent: -1 }];
+    let fileCount = 0, folderCount = 1, depth = 0;
+    const warnings = [];
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const indent = line.search(/\S/);
+      let content = line.trim();
+      
+      if (!content.match(/^[├└│]/) && !content.includes('─')) {
+        if (content.match(/^[a-zA-Z0-9_-]+(\/)?$/)) {
+          rootName = sanitizeProjectName(content.replace(/\/$/, ''));
+          root.name = rootName;
+        } else if (i === 0) {
+          warnings.push(`Line 1: Using "${rootName}" as root. Add "my-app/" as first line to specify.`);
+        }
+        continue;
+      }
+      
+      content = content.replace(/^[├└]──\s*/, '').replace(/^[│]\s*/, '').trim();
+      const isFolder = content.endsWith('/');
+      let name = isFolder ? content.slice(0, -1).trim() : content.trim();
+      if (!name) continue;
+      name = name.replace(/[<>:"|?*]/g, '-').trim();
+      
+      while (stack.length > 1 && stack[stack.length - 1].indent >= indent) stack.pop();
+      const parent = stack[stack.length - 1].node;
+      depth = Math.max(depth, stack.length);
+      
+      if (depth > CONFIG.MAX_DEPTH) {
+        warnings.push(`Depth exceeds ${CONFIG.MAX_DEPTH} — tree truncated.`);
+        break;
+      }
+      
+      if (isFolder) {
+        let folder = parent.children.find(c => c.type === 'folder' && c.name === name);
+        if (!folder) {
+          if (parent.children.some(c => c.type === 'file' && c.name === name)) {
+            name = name + '_folder';
+            warnings.push(`Line ${i+1}: Type conflict — renamed folder to "${name}"`);
+          }
+          folder = { name, type: 'folder', children: [] };
+          parent.children.push(folder);
+          folderCount++;
+        } else {
+          warnings.push(`Line ${i+1}: Merged duplicate folder "${name}"`);
+        }
+        stack.push({ node: folder, indent });
+      } else {
+        if (parent.children.some(c => c.type === 'folder' && c.name === name)) {
+          name = name + '.txt';
+          warnings.push(`Line ${i+1}: Type conflict — renamed file to "${name}"`);
+        }
+        const existingFile = parent.children.find(c => c.type === 'file' && c.name === name);
+        if (existingFile) {
+          const base = name.replace(/\.[^/.]+$/, '');
+          const ext = name.split('.').pop();
+          let counter = 1, newName = `${base}_${counter}.${ext}`;
+          while (parent.children.some(c => c.type === 'file' && c.name === newName)) {
+            counter++; newName = `${base}_${counter}.${ext}`;
+          }
+          warnings.push(`Line ${i+1}: Duplicate file "${name}" — renamed to "${newName}"`);
+          name = newName;
+        }
+        parent.children.push({ name, type: 'file' });
+        fileCount++;
+      }
+    }
+    
+    if (fileCount > CONFIG.MAX_FILES) throw new Error(`Too many files (max ${CONFIG.MAX_FILES})`);
+    if (folderCount > CONFIG.MAX_FOLDERS) throw new Error(`Too many folders (max ${CONFIG.MAX_FOLDERS})`);
+    
+    return { root, fileCount, folderCount: folderCount - 1, warnings };
   }
 
   // ============================================================
@@ -755,48 +814,79 @@ footer {
   }
 
   // ============================================================
-  // PREVIEW WITH VIRTUAL LIMIT
+  // PREVIEW (DocumentFragment, no innerHTML)
   // ============================================================
   function renderPreview(tree) {
+    elements.preview.innerHTML = '';
     if (!tree) return;
-    let html = '', nodeCount = 0;
-    const MAX_PREVIEW = CONFIG.PREVIEW_MAX_NODES;
     
-    function walk(node, depth) {
-      if (nodeCount >= MAX_PREVIEW) return;
+    const fragment = document.createDocumentFragment();
+    let nodeCount = 0;
+    
+    function walk(node, depth, container) {
+      if (nodeCount >= CONFIG.PREVIEW_MAX_NODES) return;
+      
       const indent = '  '.repeat(depth);
+      const lineDiv = document.createElement('div');
+      lineDiv.style.whiteSpace = 'pre';
+      
       if (node.type === 'folder') {
-        html += `<div>${indent}<span class="preview-folder">📁 ${node.name}/</span></div>`;
+        const span = document.createElement('span');
+        span.className = 'preview-folder';
+        span.textContent = `📁 ${node.name}/`;
+        lineDiv.textContent = indent;
+        lineDiv.appendChild(span);
+        container.appendChild(lineDiv);
         nodeCount++;
+        
         if (node.children && depth < CONFIG.PREVIEW_MAX_DEPTH) {
-          node.children.forEach(c => walk(c, depth+1));
+          node.children.forEach(c => walk(c, depth+1, container));
         } else if (node.children && node.children.length) {
-          html += `<div>${indent}  <span class="preview-more">... and ${node.children.length} more items</span></div>`;
+          const moreDiv = document.createElement('div');
+          moreDiv.style.whiteSpace = 'pre';
+          const moreSpan = document.createElement('span');
+          moreSpan.className = 'preview-more';
+          moreSpan.textContent = `${indent}  ... and ${node.children.length} more items`;
+          moreDiv.textContent = indent + '  ';
+          moreDiv.appendChild(moreSpan);
+          container.appendChild(moreDiv);
           nodeCount++;
         }
       } else {
         const bin = isBinary(node.name);
-        html += `<div>${indent}<span class="${bin?'preview-binary':'preview-file'}">${bin?'📦':'📄'} ${node.name}</span></div>`;
+        const span = document.createElement('span');
+        span.className = bin ? 'preview-binary' : 'preview-file';
+        span.textContent = `${bin ? '📦' : '📄'} ${node.name}`;
+        lineDiv.textContent = indent;
+        lineDiv.appendChild(span);
+        container.appendChild(lineDiv);
         nodeCount++;
       }
     }
-    walk(tree, 0);
-    if (nodeCount >= MAX_PREVIEW) {
-      html += `<div class="preview-more">... preview truncated (${state.fileCount + state.folderCount} total items)</div>`;
+    
+    walk(tree, 0, fragment);
+    
+    if (nodeCount >= CONFIG.PREVIEW_MAX_NODES) {
+      const truncDiv = document.createElement('div');
+      const truncSpan = document.createElement('span');
+      truncSpan.className = 'preview-more';
+      truncSpan.textContent = `... preview truncated (${state.fileCount + state.folderCount} total items)`;
+      truncDiv.appendChild(truncSpan);
+      fragment.appendChild(truncDiv);
     }
-    elements.preview.innerHTML = html;
+    
+    elements.preview.appendChild(fragment);
   }
 
   // ============================================================
-  // COPY PREVIEW AS MARKDOWN
+  // COPY PREVIEW & DOWNLOAD CLEAN TREE
   // ============================================================
   function copyPreviewAsMarkdown() {
     if (!state.parsedTree) { showError('Parse a tree first.'); return; }
     let md = '```\n' + state.parsedTree.name + '/\n';
     function walk(node, depth, isLast, prefix) {
       if (depth === 0) { node.children?.forEach((c,i) => walk(c, depth+1, i===node.children.length-1, '')); return; }
-      const conn = isLast ? '└── ' : '├── ';
-      md += prefix + conn + node.name + (node.type==='folder'?'/':'') + '\n';
+      md += prefix + (isLast ? '└── ' : '├── ') + node.name + (node.type==='folder'?'/':'') + '\n';
       if (node.type==='folder' && node.children) {
         const np = prefix + (isLast?'    ':'│   ');
         node.children.forEach((c,i) => walk(c, depth+1, i===node.children.length-1, np));
@@ -805,6 +895,20 @@ footer {
     walk(state.parsedTree, 0, true, '');
     md += '```';
     navigator.clipboard?.writeText(md).then(() => showSuccess('Copied as Markdown!')).catch(() => showError('Copy failed'));
+  }
+
+  function downloadCleanTree() {
+    if (!state.parsedTree) { showError('Parse a tree first.'); return; }
+    let out = `${state.parsedTree.name}/\n`;
+    function add(n, d=0, last=true, pre='') {
+      if(d===0) { n.children?.forEach((c,i)=>add(c,d+1,i===n.children.length-1,'')); return; }
+      out += pre + (last?'└── ':'├── ') + n.name + (n.type==='folder'?'/':'') + '\n';
+      if(n.type==='folder'&&n.children) { const np = pre + (last?'    ':'│   '); n.children.forEach((c,i)=>add(c,d+1,i===n.children.length-1,np)); }
+    }
+    add(state.parsedTree);
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([out])); a.download = `${state.parsedTree.name}.clean.tree.txt`; a.click();
+    showSuccess(`Clean tree downloaded.`);
   }
 
   // ============================================================
@@ -825,16 +929,31 @@ footer {
     elements.projectNameDisplay.textContent = `📦 ${state.projectName}`;
     if(state.parsedTree) { renderPreview(state.parsedTree); elements.statsText.innerHTML = `📁 ${s.fd} folders · 📄 ${s.fc} files`; }
     elements.undoBtn.disabled = history.past.length < 2; elements.redoBtn.disabled = !history.future.length;
-    updateFQI(state.issueCount, state.fileCount);
   }
 
   // ============================================================
   // EXPORT
   // ============================================================
-  function generatePlaceholder(n) { if(isBinary(n)) return `# BINARY PLACEHOLDER\n`; const e = n.split('.').pop(); if(n==='package.json') return JSON.stringify({ name: state.projectName, version:'1.0.0', private:true },null,2); if(n==='tsconfig.json') return JSON.stringify({ compilerOptions:{ target:'ES2022', module:'ESNext', strict:true } },null,2); if(e==='md') return `# ${n}\n`; return ''; }
+  function generatePlaceholder(n) {
+    if (!elements.includePlaceholders.checked) return '';
+    if(isBinary(n)) return `# BINARY PLACEHOLDER\n`;
+    const e = n.split('.').pop();
+    if(n==='package.json') return JSON.stringify({ name: state.projectName, version:'1.0.0', private:true },null,2);
+    if(n==='tsconfig.json') return JSON.stringify({ compilerOptions:{ target:'ES2022', module:'ESNext', strict:true } },null,2);
+    if(e==='md') return `# ${n}\n`;
+    return '';
+  }
   function addToZip(z, n, p='') { const f = p ? `${p}/${n.name}` : n.name; if(n.type==='folder') { const folder = z.folder(f); n.children?.forEach(c=>addToZip(z,c,f)); } else z.file(f, generatePlaceholder(n.name)); }
   async function generateZip() { if(!state.parsedTree) return; const z = new JSZip(); state.parsedTree.children?.forEach(c=>addToZip(z,c,state.parsedTree.name)); const b = await z.generateAsync({ type:'blob', compression:'DEFLATE' }); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `${state.parsedTree.name}.zip`; a.click(); showSuccess(`${state.parsedTree.name}.zip generated.`); }
-  function generateScript() { if(!state.parsedTree) return; let s = '#!/bin/bash\n'; function add(n,p='') { const f = p?`${p}/${n.name}`:n.name; if(n.type==='folder') { s += `mkdir -p "${f}"\n`; n.children?.forEach(c=>add(c,f)); } else s += `touch "${f}"\n`; } s += `mkdir -p "${state.parsedTree.name}"\ncd "${state.parsedTree.name}"\n`; state.parsedTree.children?.forEach(c=>add(c,'')); const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([s])); a.download = `${state.parsedTree.name}.sh`; a.click(); showSuccess(`${state.parsedTree.name}.sh generated.`); }
+  function generateScript() {
+    if(!state.parsedTree) return;
+    let s = '#!/usr/bin/env bash\nset -e\n# Generated by AION Scaffold v2.6.1\n\n';
+    function add(n,p='') { const f = p?`${p}/${n.name}`:n.name; if(n.type==='folder') { s += `mkdir -p "${f}"\n`; n.children?.forEach(c=>add(c,f)); } else { s += `touch "${f}"\n`; if (elements.includePlaceholders.checked) s += `echo "${generatePlaceholder(n.name).replace(/"/g,'\\"').replace(/\n/g,'\\n')}" > "${f}"\n`; } }
+    s += `mkdir -p "${state.parsedTree.name}"\ncd "${state.parsedTree.name}"\n`;
+    state.parsedTree.children?.forEach(c=>add(c,''));
+    s += `\necho "✅ ${state.parsedTree.name} created."\n`;
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([s])); a.download = `${state.parsedTree.name}.sh`; a.click(); showSuccess(`${state.parsedTree.name}.sh generated.`);
+  }
   function exportTree() { if(!state.parsedTree) return; let o = `${state.parsedTree.name}/\n`; function add(n,d=0,last=true,pre='') { if(d===0) { n.children?.forEach((c,i)=>add(c,d+1,i===n.children.length-1,'')); return; } o += pre + (last?'└── ':'├── ') + n.name + (n.type==='folder'?'/':'') + '\n'; if(n.type==='folder'&&n.children) { const np = pre + (last?'    ':'│   '); n.children.forEach((c,i)=>add(c,d+1,i===n.children.length-1,np)); } } add(state.parsedTree); const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([o])); a.download = `${state.parsedTree.name}.tree.txt`; a.click(); showSuccess(`Tree exported.`); }
   function exportJSON() { if(!state.parsedTree) return; const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(state.parsedTree, null, 2)])); a.download = `${state.parsedTree.name}.json`; a.click(); showSuccess(`JSON exported.`); }
   function handleExport() { const f = elements.exportFormat.value; if(f==='zip') generateZip(); else if(f==='script') generateScript(); else if(f==='tree') exportTree(); else if(f==='json') exportJSON(); }
@@ -846,7 +965,7 @@ footer {
   // ============================================================
   // RECOVERY
   // ============================================================
-  try { const b = localStorage.getItem(CONFIG.AUTO_SAVE_KEY); if(b) { const d = JSON.parse(b); if(Date.now()-d.timestamp < 86400000) { elements.recoveryHint.textContent = '💾 Restore'; elements.recoveryHint.onclick = () => { if(confirm('Restore previous session?')) { elements.input.value = d.input; if(d.tree) { state.parsedTree = d.tree; state.fileCount = d.fc; state.folderCount = d.fd; state.projectName = d.pn || 'my-awesome-project'; elements.projectNameInput.value = state.projectName; elements.projectNameDisplay.textContent = `📦 ${state.projectName}`; renderPreview(state.parsedTree); elements.statsText.innerHTML = `📁 ${d.fd} folders · 📄 ${d.fc} files`; } showSuccess('Restored.'); } }; } } } catch(e){}
+  try { const b = localStorage.getItem(CONFIG.AUTO_SAVE_KEY); if(b) { const d = JSON.parse(b); if(Date.now()-d.timestamp < 86400000) { elements.recoveryHint.textContent = '💾 Restore'; elements.recoveryHint.onclick = () => { if(confirm('Restore previous session?')) { restore(d); showSuccess('Restored.'); } }; } } } catch(e){}
 
   // ============================================================
   // EVENT BINDING
@@ -862,12 +981,12 @@ footer {
   elements.undoBtn.onclick = undo;
   elements.redoBtn.onclick = redo;
   elements.copyPreviewBtn.onclick = copyPreviewAsMarkdown;
+  elements.downloadCleanTreeBtn.onclick = downloadCleanTree;
   elements.projectNameInput.addEventListener('input', (e) => {
-    state.projectName = sanitizeProjectName(e.target.value);
+    state.projectName = sanitizeProjectName((e.target as HTMLInputElement).value);
     elements.projectNameDisplay.textContent = `📦 ${state.projectName}`;
   });
   
-  // Changelog
   elements.versionBadge.addEventListener('click', () => { renderChangelog(); elements.changelogModal.classList.add('visible'); });
   elements.closeChangelogBtn.addEventListener('click', () => elements.changelogModal.classList.remove('visible'));
   elements.changelogModal.addEventListener('click', (e) => { if(e.target === elements.changelogModal) elements.changelogModal.classList.remove('visible'); });
@@ -877,6 +996,9 @@ footer {
     if((e.ctrlKey||e.metaKey) && e.key==='z' && !e.shiftKey) { e.preventDefault(); undo(); }
     if((e.ctrlKey||e.metaKey) && e.key==='y') { e.preventDefault(); redo(); }
   });
+
+  // Auto-show changelog on major version bump
+  checkChangelogAutoShow();
 })();
 </script>
 </body>
