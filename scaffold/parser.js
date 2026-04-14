@@ -1,10 +1,10 @@
 /**
- * AION Scaffold Shared Parser v2.6.1
- * Used by both web and CLI surfaces. Single source of truth.
+ * AION Scaffold Shared Parser v2.6.5
+ * FORGE-Hardened — Used by both web and CLI surfaces. Single source of truth.
  * 
  * @author Sheldon K. Salmon
  * @license MIT
- * @version 2.6.1
+ * @version 2.6.5
  */
 
 // ============================================================
@@ -243,106 +243,186 @@ function applyFixes(input, issues) {
 }
 
 // ============================================================
-// PARSER (with duplicate rename + type conflict)
+// PARSER — FORGE-HARDENED v2.6.5
 // ============================================================
+/**
+ * FORGE-HARDENED parseTree — v2.6.5
+ * Converts ASCII tree structure to nested folder/file hierarchy.
+ * 
+ * @param {string} input - Raw tree text
+ * @param {string} projectName - Fallback root name
+ * @returns {{
+ *   root: { name: string, type: 'folder', children: Array },
+ *   fileCount: number,
+ *   folderCount: number,
+ *   warnings: Array<{ severity: 'info'|'warn'|'error', type: string, line?: number, message: string }>
+ * }}
+ */
 function parseTree(input, projectName = 'my-project') {
-  const lines = input.split('\n').map(stripComments).filter(l => l.trim());
-  if (!lines.length) throw new Error('Empty input');
-  if (input.length > CONFIG.MAX_INPUT_SIZE) {
-    throw new Error(`Input too large (max ${CONFIG.MAX_INPUT_SIZE / 1000}KB)`);
-  }
+  const TREE_CHARS = /[├└│─]/g;
   
-  let rootName = sanitizeProjectName(projectName);
-  const root = { name: rootName, type: 'folder', children: [] };
-  const stack = [{ node: root, indent: -1 }];
-  let fileCount = 0, folderCount = 1, depth = 0;
-  const warnings = [];
+  const rawLines = input.split('\n');
+  const parsedLines = [];
   
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    const indent = line.search(/\S/);
-    let content = line.trim();
+  for (let i = 0; i < rawLines.length; i++) {
+    const line = rawLines[i];
+    if (!line.trim()) continue;
     
-    // Root declaration
-    if (!content.match(/^[├└│]/) && !content.includes('─')) {
-      if (content.match(/^[a-zA-Z0-9_-]+(\/)?$/)) {
-        rootName = sanitizeProjectName(content.replace(/\/$/, ''));
-        root.name = rootName;
-      } else if (i === 0) {
-        warnings.push(`Line 1: Using "${rootName}" as root. Add "my-app/" as first line to specify.`);
+    // FORGE FIX EL-001: Robust depth counting — handles variable spacing after "│"
+    let depth = 0;
+    let j = 0;
+    while (j < line.length) {
+      const ch = line[j];
+      if (ch === '│') {
+        depth++;
+        j++;
+        while (j < line.length && line[j] === ' ') j++;
+      } else if (ch === '├' || ch === '└') {
+        break;
+      } else if (ch === ' ' || ch === '\t') {
+        j++;
+      } else {
+        break;
       }
-      continue;
     }
     
-    // Remove tree characters
-    content = content.replace(/^[├└]──\s*/, '').replace(/^[│]\s*/, '').trim();
+    let cleanedLine = line.replace(TREE_CHARS, '');
+    let content = cleanedLine.trim();
+    if (!content) continue;
+    
+    content = stripComments(content);
+    
     const isFolder = content.endsWith('/');
-    let name = isFolder ? content.slice(0, -1).trim() : content.trim();
+    const rawName = isFolder ? content.slice(0, -1).trim() : content.trim();
+    if (!rawName) continue;
+    
+    let name = sanitizeName(rawName);
+    name = name.replace(TREE_CHARS, '');
     if (!name) continue;
     
-    // Sanitize name
-    name = sanitizeName(name);
+    parsedLines.push({ depth, name, isFolder, rawName, lineNumber: i + 1 });
+  }
+  
+  if (!parsedLines.length) {
+    return {
+      root: { name: sanitizeProjectName(projectName), type: 'folder', children: [] },
+      fileCount: 0,
+      folderCount: 0,
+      warnings: [{ severity: 'error', type: 'empty_input', message: 'No valid lines found in input' }]
+    };
+  }
+  
+  // FORGE FIX EL-002: Documented asymmetry — root is pre-counted
+  let rootName = sanitizeProjectName(projectName);
+  if (parsedLines[0] && parsedLines[0].depth === 0 && parsedLines[0].isFolder) {
+    rootName = parsedLines[0].name;
+    parsedLines.shift();
+  }
+  
+  const root = { name: rootName, type: 'folder', children: [] };
+  
+  // FORGE FIX SA-002: Clear comment explaining stack pop logic
+  // Stack tracks { node, depth, path }
+  // We pop while stack top depth >= current depth to return to the correct parent
+  const stack = [{ node: root, depth: -1, path: rootName }];
+  
+  // FORGE FIX SA-003: pathMap tracks full paths for duplicate detection
+  const pathMap = new Map();
+  
+  let fileCount = 0;
+  let folderCount = 1; // Root is pre-counted
+  const warnings = [];
+  
+  // FORGE FIX EL-003 & CP-002: Structured warnings with severity
+  function addWarning(severity, type, lineNumber, message) {
+    warnings.push({ severity, type, line: lineNumber, message });
+  }
+  
+  for (let i = 0; i < parsedLines.length; i++) {
+    const item = parsedLines[i];
+    let { depth, name, isFolder, rawName, lineNumber } = item;
     
-    // Pop stack to correct indent
-    while (stack.length > 1 && stack[stack.length - 1].indent >= indent) {
+    name = name.replace(TREE_CHARS, '');
+    
+    // Pop stack to find parent — pops past siblings (>= depth) to reach parent
+    while (stack.length > 1 && stack[stack.length - 1].depth >= depth) {
       stack.pop();
     }
     
     const parent = stack[stack.length - 1].node;
-    depth = Math.max(depth, stack.length);
+    const parentPath = stack[stack.length - 1].path;
     
-    if (depth > CONFIG.MAX_DEPTH) {
-      warnings.push(`Depth exceeds ${CONFIG.MAX_DEPTH} — tree truncated.`);
-      break;
-    }
+    // Build full path for duplicate detection
+    const fullPath = parentPath + '/' + name;
     
     if (isFolder) {
-      let folder = parent.children.find(c => c.type === 'folder' && c.name === name);
-      if (!folder) {
-        // Check for type conflict
-        if (parent.children.some(c => c.type === 'file' && c.name === name)) {
-          name = name + '_folder';
-          warnings.push(`Line ${i+1}: Type conflict — renamed folder to "${name}"`);
-        }
-        folder = { name, type: 'folder', children: [] };
-        parent.children.push(folder);
-        folderCount++;
-        if (folderCount > CONFIG.MAX_FOLDERS) {
-          throw new Error(`Too many folders (max ${CONFIG.MAX_FOLDERS})`);
-        }
-      } else {
-        warnings.push(`Line ${i+1}: Merged duplicate folder "${name}"`);
+      if (pathMap.has(fullPath)) {
+        addWarning('info', 'duplicate_folder', lineNumber, `Merged duplicate folder "${rawName}" into existing`);
+        stack.push({ node: pathMap.get(fullPath), depth, path: fullPath });
+        continue;
       }
-      stack.push({ node: folder, indent });
-    } else {
-      // Check for type conflict
-      if (parent.children.some(c => c.type === 'folder' && c.name === name)) {
-        name = name + '.txt';
-        warnings.push(`Line ${i+1}: Type conflict — renamed file to "${name}"`);
-      }
-      // Check for duplicate file
-      const existingFile = parent.children.find(c => c.type === 'file' && c.name === name);
-      if (existingFile) {
-        const base = name.replace(/\.[^/.]+$/, '');
-        const ext = name.split('.').pop() || 'txt';
-        let counter = 1;
-        let newName = `${base}_${counter}.${ext}`;
-        while (parent.children.some(c => c.type === 'file' && c.name === newName)) {
-          counter++;
-          newName = `${base}_${counter}.${ext}`;
-        }
-        warnings.push(`Line ${i+1}: Duplicate file "${name}" — renamed to "${newName}"`);
+      
+      if (pathMap.has(fullPath) && pathMap.get(fullPath).type === 'file') {
+        const newName = name + '_folder';
+        addWarning('warn', 'type_conflict_folder', lineNumber, `"${rawName}" conflicts with existing file — renamed to "${newName}"`);
         name = newName;
       }
-      parent.children.push({ name, type: 'file' });
-      fileCount++;
-      if (fileCount > CONFIG.MAX_FILES) {
-        throw new Error(`Too many files (max ${CONFIG.MAX_FILES})`);
+      
+      const folder = { name, type: 'folder', children: [] };
+      parent.children.push(folder);
+      pathMap.set(fullPath, folder);
+      folderCount++;
+      stack.push({ node: folder, depth, path: fullPath });
+      
+    } else {
+      if (pathMap.has(fullPath)) {
+        const existing = pathMap.get(fullPath);
+        if (existing.type === 'folder') {
+          const newName = name + '.txt';
+          addWarning('warn', 'type_conflict_file', lineNumber, `"${rawName}" conflicts with existing folder — renamed to "${newName}"`);
+          name = newName;
+        } else {
+          const base = name.replace(/\.[^/.]+$/, '');
+          const ext = name.split('.').pop() || 'txt';
+          let counter = 1;
+          let newName = `${base}_${counter}.${ext}`;
+          let newPath = parentPath + '/' + newName;
+          while (pathMap.has(newPath)) {
+            counter++;
+            newName = `${base}_${counter}.${ext}`;
+            newPath = parentPath + '/' + newName;
+          }
+          addWarning('info', 'duplicate_file', lineNumber, `"${rawName}" already exists — renamed to "${newName}"`);
+          name = newName;
+        }
       }
+      
+      const finalPath = parentPath + '/' + name;
+      const file = { name, type: 'file' };
+      parent.children.push(file);
+      pathMap.set(finalPath, file);
+      fileCount++;
     }
   }
   
-  return { root, fileCount, folderCount: folderCount - 1, warnings };
+  if (fileCount > CONFIG.MAX_FILES) {
+    throw new Error(`Too many files (max ${CONFIG.MAX_FILES})`);
+  }
+  if (folderCount > CONFIG.MAX_FOLDERS) {
+    throw new Error(`Too many folders (max ${CONFIG.MAX_FOLDERS})`);
+  }
+  
+  const actualDepth = Math.max(...parsedLines.map(l => l.depth), 0);
+  if (actualDepth > CONFIG.MAX_DEPTH) {
+    addWarning('warn', 'depth_exceeded', null, `Maximum depth ${CONFIG.MAX_DEPTH} exceeded (actual: ${actualDepth}) — tree may be truncated`);
+  }
+  
+  return { 
+    root, 
+    fileCount, 
+    folderCount: folderCount - 1, // Subtract root from count
+    warnings 
+  };
 }
 
 // ============================================================
@@ -403,7 +483,7 @@ function generatePlaceholder(name, fullPath, includePlaceholders = true, project
   }
   
   if (ext === 'md') {
-    return `# ${baseName.replace(/-/g, ' ').toUpperCase()}\n\n## Overview\n\n[Generated by AION Scaffold v2.6.1]\n`;
+    return `# ${baseName.replace(/-/g, ' ').toUpperCase()}\n\n## Overview\n\n[Generated by AION Scaffold v2.6.5]\n`;
   }
   
   if (ext === 'ts' || ext === 'js') {
@@ -463,7 +543,7 @@ function exportAsTree(tree) {
 }
 
 function exportAsShellScript(tree, includePlaceholders = true, projectName = 'my-project') {
-  let script = '#!/usr/bin/env bash\nset -e\n# Generated by AION Scaffold v2.6.1\n\n';
+  let script = '#!/usr/bin/env bash\nset -e\n# Generated by AION Scaffold v2.6.5\n\n';
   
   function add(node, currentPath = '') {
     const safeName = sanitizeName(node.name);
@@ -477,7 +557,6 @@ function exportAsShellScript(tree, includePlaceholders = true, projectName = 'my
       if (includePlaceholders) {
         const content = generatePlaceholder(node.name, fullPath, true, projectName);
         if (content) {
-          // Use heredoc for multi-line content
           script += `cat > "${fullPath}" << 'EOF'\n${content}EOF\n`;
         }
       }
