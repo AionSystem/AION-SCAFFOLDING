@@ -603,10 +603,135 @@ footer {
   elements.closeChangelogBtn.addEventListener('click',()=>elements.changelogModal.classList.remove('visible'));
   elements.changelogModal.addEventListener('click',(e)=>{ if(e.target===elements.changelogModal)elements.changelogModal.classList.remove('visible'); });
   
-  // Audit stubs (full implementation preserved from v2.5)
-  elements.auditAndFixBtn.onclick = () => showInfo('Audit feature — full implementation in parser.js module');
-  elements.applyFixesBtn.onclick = () => showInfo('Apply fixes — integrated with audit engine');
-  elements.dismissAuditBtn.onclick = () => elements.auditPanel.classList.remove('visible');
+  // ============================================================
+// AUDIT ENGINE (Full Implementation)
+// ============================================================
+function auditTree(input, projectName) {
+  const issues = [];
+  const lines = input.split('\n');
+  const pathMap = new Map();
+  let rootFound = false;
+  let fixableCount = 0;
+  let manualCount = 0;
+  
+  lines.forEach((line, idx) => {
+    const raw = line;
+    let p = stripComments(line);
+    if (!p.trim()) return;
+    
+    const indent = p.search(/\S/);
+    let content = p.trim();
+    
+    if (idx === 0 && !content.match(/^[├└│]/) && !content.includes('─')) rootFound = true;
+    if (raw.includes('\t') && raw.includes(' ')) { issues.push({ type: 'mixed_indent', line: idx+1, fixable: true }); fixableCount++; }
+    if (raw.match(/\s+[#\/]{1,2}\s+.+$/)) { issues.push({ type: 'has_comments', line: idx+1, fixable: true }); fixableCount++; }
+    if (!content.match(/^[├└│]/) && !content.includes('─') && !(idx === 0 && !rootFound)) {
+      if (!content.match(/^[a-zA-Z0-9_-]+(\/)?$/)) { issues.push({ type: 'missing_tree_chars', line: idx+1, fixable: true }); fixableCount++; }
+    }
+    
+    let name = content.replace(/^[├└]──\s*/, '').replace(/^[│]\s*/, '').trim();
+    const isFolder = name.endsWith('/');
+    name = isFolder ? name.slice(0, -1).trim() : name;
+    
+    if (name && name.match(/[<>:"|?*]/)) { issues.push({ type: 'invalid_chars', line: idx+1, name, fixable: true }); fixableCount++; }
+    if (!isFolder && content.match(/[^\/]+\/$/)) { issues.push({ type: 'file_with_slash', line: idx+1, fixable: true }); fixableCount++; }
+  });
+  
+  if (!rootFound) { issues.push({ type: 'no_root', line: 1, fixable: false, message: `No root declared. Using "${projectName}" as root.` }); manualCount++; }
+  
+  const indentLevels = lines.map(l => stripComments(l)).filter(l => l.trim()).map(l => l.search(/\S/)).filter(i => i > 0);
+  if (indentLevels.length && indentLevels.some(i => i % 4 !== 0)) { issues.push({ type: 'inconsistent_indent', fixable: true }); fixableCount++; }
+  
+  // Pre-detect conflicts
+  const stack = [{ indent: -1, path: sanitizeProjectName(projectName) }];
+  lines.forEach((line, idx) => {
+    const p = stripComments(line); if (!p.trim()) return;
+    const indent = p.search(/\S/); let content = p.trim();
+    if (!content.match(/^[├└│]/) && !content.includes('─')) return;
+    content = content.replace(/^[├└]──\s*/, '').replace(/^[│]\s*/, '').trim();
+    const isFolder = content.endsWith('/');
+    let name = isFolder ? content.slice(0, -1).trim() : content.trim();
+    if (!name) return;
+    name = name.replace(/[<>:"|?*]/g, '-').trim();
+    while (stack.length > 1 && stack[stack.length - 1].indent >= indent) stack.pop();
+    const parentPath = stack[stack.length - 1].path;
+    const fullPath = parentPath + '/' + name;
+    
+    if (pathMap.has(fullPath)) {
+      const existing = pathMap.get(fullPath);
+      if (existing.type !== (isFolder ? 'folder' : 'file')) {
+        issues.push({ type: 'type_conflict', line: idx+1, path: fullPath, fixable: false, message: `"${name}" exists as ${existing.type}, cannot create ${isFolder?'folder':'file'}` });
+        manualCount++;
+      } else if (!isFolder) {
+        issues.push({ type: 'duplicate_file', line: idx+1, path: fullPath, fixable: false, message: `Duplicate file "${name}" will be auto-renamed` });
+        manualCount++;
+      }
+    } else {
+      pathMap.set(fullPath, { type: isFolder ? 'folder' : 'file' });
+    }
+    if (isFolder) stack.push({ indent, path: fullPath });
+  });
+  
+  state.fixableIssueCount = fixableCount;
+  state.manualIssueCount = manualCount;
+  updateFQI();
+  
+  return { issues, fixable: issues.filter(i => i.fixable), manual: issues.filter(i => !i.fixable) };
+}
+
+function applyFixes(input, issues) {
+  let lines = input.split('\n');
+  const fixes = [];
+  if (issues.some(i => i.type === 'has_comments')) { lines = lines.map(stripComments); fixes.push('Stripped comments'); }
+  if (issues.some(i => i.type === 'mixed_indent')) { lines = lines.map(l => l.replace(/\t/g, ' ')); fixes.push('Converted tabs'); }
+  issues.filter(i => i.type === 'file_with_slash').forEach(i => { if (lines[i.line - 1]) lines[i.line - 1] = lines[i.line - 1].replace(/([^\/\s]+)\/$/, '$1'); });
+  issues.filter(i => i.type === 'invalid_chars').forEach(i => { if (lines[i.line - 1] && i.name) lines[i.line - 1] = lines[i.line - 1].replace(i.name, i.name.replace(/[<>:"|?*]/g, '-')); });
+  issues.filter(i => i.type === 'missing_tree_chars').forEach(i => { const idx = i.line - 1; if (lines[idx]) { const l = lines[idx]; const indent = l.search(/\S/); lines[idx] = ' '.repeat(indent) + '├── ' + l.trim(); } });
+  if (issues.some(i => i.type === 'inconsistent_indent')) {
+    lines = lines.map(l => { const t = l.trimStart(); const indent = l.length - t.length; if (indent === 0) return l; return ' '.repeat(Math.round(indent / 4) * 4) + t; });
+    fixes.push('Normalized indentation');
+  }
+  lines = lines.filter(l => { const t = l.trim(); return t !== '│' && t !== '├──' && t !== '└──' && t !== ''; });
+  return { fixed: lines.join('\n'), fixes };
+}
+
+function runAudit() {
+  const input = elements.input.value;
+  if (!input.trim()) { showError('Paste a tree first.'); return; }
+  state.originalInput = input;
+  const projectName = sanitizeProjectName(elements.projectNameInput.value);
+  const { issues, fixable, manual } = auditTree(input, projectName);
+  state.pendingFixes = fixable;
+  
+  let html = '';
+  if (fixable.length) { html += `<div style="color:var(--green);">✅ FIXABLE (${fixable.length})</div>`; fixable.slice(0, 10).forEach(i => { html += `<div class="audit-item fixable">Line ${i.line||'—'}: ${i.type.replace(/_/g,' ')}</div>`; }); if (fixable.length > 10) html += `<div class="audit-item">... and ${fixable.length - 10} more</div>`; }
+  if (manual.length) { html += `<div style="color:var(--red); margin-top:8px;">⚠️ MANUAL (${manual.length})</div>`; manual.forEach(i => { html += `<div class="audit-item" style="color:var(--red);">${i.message || i.type.replace(/_/g,' ')}</div>`; }); }
+  if (!issues.length) html = '<div style="color:var(--green);">✅ No issues! Tree is clean.</div>';
+  
+  elements.auditList.innerHTML = html;
+  elements.auditSummary.innerHTML = `${fixable.length} fixable · ${manual.length} manual`;
+  elements.auditPanel.classList.add('visible');
+  elements.ariaLive.textContent = `Audit complete. ${fixable.length} fixable issues, ${manual.length} manual.`;
+  
+  if (manual.length) showWarning(`${manual.length} issues need manual attention.`);
+  else if (fixable.length) showInfo(`${fixable.length} issues — all fixable.`);
+  else showSuccess('Tree is clean!');
+}
+
+function applyFixesAction() {
+  if (!state.pendingFixes.length) { showInfo('No fixes to apply.'); return; }
+  const { fixed, fixes } = applyFixes(state.originalInput, state.pendingFixes);
+  pushHistory();
+  elements.input.value = fixed;
+  elements.auditPanel.classList.remove('visible');
+  showSuccess(`Applied: ${fixes.join('; ')}. Click Parse to rebuild.`);
+  state.pendingFixes = [];
+}
+
+// Replace the stub event handlers with real ones:
+elements.auditAndFixBtn.onclick = runAudit;
+elements.applyFixesBtn.onclick = applyFixesAction;
+elements.dismissAuditBtn.onclick = () => elements.auditPanel.classList.remove('visible');
   
   document.addEventListener('keydown',e=>{ if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){ e.preventDefault(); parseAction(); } if((e.ctrlKey||e.metaKey)&&e.key==='z'&&!e.shiftKey){ e.preventDefault(); undo(); } if((e.ctrlKey||e.metaKey)&&e.key==='y'){ e.preventDefault(); redo(); } });
 
