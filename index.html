@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-<meta name="description" content="AION Scaffold — Intelligent Tree to Filesystem Generator. Audit, fix, and generate complete project structures.">
-<meta property="og:title" content="AION Scaffold — Intelligent Scaffolding Tool">
+<meta name="description" content="AION Scaffold v2.6 — Intelligent Tree to Filesystem Generator. Audit, fix, and generate complete project structures.">
+<meta property="og:title" content="AION Scaffold v2.6 — Intelligent Scaffolding Tool">
 <meta property="og:description" content="The most intelligent browser-based scaffolding tool. Zero install, audit & fix, undo/redo, binary detection.">
 <meta property="og:type" content="website">
-<title>AION Scaffold v2.5 · AionSystem</title>
+<title>AION Scaffold v2.6 · AionSystem</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:ital,wght@0,300;0,400;0,600;0,700;0,900;1,300&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
@@ -50,31 +50,27 @@ body::after {
 }
 @keyframes scan { 0% { transform: translateY(0); } 100% { transform: translateY(4px); } }
 
-/* Live Region for Screen Readers */
 .visually-hidden {
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
   overflow: hidden; clip: rect(0,0,0,0); border: 0;
 }
 
-/* Cursor - Stage 1 */
+/* Cursor */
 .custom-cursor {
   width: 20px; height: 20px; border: 2px solid var(--cyan); border-radius: 50%;
   position: fixed; pointer-events: none; z-index: 9999; mix-blend-mode: screen;
   transition: all 0.15s ease; transform: translate(-50%, -50%);
   box-shadow: 0 0 15px var(--cyan), 0 0 30px rgba(0,212,255,0.3);
 }
-/* Stage 2 - Hover */
 .custom-cursor.hover {
   width: 36px; height: 36px; background: rgba(0,212,255,0.08);
   border-color: var(--amber); box-shadow: 0 0 25px var(--amber), 0 0 50px rgba(240,165,0,0.5);
 }
-/* Stage 3 - Dynamic Magnify (removed - replaced with tooltip style) */
 .cursor-trail {
   position: fixed; width: 6px; height: 6px; border-radius: 50%; background: var(--cyan);
   pointer-events: none; z-index: 9998; opacity: 0.6; box-shadow: 0 0 10px var(--cyan);
 }
 
-/* Dynamic Tooltip Loupe */
 .magnify-tooltip {
   position: fixed; z-index: 10000; background: rgba(8,9,11,0.85); backdrop-filter: blur(12px);
   border: 1px solid var(--red); border-radius: 12px; padding: 16px; max-width: 400px;
@@ -83,7 +79,6 @@ body::after {
   border-left: 4px solid var(--red); transform: translateY(-10px);
 }
 .magnify-tooltip.visible { opacity: 1; transform: translateY(0); }
-.magnify-tooltip code { color: var(--cyan); background: rgba(0,212,255,0.1); padding: 2px 6px; border-radius: 4px; }
 
 nav {
   position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; align-items: center;
@@ -114,8 +109,7 @@ nav {
 .icon-btn {
   background: transparent; border: 1px solid var(--dim); color: var(--muted);
   padding: 8px 12px; border-radius: 4px; font-family: var(--mono); font-size: 10px;
-  cursor: pointer; transition: all 0.2s; text-transform: uppercase;
-  min-height: 44px; /* Touch target */
+  cursor: pointer; transition: all 0.2s; text-transform: uppercase; min-height: 44px;
 }
 .icon-btn:hover { border-color: var(--cyan); color: var(--cyan); }
 .icon-btn.primary-action { border-color: var(--green); color: var(--green); }
@@ -123,18 +117,20 @@ nav {
 .icon-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
 textarea {
-  width: 100%; height: 380px; background: #0a0d12; border: 1px solid var(--border);
+  width: 100%; height: 340px; background: #0a0d12; border: 1px solid var(--border);
   border-radius: 8px; padding: 16px; color: var(--text); font-family: var(--jmono);
   font-size: 12px; line-height: 1.6; resize: vertical; outline: none;
 }
 textarea:focus { border-color: var(--cyan); box-shadow: 0 0 15px rgba(0,212,255,0.2); }
+
 .preview {
-  height: 380px; overflow-y: auto; font-family: var(--jmono); font-size: 11px;
+  height: 340px; overflow-y: auto; font-family: var(--jmono); font-size: 11px;
   line-height: 1.7; color: var(--muted);
 }
 .preview-folder { color: var(--amber); }
 .preview-file { color: var(--green); }
 .preview-binary { color: var(--purple); }
+.preview-more { color: var(--dim); font-style: italic; padding: 8px 0; }
 
 .message-bar { margin-bottom: 16px; }
 .error-message, .warning-message, .success-message, .info-message {
@@ -154,17 +150,33 @@ textarea:focus { border-color: var(--cyan); box-shadow: 0 0 15px rgba(0,212,255,
 .audit-panel.visible { display: block; }
 .audit-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
 .audit-title { font-family: var(--mono); color: var(--cyan); text-transform: uppercase; font-size: 11px; }
-.audit-list { max-height: 180px; overflow-y: auto; font-family: var(--jmono); font-size: 10px; margin-bottom: 12px; }
+.audit-list { max-height: 150px; overflow-y: auto; font-family: var(--jmono); font-size: 10px; margin-bottom: 12px; }
 .audit-item { padding: 6px 0; border-bottom: 1px solid var(--border); color: var(--muted); }
 .audit-item.fixable { color: var(--amber); }
 .audit-summary { font-family: var(--mono); font-size: 10px; padding: 8px 0; }
+
+.project-name-row {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap;
+}
+.project-name-label {
+  font-family: var(--mono); font-size: 11px; color: var(--muted); text-transform: uppercase;
+}
+.project-name-input {
+  background: #0a0d12; border: 1px solid var(--border); border-radius: 4px;
+  padding: 8px 12px; color: var(--text); font-family: var(--mono); font-size: 12px;
+  width: 200px;
+}
+.project-name-input:focus { outline: none; border-color: var(--cyan); }
+.project-name-hint {
+  font-family: var(--mono); font-size: 10px; color: var(--dim);
+}
 
 .action-bar { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
 .cta-btn {
   display: inline-flex; align-items: center; gap: 10px; font-family: var(--mono);
   font-size: 11px; text-transform: uppercase; padding: 14px 24px; border: 1px solid var(--cyan);
   color: var(--cyan); background: transparent; cursor: pointer; border-radius: 4px;
-  min-height: 44px; /* Touch target */
+  min-height: 44px;
 }
 .cta-btn.primary { background: var(--amber); color: #000; border-color: var(--amber); }
 .cta-btn:hover { background: var(--cyan); color: #000; }
@@ -173,11 +185,39 @@ textarea:focus { border-color: var(--cyan); box-shadow: 0 0 15px rgba(0,212,255,
   color: var(--text); font-family: var(--mono); border-radius: 4px; min-height: 44px;
 }
 
-.stats-bar { display: flex; justify-content: space-between; align-items: center; font-family: var(--mono); font-size: 11px; color: var(--muted); }
-.badge-group { display: flex; gap: 12px; }
-.fqi-badge, .version-badge { padding: 4px 10px; border-radius: 4px; font-size: 10px; }
+.stats-bar { display: flex; justify-content: space-between; align-items: center; font-family: var(--mono); font-size: 11px; color: var(--muted); flex-wrap: wrap; gap: 8px; }
+.badge-group { display: flex; gap: 12px; align-items: center; }
+.fqi-badge, .version-badge { padding: 4px 10px; border-radius: 4px; font-size: 10px; cursor: pointer; }
 .fqi-badge { background: rgba(74,222,128,0.1); border: 1px solid var(--green); color: var(--green); }
 .version-badge { background: rgba(168,85,247,0.1); border: 1px solid var(--purple); color: var(--purple); }
+.version-badge:hover { background: rgba(168,85,247,0.2); }
+.project-badge {
+  padding: 4px 10px; border-radius: 4px; font-size: 10px;
+  background: rgba(0,212,255,0.1); border: 1px solid var(--cyan); color: var(--cyan);
+}
+
+/* Changelog Modal */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
+  z-index: 1000; display: none; align-items: center; justify-content: center;
+}
+.modal-overlay.visible { display: flex; }
+.modal-content {
+  background: var(--panel); border: 1px solid var(--border); border-radius: 16px;
+  padding: 24px; max-width: 500px; max-height: 70vh; overflow-y: auto;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+}
+.modal-title {
+  font-family: var(--sans); font-size: 20px; color: var(--amber); margin-bottom: 16px;
+  text-transform: uppercase;
+}
+.modal-close {
+  float: right; background: transparent; border: none; color: var(--muted);
+  font-size: 20px; cursor: pointer;
+}
+.changelog-list { font-family: var(--mono); font-size: 11px; color: var(--muted); line-height: 1.8; }
+.changelog-version { color: var(--cyan); margin-top: 12px; margin-bottom: 4px; }
+.changelog-item { padding-left: 16px; }
 
 footer {
   border-top: 1px solid var(--border); padding: 32px 40px; max-width: 1400px; margin: 0 auto;
@@ -186,6 +226,7 @@ footer {
 }
 .footer-links { display: flex; gap: 24px; }
 .footer-links a { color: var(--muted); text-decoration: none; }
+.keyboard-hint { font-size: 9px; color: var(--dim); margin-left: 12px; }
 
 @media (max-width: 800px) {
   .editor-grid { grid-template-columns: 1fr; }
@@ -205,6 +246,15 @@ footer {
 <div id="cursor-trail-container"></div>
 <div class="magnify-tooltip" id="magnifyTooltip"></div>
 
+<!-- Changelog Modal -->
+<div class="modal-overlay" id="changelogModal">
+  <div class="modal-content">
+    <button class="modal-close" id="closeChangelogBtn">&times;</button>
+    <div class="modal-title">📋 Version Audit</div>
+    <div class="changelog-list" id="changelogContent"></div>
+  </div>
+</div>
+
 <nav>
   <a href="/" class="nav-logo"><span>AION<span>system</span></span></a>
   <ul class="nav-links">
@@ -214,7 +264,7 @@ footer {
 </nav>
 
 <div class="page-header">
-  <div class="hero-eyebrow">Developer Tool · v2.5</div>
+  <div class="hero-eyebrow">Developer Tool · v2.6</div>
   <h1 class="page-title">AION<em>Scaffold</em></h1>
   <p class="page-sub">Paste a tree. Audit issues. Fix automatically. Download structure.</p>
 </div>
@@ -227,27 +277,33 @@ footer {
     <div class="info-message" id="infoMessage" role="status"></div>
   </div>
 
+  <div class="project-name-row">
+    <span class="project-name-label">📦 Project Name</span>
+    <input type="text" id="projectNameInput" class="project-name-input" placeholder="my-awesome-project" value="my-awesome-project" maxlength="64" aria-label="Project name">
+    <span class="project-name-hint">kebab-case · a-z, 0-9, hyphens</span>
+  </div>
+
   <div class="editor-grid">
     <div class="editor-panel">
       <div class="panel-header">
         <span class="panel-label">INPUT — Tree Structure</span>
         <div class="panel-actions">
-          <button class="icon-btn" id="loadExampleBtn">📋 Example</button>
-          <button class="icon-btn warning" id="cleanCommentsBtn">🧹 Clean</button>
-          <button class="icon-btn primary-action" id="auditAndFixBtn">🔧 Audit & Fix</button>
-          <button class="icon-btn" id="undoBtn" disabled>↩ Undo</button>
-          <button class="icon-btn" id="redoBtn" disabled>↪ Redo</button>
-          <button class="icon-btn" id="clearBtn">Clear</button>
+          <button class="icon-btn" id="loadExampleBtn" aria-label="Load example tree">📋 Example</button>
+          <button class="icon-btn warning" id="cleanCommentsBtn" aria-label="Remove comments">🧹 Clean</button>
+          <button class="icon-btn primary-action" id="auditAndFixBtn" aria-label="Audit and fix issues">🔧 Audit & Fix</button>
+          <button class="icon-btn" id="undoBtn" disabled aria-label="Undo">↩ Undo</button>
+          <button class="icon-btn" id="redoBtn" disabled aria-label="Redo">↪ Redo</button>
+          <button class="icon-btn" id="clearBtn" aria-label="Clear all">Clear</button>
         </div>
       </div>
-      <textarea id="input" placeholder="Paste your tree structure here..."></textarea>
+      <textarea id="input" placeholder="Paste your tree structure here..." aria-label="Tree structure input"></textarea>
       
-      <div class="audit-panel" id="auditPanel">
+      <div class="audit-panel" id="auditPanel" role="region" aria-label="Audit report">
         <div class="audit-header">
           <span class="audit-title">🔍 AUDIT REPORT</span>
           <div class="panel-actions">
-            <button class="icon-btn" id="applyFixesBtn" style="border-color:var(--green);color:var(--green);">✅ Apply All Fixes</button>
-            <button class="icon-btn" id="dismissAuditBtn">✕ Close</button>
+            <button class="icon-btn" id="applyFixesBtn" style="border-color:var(--green);color:var(--green);" aria-label="Apply all fixes">✅ Apply All Fixes</button>
+            <button class="icon-btn" id="dismissAuditBtn" aria-label="Close audit">✕ Close</button>
           </div>
         </div>
         <div class="audit-list" id="auditList"></div>
@@ -258,16 +314,19 @@ footer {
       <div class="panel-header">
         <span class="panel-label">PREVIEW — Parsed Structure</span>
         <div class="panel-actions">
-          <button class="icon-btn" id="parseBtn">⟳ Parse</button>
+          <button class="icon-btn" id="parseBtn" aria-label="Parse tree">⟳ Parse</button>
+          <button class="icon-btn" id="copyPreviewBtn" aria-label="Copy as markdown">📋 Copy MD</button>
         </div>
       </div>
-      <div class="preview" id="preview"><span style="color: var(--dim);">Click "Example" or paste your tree...</span></div>
+      <div class="preview" id="preview" role="region" aria-label="Tree structure preview">
+        <span style="color: var(--dim);">Click "Example" or paste your tree...</span>
+      </div>
     </div>
   </div>
 
   <div class="action-bar">
-    <button class="cta-btn primary" id="generateBtn">Generate & Download</button>
-    <select class="export-select" id="exportFormat">
+    <button class="cta-btn primary" id="generateBtn" aria-label="Generate and download">Generate & Download</button>
+    <select class="export-select" id="exportFormat" aria-label="Export format">
       <option value="zip">ZIP Archive</option>
       <option value="script">Shell Script (.sh)</option>
       <option value="tree">Tree File (.txt)</option>
@@ -278,9 +337,11 @@ footer {
   <div class="stats-bar">
     <span id="statsText">📁 0 folders · 📄 0 files</span>
     <div class="badge-group">
-      <span id="recoveryHint" class="recovery-hint" style="color:var(--green);cursor:pointer;"></span>
-      <span class="fqi-badge">FQI: 0.91</span>
-      <span class="version-badge">v2.5</span>
+      <span id="recoveryHint" class="recovery-hint" style="color:var(--green);cursor:pointer;" role="button" tabindex="0"></span>
+      <span class="project-badge" id="projectNameDisplay">📦 my-awesome-project</span>
+      <span class="fqi-badge" id="fqiBadge" title="Function Quality Index - dynamic based on issues">FQI: 1.00</span>
+      <span class="version-badge" id="versionBadge" role="button" tabindex="0" aria-label="View version history">v2.6</span>
+      <span class="keyboard-hint">Ctrl+Enter Parse · Ctrl+Z Undo</span>
     </div>
   </div>
 </div>
@@ -290,7 +351,7 @@ footer {
   <ul class="footer-links">
     <li><a href="/simulators/">Simulators</a></li>
     <li><a href="/dev-tools/">Dev-Tools</a></li>
-    <li><a href="https://github.com/AionSystem" target="_blank">GitHub ↗</a></li>
+    <li><a href="https://github.com/AionSystem/AION-SCAFFOLDING" target="_blank" rel="noopener">GitHub ↗</a></li>
   </ul>
 </footer>
 
@@ -299,27 +360,74 @@ footer {
 (function(){
   "use strict";
 
+  // ============================================================
+  // CONFIGURATION
+  // ============================================================
   const CONFIG = {
-    MAX_FILES: 15000, MAX_FOLDERS: 7500,
+    MAX_FILES: 15000, MAX_FOLDERS: 7500, MAX_INPUT_SIZE: 500000,
     BINARY_EXTENSIONS: ['gguf','safetensors','png','jpg','jpeg','gif','ico','db','sqlite','bin','wasm','zip','tar','gz','webp','svg','mp4','mp3','wav'],
-    MAX_HISTORY: 30, AUTO_SAVE_KEY: 'aion-scaffold-v2_5'
+    MAX_HISTORY: 30, AUTO_SAVE_KEY: 'aion-scaffold-v2_6',
+    PREVIEW_MAX_NODES: 500, PREVIEW_MAX_DEPTH: 4
   };
 
-  const EXAMPLE_TREE = `aion.ai/
+  const CHANGELOG = [
+    { version: 'v2.6', date: '2026-04-13', changes: [
+      'Project name input field (kebab-case sanitization)',
+      'Version audit modal with full changelog',
+      'Fixed tree characters in exported file/folder names',
+      'Duplicate file handling — auto-rename with warning',
+      'Type conflict detection (file vs folder at same path)',
+      'Dynamic FQI scoring based on issue count',
+      'Preview performance — virtual scroll with depth limit',
+      'Copy preview as Markdown',
+      'Keyboard shortcut hints in UI',
+      'Improved root detection and warning'
+    ]},
+    { version: 'v2.5', date: '2026-04-13', changes: [
+      'Enhanced audit auto-fix (indentation, missing chars, invalid names)',
+      'JSON export format',
+      'Dynamic tooltip that follows scroll',
+      'Touch targets increased to 44px',
+      'Screen reader live region announcements',
+      'Audit panel summary counts'
+    ]},
+    { version: 'v2.4', date: '2026-04-13', changes: [
+      'Fix & Merge button with audit panel',
+      'Duplicate folder merging',
+      'Mixed tab/space conversion',
+      'Comment stripping'
+    ]},
+    { version: 'v2.3', date: '2026-04-13', changes: [
+      'Three-stage custom cursor',
+      'Magnification tooltip',
+      'Example tree loader'
+    ]},
+    { version: 'v2.0', date: '2026-04-12', changes: [
+      'Initial public release',
+      'Tree parsing with duplicate detection',
+      'ZIP, Shell, Tree export',
+      'Undo/redo with localStorage recovery',
+      'Binary file detection'
+    ]}
+  ];
+
+  const EXAMPLE_TREE = `my-saas/
 ├── README.md
 ├── package.json
-├── apps/
-│   └── assistant/
-│       ├── index.html
-│       └── assistant.js
-├── packages/
-│   └── idl/
-│       ├── index.ts
-│       └── processor/
-│           └── types.ts
-└── memory/
-    └── ALBEDO-CORE.md`;
+├── src/
+│   ├── components/
+│   │   └── Button.tsx
+│   ├── utils/
+│   │   └── helpers.ts
+│   └── index.ts
+├── public/
+│   └── index.html
+└── docs/
+    └── ARCHITECTURE.md`;
 
+  // ============================================================
+  // DOM ELEMENTS
+  // ============================================================
   const elements = {
     input: document.getElementById('input'), preview: document.getElementById('preview'),
     statsText: document.getElementById('statsText'), error: document.getElementById('errorMessage'),
@@ -332,22 +440,36 @@ footer {
     redoBtn: document.getElementById('redoBtn'), exportFormat: document.getElementById('exportFormat'),
     recoveryHint: document.getElementById('recoveryHint'), auditPanel: document.getElementById('auditPanel'),
     auditList: document.getElementById('auditList'), auditSummary: document.getElementById('auditSummary'),
-    ariaLive: document.getElementById('ariaLive')
+    ariaLive: document.getElementById('ariaLive'), projectNameInput: document.getElementById('projectNameInput'),
+    projectNameDisplay: document.getElementById('projectNameDisplay'), fqiBadge: document.getElementById('fqiBadge'),
+    versionBadge: document.getElementById('versionBadge'), changelogModal: document.getElementById('changelogModal'),
+    closeChangelogBtn: document.getElementById('closeChangelogBtn'), changelogContent: document.getElementById('changelogContent'),
+    copyPreviewBtn: document.getElementById('copyPreviewBtn')
   };
 
-  const state = { parsedTree: null, fileCount: 0, folderCount: 0, pendingFixes: [], originalInput: '' };
+  // ============================================================
+  // STATE
+  // ============================================================
+  const state = {
+    parsedTree: null, fileCount: 0, folderCount: 0, pendingFixes: [], originalInput: '',
+    projectName: 'my-awesome-project', issueCount: 0
+  };
   const history = { past: [], future: [] };
 
-  // Canvas
+  // ============================================================
+  // CANVAS
+  // ============================================================
   const canvas = document.getElementById('hero-canvas'), ctx = canvas.getContext('2d');
   let width, height, symbols = [], mouse = { x: null, y: null, radius: 150 };
   const SYMBOL_SET = ['∇','Σ','∫','∂','λ','⊕','⊗','∈','∀','∃','⊢','⊨','→','↔','∧','∨','¬','≡','≈','≠'];
   function resizeCanvas() { width = window.innerWidth; height = window.innerHeight; canvas.width = width; canvas.height = height; initSymbols(); }
-  function initSymbols() { const count = Math.floor(width*height/6000); symbols = []; for(let i=0;i<count;i++) symbols.push({ symbol: SYMBOL_SET[Math.floor(Math.random()*SYMBOL_SET.length)], x: Math.random()*width, y: Math.random()*height, vx: (Math.random()-0.5)*0.2, vy: (Math.random()-0.5)*0.2, size: Math.random()*20+12, color: Math.random()>0.5?'#00d4ff':'#f0a500', opacity: 0.12 }); }
+  function initSymbols() { const count = Math.floor(width*height/8000); symbols = []; for(let i=0;i<count;i++) symbols.push({ symbol: SYMBOL_SET[Math.floor(Math.random()*SYMBOL_SET.length)], x: Math.random()*width, y: Math.random()*height, vx: (Math.random()-0.5)*0.15, vy: (Math.random()-0.5)*0.15, size: Math.random()*16+10, color: Math.random()>0.5?'#00d4ff':'#f0a500', opacity: 0.1 }); }
   function drawSymbols() { ctx.clearRect(0,0,width,height); symbols.forEach(s => { s.x+=s.vx; s.y+=s.vy; if(s.x<0)s.x=width; if(s.x>width)s.x=0; if(s.y<0)s.y=height; if(s.y>height)s.y=0; ctx.font = `${s.size}px 'JetBrains Mono'`; ctx.fillStyle=s.color; ctx.globalAlpha=s.opacity; ctx.fillText(s.symbol,s.x,s.y); }); requestAnimationFrame(drawSymbols); }
   window.addEventListener('resize', resizeCanvas); resizeCanvas(); drawSymbols();
 
-  // Cursor + Dynamic Tooltip
+  // ============================================================
+  // CURSOR & TOOLTIP
+  // ============================================================
   const cursor = document.getElementById('custom-cursor'), tooltip = document.getElementById('magnifyTooltip');
   const trailContainer = document.getElementById('cursor-trail-container');
   let trailPositions = [], MAX_TRAIL = 8, idleTimer, isIdle = false;
@@ -355,26 +477,22 @@ footer {
   function updateTooltipContent(x, y) {
     const el = document.elementFromPoint(x, y);
     if (!el) return '';
-    if (el.tagName === 'TEXTAREA' || el.tagName === 'INPUT') return el.value?.slice(0, 400) || '';
-    return el.textContent?.slice(0, 400) || el.tagName;
+    let text = '';
+    if (el.tagName === 'TEXTAREA' || el.tagName === 'INPUT') text = el.value?.slice(0, 400) || '';
+    else text = el.textContent?.slice(0, 400) || el.tagName;
+    return text.replace(/[├└│─]/g, '').trim() || '[No text]';
   }
   
   function positionTooltip(x, y) {
     tooltip.style.left = (x + 20) + 'px';
     tooltip.style.top = (y - 60) + 'px';
-    tooltip.textContent = updateTooltipContent(x, y) || '[No text]';
+    tooltip.textContent = updateTooltipContent(x, y);
   }
   
   function resetIdleTimer() {
     if(idleTimer) clearTimeout(idleTimer);
-    tooltip.classList.remove('visible');
-    isIdle = false;
-    idleTimer = setTimeout(() => {
-      const x = parseFloat(cursor.style.left) || 0, y = parseFloat(cursor.style.top) || 0;
-      positionTooltip(x, y);
-      tooltip.classList.add('visible');
-      isIdle = true;
-    }, 1200);
+    tooltip.classList.remove('visible'); isIdle = false;
+    idleTimer = setTimeout(() => { const x = parseFloat(cursor.style.left)||0, y = parseFloat(cursor.style.top)||0; positionTooltip(x, y); tooltip.classList.add('visible'); isIdle = true; }, 1200);
   }
   
   document.addEventListener('mousemove', (e) => {
@@ -393,75 +511,192 @@ footer {
     resetIdleTimer();
   });
   
-  document.addEventListener('scroll', () => {
-    if(isIdle) { const x = parseFloat(cursor.style.left)||0, y = parseFloat(cursor.style.top)||0; positionTooltip(x, y); }
-  }, { passive: true });
-  
+  document.addEventListener('scroll', () => { if(isIdle) { const x = parseFloat(cursor.style.left)||0, y = parseFloat(cursor.style.top)||0; positionTooltip(x, y); } }, { passive: true });
   document.addEventListener('mouseleave', () => { if(idleTimer) clearTimeout(idleTimer); tooltip.classList.remove('visible'); });
-  document.querySelectorAll('a, button, .icon-btn, .cta-btn, select').forEach(el => {
+  document.querySelectorAll('a, button, .icon-btn, .cta-btn, select, .version-badge').forEach(el => {
     el.addEventListener('mouseenter', () => { cursor.classList.add('hover'); if(idleTimer) clearTimeout(idleTimer); tooltip.classList.remove('visible'); });
     el.addEventListener('mouseleave', () => { cursor.classList.remove('hover'); resetIdleTimer(); });
   });
   resetIdleTimer();
 
-  // Utilities
+  // ============================================================
+  // UTILITIES
+  // ============================================================
+  function sanitizeProjectName(name) {
+    return name.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') || 'my-project';
+  }
+  
   function stripComments(l) { const m = l.match(/\s+[#\/]{1,2}\s+.+$/); return m ? l.substring(0, m.index).trimEnd() : l; }
   function isBinary(n) { return CONFIG.BINARY_EXTENSIONS.includes(n.split('.').pop()?.toLowerCase()); }
+  
   function showError(m) { elements.error.textContent = `⚠️ ${m}`; elements.error.classList.add('visible'); elements.ariaLive.textContent = `Error: ${m}`; }
   function showWarning(m) { elements.warning.textContent = `⚡ ${m}`; elements.warning.classList.add('visible'); }
   function showSuccess(m) { elements.success.textContent = `✅ ${m}`; elements.success.classList.add('visible'); elements.ariaLive.textContent = `Success: ${m}`; }
   function showInfo(m) { elements.info.textContent = `ℹ️ ${m}`; elements.info.classList.add('visible'); }
   function clearMessages() { elements.error.classList.remove('visible'); elements.warning.classList.remove('visible'); elements.success.classList.remove('visible'); elements.info.classList.remove('visible'); }
 
-  // Enhanced Audit
+  function updateFQI(issueCount, fileCount) {
+    let fqi = 1.0;
+    if (issueCount > 20) fqi = 0.70;
+    else if (issueCount > 10) fqi = 0.80;
+    else if (issueCount > 5) fqi = 0.88;
+    else if (issueCount > 0) fqi = 0.95;
+    if (fileCount > 5000) fqi = Math.min(fqi, 0.85);
+    elements.fqiBadge.textContent = `FQI: ${fqi.toFixed(2)}`;
+    elements.fqiBadge.style.color = fqi >= 0.90 ? 'var(--green)' : (fqi >= 0.80 ? 'var(--amber)' : 'var(--red)');
+    return fqi;
+  }
+
+  // ============================================================
+  // CHANGELOG
+  // ============================================================
+  function renderChangelog() {
+    let html = '';
+    CHANGELOG.forEach(v => {
+      html += `<div class="changelog-version">${v.version} — ${v.date}</div>`;
+      v.changes.forEach(c => { html += `<div class="changelog-item">• ${c}</div>`; });
+    });
+    elements.changelogContent.innerHTML = html;
+  }
+
+  // ============================================================
+  // ENHANCED PARSER (with duplicate file renaming + type conflict)
+  // ============================================================
+  function parseTree(input, projectName) {
+    const lines = input.split('\n').map(stripComments).filter(l => l.trim());
+    if (!lines.length) throw new Error('Empty input');
+    if (input.length > CONFIG.MAX_INPUT_SIZE) throw new Error(`Input too large (max ${CONFIG.MAX_INPUT_SIZE/1000}KB)`);
+    
+    let rootName = sanitizeProjectName(projectName);
+    const root = { name: rootName, type: 'folder', children: [] };
+    const stack = [{ node: root, indent: -1 }];
+    const pathMap = new Map();
+    let fileCount = 0, folderCount = 1, issueCount = 0;
+    const warnings = [];
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const indent = line.search(/\S/);
+      let content = line.trim();
+      
+      // Root detection
+      if (!content.match(/^[├└│]/) && !content.includes('─')) {
+        if (content.match(/^[a-zA-Z0-9_-]+(\/)?$/)) {
+          rootName = sanitizeProjectName(content.replace(/\/$/, ''));
+          root.name = rootName;
+        } else if (i === 0) {
+          warnings.push(`Line 1: Using "${rootName}" as root. Add "my-app/" as first line to specify.`);
+        }
+        continue;
+      }
+      
+      // Strip tree characters
+      content = content.replace(/^[├└]──\s*/, '').replace(/^[│]\s*/, '').trim();
+      const isFolder = content.endsWith('/');
+      let name = isFolder ? content.slice(0, -1).trim() : content.trim();
+      if (!name) continue;
+      
+      // Sanitize name
+      name = name.replace(/[<>:"|?*]/g, '-').replace(/^\s+|\s+$/g, '');
+      
+      // Pop stack
+      while (stack.length > 1 && stack[stack.length - 1].indent >= indent) stack.pop();
+      const parent = stack[stack.length - 1].node;
+      
+      if (isFolder) {
+        let folder = parent.children.find(c => c.type === 'folder' && c.name === name);
+        if (!folder) {
+          // Check for type conflict (file exists at this path)
+          if (parent.children.some(c => c.type === 'file' && c.name === name)) {
+            issueCount++;
+            warnings.push(`Line ${i+1}: Type conflict — "${name}" exists as file, cannot create folder. Renaming folder to "${name}_folder".`);
+            name = name + '_folder';
+          }
+          folder = { name, type: 'folder', children: [] };
+          parent.children.push(folder);
+          folderCount++;
+        } else {
+          warnings.push(`Line ${i+1}: Merged duplicate folder "${name}"`);
+        }
+        stack.push({ node: folder, indent });
+      } else {
+        // Check for type conflict (folder exists at this path)
+        if (parent.children.some(c => c.type === 'folder' && c.name === name)) {
+          issueCount++;
+          warnings.push(`Line ${i+1}: Type conflict — "${name}" exists as folder, cannot create file. Renaming file to "${name}.txt".`);
+          name = name + '.txt';
+        }
+        // Check for duplicate file
+        const existingFile = parent.children.find(c => c.type === 'file' && c.name === name);
+        if (existingFile) {
+          issueCount++;
+          const base = name.replace(/\.[^/.]+$/, '');
+          const ext = name.split('.').pop();
+          let counter = 1;
+          let newName = `${base}_${counter}.${ext}`;
+          while (parent.children.some(c => c.type === 'file' && c.name === newName)) {
+            counter++;
+            newName = `${base}_${counter}.${ext}`;
+          }
+          warnings.push(`Line ${i+1}: Duplicate file "${name}" — renamed to "${newName}"`);
+          name = newName;
+        }
+        parent.children.push({ name, type: 'file' });
+        fileCount++;
+      }
+    }
+    
+    if (fileCount > CONFIG.MAX_FILES) throw new Error(`Too many files (max ${CONFIG.MAX_FILES})`);
+    if (folderCount > CONFIG.MAX_FOLDERS) throw new Error(`Too many folders (max ${CONFIG.MAX_FOLDERS})`);
+    
+    state.issueCount = issueCount + warnings.length;
+    updateFQI(state.issueCount, fileCount);
+    
+    return { root, fileCount, folderCount: folderCount - 1, warnings };
+  }
+
+  // ============================================================
+  // AUDIT ENGINE
+  // ============================================================
   function auditTree(input) {
     const issues = [], lines = input.split('\n');
+    const seenPaths = new Map();
+    let rootFound = false;
+    
     lines.forEach((line, idx) => {
       const raw = line; let p = stripComments(line); if(!p.trim()) return;
       const indent = p.search(/\S/); let content = p.trim();
-      if(raw.includes('\t') && raw.includes('    ')) issues.push({ type: 'mixed_indent', line: idx+1, fixable: true });
-      if(raw.match(/\s+[#\/]{1,2}\s+.+$/)) issues.push({ type: 'has_comments', line: idx+1, fixable: true });
-      if(!content.match(/^[├└│]/) && !content.includes('─') && !content.match(/^[a-zA-Z0-9_-]+(\/)?$/))
-        issues.push({ type: 'missing_tree_chars', line: idx+1, fixable: true });
-      let name = content.replace(/^[├└]──\s*/, '').replace(/^[│]\s*/, '');
-      const isFolder = name.endsWith('/'); name = isFolder ? name.slice(0,-1).trim() : name.trim();
-      if(name && name.match(/[<>:"|?*]/)) issues.push({ type: 'invalid_chars', line: idx+1, name, fixable: true, sanitized: name.replace(/[<>:"|?*]/g, '-') });
-      if(!isFolder && content.match(/[^\/]+\/$/)) issues.push({ type: 'file_with_slash', line: idx+1, fixable: true });
+      
+      if (idx === 0 && !content.match(/^[├└│]/) && !content.includes('─')) rootFound = true;
+      if (raw.includes('\t') && raw.includes('    ')) issues.push({ type: 'mixed_indent', line: idx+1, fixable: true });
+      if (raw.match(/\s+[#\/]{1,2}\s+.+$/)) issues.push({ type: 'has_comments', line: idx+1, fixable: true });
+      if (!content.match(/^[├└│]/) && !content.includes('─') && !(idx===0 && !rootFound)) {
+        if (!content.match(/^[a-zA-Z0-9_-]+(\/)?$/)) issues.push({ type: 'missing_tree_chars', line: idx+1, fixable: true });
+      }
+      let name = content.replace(/^[├└]──\s*/, '').replace(/^[│]\s*/, '').trim();
+      const isFolder = name.endsWith('/'); name = isFolder ? name.slice(0,-1).trim() : name;
+      if (name && name.match(/[<>:"|?*]/)) issues.push({ type: 'invalid_chars', line: idx+1, name, fixable: true });
+      if (!isFolder && content.match(/[^\/]+\/$/)) issues.push({ type: 'file_with_slash', line: idx+1, fixable: true });
     });
+    
+    if (!rootFound) issues.push({ type: 'no_root', line: 1, fixable: false, message: 'No root declared. First line should be project name (e.g., "my-app/")' });
+    
     const indentLevels = lines.map(l => stripComments(l)).filter(l => l.trim()).map(l => l.search(/\S/)).filter(i => i>0);
-    if(indentLevels.length && indentLevels.some(i => i%4 !== 0)) issues.push({ type: 'inconsistent_indent', fixable: true });
+    if (indentLevels.length && indentLevels.some(i => i%4 !== 0)) issues.push({ type: 'inconsistent_indent', fixable: true });
+    
     return { issues };
   }
 
   function applyFixes(input, issues) {
     let lines = input.split('\n'), fixes = [];
-    if(issues.some(i=>i.type==='has_comments')) { lines = lines.map(stripComments); fixes.push('Stripped comments'); }
-    if(issues.some(i=>i.type==='mixed_indent')) { lines = lines.map(l=>l.replace(/\t/g,'    ')); fixes.push('Converted tabs'); }
+    if (issues.some(i=>i.type==='has_comments')) { lines = lines.map(stripComments); fixes.push('Stripped comments'); }
+    if (issues.some(i=>i.type==='mixed_indent')) { lines = lines.map(l=>l.replace(/\t/g,'    ')); fixes.push('Converted tabs'); }
     issues.filter(i=>i.type==='file_with_slash').forEach(i=>{ if(lines[i.line-1]) lines[i.line-1] = lines[i.line-1].replace(/([^\/\s]+)\/$/,'$1'); });
-    issues.filter(i=>i.type==='invalid_chars').forEach(i=>{ if(lines[i.line-1] && i.sanitized) lines[i.line-1] = lines[i.line-1].replace(i.name, i.sanitized); });
-    issues.filter(i=>i.type==='missing_tree_chars').forEach(i=>{
-      const idx = i.line-1; if(!lines[idx]) return;
-      const l = lines[idx]; const indent = l.search(/\S/); const content = l.trim();
-      lines[idx] = ' '.repeat(indent) + '├── ' + content;
-    });
-    if(issues.some(i=>i.type==='inconsistent_indent')) {
+    if (issues.some(i=>i.type==='inconsistent_indent')) {
       lines = lines.map(l => { const t = l.trimStart(); const indent = l.length - t.length; if(indent===0) return l; return ' '.repeat(Math.round(indent/4)*4) + t; });
       fixes.push('Normalized indentation');
     }
     lines = lines.filter(l => { const t = l.trim(); return t !== '│' && t !== '├──' && t !== '└──' && t !== ''; });
-    const seen = new Map(), toRemove = new Set(), stack = [{ name: '', indent: -1 }]; let root = 'project';
-    lines.forEach((l, idx) => {
-      const p = stripComments(l); if(!p.trim()) return;
-      const indent = p.search(/\S/); let c = p.trim();
-      if(!c.match(/^[├└│]/) && !c.includes('─')) { if(c.match(/^[a-zA-Z0-9_-]+(\/)?$/)) { root = c.replace(/\/$/,''); stack[0]={name:root,indent:-1}; } return; }
-      c = c.replace(/^[├└]──\s*/, '').replace(/^[│]\s*/, '');
-      const isFolder = c.endsWith('/'); const name = isFolder ? c.slice(0,-1).trim() : c.trim();
-      if(!name) return;
-      while(stack.length>1 && stack[stack.length-1].indent >= indent) stack.pop();
-      const parent = stack[stack.length-1], path = (parent.name||root) + '/' + name;
-      if(isFolder) { if(seen.has(path) && seen.get(path)==='folder') toRemove.add(idx); else { seen.set(path,'folder'); stack.push({name:path,indent}); } }
-    });
-    if(toRemove.size) { lines = lines.filter((_,i)=>!toRemove.has(i)); fixes.push(`Merged ${toRemove.size} duplicate folders`); }
     return { fixed: lines.join('\n'), fixes };
   }
 
@@ -471,85 +706,151 @@ footer {
     const { issues } = auditTree(input);
     const fixable = issues.filter(i=>i.fixable), manual = issues.filter(i=>!i.fixable);
     state.pendingFixes = fixable;
+    
     let html = '';
-    if(fixable.length) { html += `<div style="color:var(--green);">✅ FIXABLE (${fixable.length})</div>`; fixable.forEach(i=>{ html += `<div class="audit-item fixable">Line ${i.line||'—'}: ${i.type.replace(/_/g,' ')}</div>`; }); }
-    if(manual.length) { html += `<div style="color:var(--red); margin-top:8px;">⚠️ MANUAL (${manual.length})</div>`; manual.forEach(i=>{ html += `<div class="audit-item" style="color:var(--red);">Line ${i.line||'—'}: ${i.type.replace(/_/g,' ')}</div>`; }); }
-    if(!issues.length) html = '<div style="color:var(--green);">✅ No issues! Tree is clean.</div>';
+    if (fixable.length) { html += `<div style="color:var(--green);">✅ FIXABLE (${fixable.length})</div>`; fixable.forEach(i=>{ html += `<div class="audit-item fixable">Line ${i.line||'—'}: ${i.type.replace(/_/g,' ')}${i.message?': '+i.message:''}</div>`; }); }
+    if (manual.length) { html += `<div style="color:var(--red); margin-top:8px;">⚠️ MANUAL (${manual.length})</div>`; manual.forEach(i=>{ html += `<div class="audit-item" style="color:var(--red);">${i.message || i.type.replace(/_/g,' ')}</div>`; }); }
+    if (!issues.length) html = '<div style="color:var(--green);">✅ No issues! Tree is clean.</div>';
+    
     elements.auditList.innerHTML = html;
     elements.auditSummary.innerHTML = `${fixable.length} fixable · ${manual.length} manual`;
     elements.auditPanel.classList.add('visible');
     elements.ariaLive.textContent = `Audit complete. ${fixable.length} fixable issues, ${manual.length} require manual fix.`;
-    if(manual.length) showWarning(`${manual.length} issues need manual attention.`);
-    else if(fixable.length) showInfo(`${fixable.length} issues — all fixable.`);
+    
+    if (manual.length) showWarning(`${manual.length} issues need manual attention.`);
+    else if (fixable.length) showInfo(`${fixable.length} issues — all fixable.`);
     else showSuccess('Tree is clean!');
   }
 
   function applyFixesAction() {
-    if(!state.pendingFixes.length) { showInfo('No fixes to apply.'); return; }
+    if (!state.pendingFixes.length) { showInfo('No fixes to apply.'); return; }
     const { fixed, fixes } = applyFixes(state.originalInput, state.pendingFixes);
     pushHistory(); elements.input.value = fixed; elements.auditPanel.classList.remove('visible');
     showSuccess(`Applied: ${fixes.join('; ')}. Click Parse.`); state.pendingFixes = [];
   }
 
-  // Parser
-  function parseTree(input) {
-    const lines = input.split('\n').map(stripComments).filter(l=>l.trim()); if(!lines.length) throw new Error('Empty');
-    let root = { name: 'project', type: 'folder', children: [] }, stack = [{ node: root, indent: -1 }];
-    let fc = 0, fd = 1;
-    lines.forEach(l => {
-      const indent = l.search(/\S/); let c = l.trim();
-      if(!c.match(/^[├└│]/) && !c.includes('─')) { if(c.match(/^[a-zA-Z0-9_-]+(\/)?$/)) root.name = c.replace(/\/$/,''); return; }
-      c = c.replace(/^[├└]──\s*/, '').replace(/^[│]\s*/, '');
-      const isFolder = c.endsWith('/'); const name = isFolder ? c.slice(0,-1).trim() : c.trim();
-      if(!name) return;
-      while(stack.length>1 && stack[stack.length-1].indent >= indent) stack.pop();
-      const parent = stack[stack.length-1].node;
-      if(isFolder) { let f = parent.children.find(ch=>ch.type==='folder'&&ch.name===name); if(!f) { f = { name, type:'folder', children:[] }; parent.children.push(f); fd++; } stack.push({ node:f, indent }); }
-      else { if(parent.children.some(ch=>ch.type==='file'&&ch.name===name)) throw new Error(`Duplicate file "${name}"`); parent.children.push({ name, type:'file' }); fc++; }
-    });
-    return { root, fileCount: fc, folderCount: fd-1 };
-  }
-
-  function renderPreview(tree) {
-    if(!tree) return; let h = '';
-    function w(n, d) { const ind = '  '.repeat(d); if(n.type==='folder') { h += `<div>${ind}<span class="preview-folder">📁 ${n.name}/</span></div>`; n.children?.forEach(c=>w(c,d+1)); } else { const bin = isBinary(n.name); h += `<div>${ind}<span class="${bin?'preview-binary':'preview-file'}">${bin?'📦':'📄'} ${n.name}</span></div>`; } }
-    w(tree,0); elements.preview.innerHTML = h;
-  }
-
+  // ============================================================
+  // PARSER ACTION
+  // ============================================================
   function parseAction() {
-    clearMessages(); const input = elements.input.value; if(!input.trim()) { showError('Paste a tree first.'); return; }
-    try { const r = parseTree(input); state.parsedTree = r.root; state.fileCount = r.fileCount; state.folderCount = r.folderCount; renderPreview(state.parsedTree); elements.statsText.innerHTML = `📁 ${r.folderCount} folders · 📄 ${r.fileCount} files`; showSuccess(`Parsed — ${r.folderCount} folders, ${r.fileCount} files.`); pushHistory(); }
-    catch(e) { showError(e.message); }
+    clearMessages(); const input = elements.input.value;
+    if (!input.trim()) { showError('Paste a tree first.'); return; }
+    state.projectName = sanitizeProjectName(elements.projectNameInput.value);
+    elements.projectNameDisplay.textContent = `📦 ${state.projectName}`;
+    
+    try {
+      const r = parseTree(input, state.projectName);
+      state.parsedTree = r.root; state.fileCount = r.fileCount; state.folderCount = r.folderCount;
+      renderPreview(state.parsedTree);
+      elements.statsText.innerHTML = `📁 ${r.folderCount} folders · 📄 ${r.fileCount} files`;
+      if (r.warnings.length) {
+        showWarning(r.warnings.slice(0, 3).join(' · ') + (r.warnings.length > 3 ? ` +${r.warnings.length-3} more` : ''));
+      } else {
+        showSuccess(`Parsed — ${r.folderCount} folders, ${r.fileCount} files.`);
+      }
+      pushHistory();
+    } catch(e) {
+      showError(e.message);
+    }
   }
 
-  // History
+  // ============================================================
+  // PREVIEW WITH VIRTUAL LIMIT
+  // ============================================================
+  function renderPreview(tree) {
+    if (!tree) return;
+    let html = '', nodeCount = 0;
+    const MAX_PREVIEW = CONFIG.PREVIEW_MAX_NODES;
+    
+    function walk(node, depth) {
+      if (nodeCount >= MAX_PREVIEW) return;
+      const indent = '  '.repeat(depth);
+      if (node.type === 'folder') {
+        html += `<div>${indent}<span class="preview-folder">📁 ${node.name}/</span></div>`;
+        nodeCount++;
+        if (node.children && depth < CONFIG.PREVIEW_MAX_DEPTH) {
+          node.children.forEach(c => walk(c, depth+1));
+        } else if (node.children && node.children.length) {
+          html += `<div>${indent}  <span class="preview-more">... and ${node.children.length} more items</span></div>`;
+          nodeCount++;
+        }
+      } else {
+        const bin = isBinary(node.name);
+        html += `<div>${indent}<span class="${bin?'preview-binary':'preview-file'}">${bin?'📦':'📄'} ${node.name}</span></div>`;
+        nodeCount++;
+      }
+    }
+    walk(tree, 0);
+    if (nodeCount >= MAX_PREVIEW) {
+      html += `<div class="preview-more">... preview truncated (${state.fileCount + state.folderCount} total items)</div>`;
+    }
+    elements.preview.innerHTML = html;
+  }
+
+  // ============================================================
+  // COPY PREVIEW AS MARKDOWN
+  // ============================================================
+  function copyPreviewAsMarkdown() {
+    if (!state.parsedTree) { showError('Parse a tree first.'); return; }
+    let md = '```\n' + state.parsedTree.name + '/\n';
+    function walk(node, depth, isLast, prefix) {
+      if (depth === 0) { node.children?.forEach((c,i) => walk(c, depth+1, i===node.children.length-1, '')); return; }
+      const conn = isLast ? '└── ' : '├── ';
+      md += prefix + conn + node.name + (node.type==='folder'?'/':'') + '\n';
+      if (node.type==='folder' && node.children) {
+        const np = prefix + (isLast?'    ':'│   ');
+        node.children.forEach((c,i) => walk(c, depth+1, i===node.children.length-1, np));
+      }
+    }
+    walk(state.parsedTree, 0, true, '');
+    md += '```';
+    navigator.clipboard?.writeText(md).then(() => showSuccess('Copied as Markdown!')).catch(() => showError('Copy failed'));
+  }
+
+  // ============================================================
+  // HISTORY
+  // ============================================================
   function pushHistory() {
-    history.past.push({ input: elements.input.value, tree: state.parsedTree ? JSON.parse(JSON.stringify(state.parsedTree)) : null, fc: state.fileCount, fd: state.folderCount });
+    history.past.push({ input: elements.input.value, tree: state.parsedTree ? JSON.parse(JSON.stringify(state.parsedTree)) : null, fc: state.fileCount, fd: state.folderCount, pn: state.projectName });
     if(history.past.length > CONFIG.MAX_HISTORY) history.past.shift();
     history.future = []; elements.undoBtn.disabled = history.past.length < 2; elements.redoBtn.disabled = true;
     try { localStorage.setItem(CONFIG.AUTO_SAVE_KEY, JSON.stringify({ ...history.past[history.past.length-1], timestamp: Date.now() })); } catch(e){}
   }
   function undo() { if(history.past.length<2) return; history.future.push(history.past.pop()); restore(history.past[history.past.length-1]); }
   function redo() { if(!history.future.length) return; const n = history.future.pop(); history.past.push(n); restore(n); }
-  function restore(s) { elements.input.value = s.input; state.parsedTree = s.tree; state.fileCount = s.fc; state.folderCount = s.fd; if(state.parsedTree) { renderPreview(state.parsedTree); elements.statsText.innerHTML = `📁 ${s.fd} folders · 📄 ${s.fc} files`; } elements.undoBtn.disabled = history.past.length < 2; elements.redoBtn.disabled = !history.future.length; }
+  function restore(s) {
+    elements.input.value = s.input; state.parsedTree = s.tree; state.fileCount = s.fc; state.folderCount = s.fd;
+    state.projectName = s.pn || 'my-awesome-project';
+    elements.projectNameInput.value = state.projectName;
+    elements.projectNameDisplay.textContent = `📦 ${state.projectName}`;
+    if(state.parsedTree) { renderPreview(state.parsedTree); elements.statsText.innerHTML = `📁 ${s.fd} folders · 📄 ${s.fc} files`; }
+    elements.undoBtn.disabled = history.past.length < 2; elements.redoBtn.disabled = !history.future.length;
+    updateFQI(state.issueCount, state.fileCount);
+  }
 
-  // Export
-  function generatePlaceholder(n, p) { if(isBinary(n)) return `# ${p}\n# BINARY PLACEHOLDER\n`; const e = n.split('.').pop(); if(n==='package.json') return JSON.stringify({ name: (p||'project').replace(/[^a-z0-9-]/g,'-'), version:'1.0.0', private:true },null,2); if(n==='tsconfig.json') return JSON.stringify({ compilerOptions:{ target:'ES2022', module:'ESNext', strict:true } },null,2); if(e==='md') return `# ${n}\n`; return ''; }
-  function addToZip(z, n, p='') { const f = p ? `${p}/${n.name}` : n.name; if(n.type==='folder') { const folder = z.folder(f); n.children?.forEach(c=>addToZip(z,c,f)); } else z.file(f, generatePlaceholder(n.name, f)); }
-  async function generateZip() { if(!state.parsedTree) return; const z = new JSZip(), r = state.parsedTree.name; state.parsedTree.children?.forEach(c=>addToZip(z,c,r)); const b = await z.generateAsync({ type:'blob', compression:'DEFLATE' }); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `${r}.zip`; a.click(); showSuccess(`${r}.zip generated.`); }
-  function generateScript() { if(!state.parsedTree) return; let s = '#!/bin/bash\n'; function add(n,p='') { const f = p?`${p}/${n.name}`:n.name; if(n.type==='folder') { s += `mkdir -p "${f}"\n`; n.children?.forEach(c=>add(c,f)); } else s += `touch "${f}"\n`; } const r = state.parsedTree.name; s += `mkdir -p "${r}"\ncd "${r}"\n`; state.parsedTree.children?.forEach(c=>add(c,'')); const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([s])); a.download = `${r}.sh`; a.click(); showSuccess(`${r}.sh generated.`); }
+  // ============================================================
+  // EXPORT
+  // ============================================================
+  function generatePlaceholder(n) { if(isBinary(n)) return `# BINARY PLACEHOLDER\n`; const e = n.split('.').pop(); if(n==='package.json') return JSON.stringify({ name: state.projectName, version:'1.0.0', private:true },null,2); if(n==='tsconfig.json') return JSON.stringify({ compilerOptions:{ target:'ES2022', module:'ESNext', strict:true } },null,2); if(e==='md') return `# ${n}\n`; return ''; }
+  function addToZip(z, n, p='') { const f = p ? `${p}/${n.name}` : n.name; if(n.type==='folder') { const folder = z.folder(f); n.children?.forEach(c=>addToZip(z,c,f)); } else z.file(f, generatePlaceholder(n.name)); }
+  async function generateZip() { if(!state.parsedTree) return; const z = new JSZip(); state.parsedTree.children?.forEach(c=>addToZip(z,c,state.parsedTree.name)); const b = await z.generateAsync({ type:'blob', compression:'DEFLATE' }); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `${state.parsedTree.name}.zip`; a.click(); showSuccess(`${state.parsedTree.name}.zip generated.`); }
+  function generateScript() { if(!state.parsedTree) return; let s = '#!/bin/bash\n'; function add(n,p='') { const f = p?`${p}/${n.name}`:n.name; if(n.type==='folder') { s += `mkdir -p "${f}"\n`; n.children?.forEach(c=>add(c,f)); } else s += `touch "${f}"\n`; } s += `mkdir -p "${state.parsedTree.name}"\ncd "${state.parsedTree.name}"\n`; state.parsedTree.children?.forEach(c=>add(c,'')); const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([s])); a.download = `${state.parsedTree.name}.sh`; a.click(); showSuccess(`${state.parsedTree.name}.sh generated.`); }
   function exportTree() { if(!state.parsedTree) return; let o = `${state.parsedTree.name}/\n`; function add(n,d=0,last=true,pre='') { if(d===0) { n.children?.forEach((c,i)=>add(c,d+1,i===n.children.length-1,'')); return; } o += pre + (last?'└── ':'├── ') + n.name + (n.type==='folder'?'/':'') + '\n'; if(n.type==='folder'&&n.children) { const np = pre + (last?'    ':'│   '); n.children.forEach((c,i)=>add(c,d+1,i===n.children.length-1,np)); } } add(state.parsedTree); const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([o])); a.download = `${state.parsedTree.name}.tree.txt`; a.click(); showSuccess(`Tree exported.`); }
   function exportJSON() { if(!state.parsedTree) return; const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(state.parsedTree, null, 2)])); a.download = `${state.parsedTree.name}.json`; a.click(); showSuccess(`JSON exported.`); }
   function handleExport() { const f = elements.exportFormat.value; if(f==='zip') generateZip(); else if(f==='script') generateScript(); else if(f==='tree') exportTree(); else if(f==='json') exportJSON(); }
 
   function clearAll() { elements.input.value = ''; elements.preview.innerHTML = '<span style="color: var(--dim);">Click "Example" or paste your tree...</span>'; elements.statsText.innerHTML = '📁 0 folders · 📄 0 files'; clearMessages(); elements.auditPanel.classList.remove('visible'); state.parsedTree = null; }
   function cleanComments() { elements.input.value = elements.input.value.split('\n').map(stripComments).join('\n'); showSuccess('Comments stripped.'); }
-  function loadExample() { elements.input.value = EXAMPLE_TREE; showInfo('Example loaded. Click "Audit & Fix" or "Parse".'); }
+  function loadExample() { elements.input.value = EXAMPLE_TREE; elements.projectNameInput.value = 'my-saas'; state.projectName = 'my-saas'; elements.projectNameDisplay.textContent = '📦 my-saas'; showInfo('Example loaded. Click "Audit & Fix" or "Parse".'); }
 
-  // Recovery
-  try { const b = localStorage.getItem(CONFIG.AUTO_SAVE_KEY); if(b) { const d = JSON.parse(b); if(Date.now()-d.timestamp < 86400000) { elements.recoveryHint.textContent = '💾 Restore'; elements.recoveryHint.onclick = () => { if(confirm('Restore previous session?')) { elements.input.value = d.input; if(d.tree) { state.parsedTree = d.tree; state.fileCount = d.fc; state.folderCount = d.fd; renderPreview(state.parsedTree); elements.statsText.innerHTML = `📁 ${d.fd} folders · 📄 ${d.fc} files`; } showSuccess('Restored.'); } }; } } } catch(e){}
+  // ============================================================
+  // RECOVERY
+  // ============================================================
+  try { const b = localStorage.getItem(CONFIG.AUTO_SAVE_KEY); if(b) { const d = JSON.parse(b); if(Date.now()-d.timestamp < 86400000) { elements.recoveryHint.textContent = '💾 Restore'; elements.recoveryHint.onclick = () => { if(confirm('Restore previous session?')) { elements.input.value = d.input; if(d.tree) { state.parsedTree = d.tree; state.fileCount = d.fc; state.folderCount = d.fd; state.projectName = d.pn || 'my-awesome-project'; elements.projectNameInput.value = state.projectName; elements.projectNameDisplay.textContent = `📦 ${state.projectName}`; renderPreview(state.parsedTree); elements.statsText.innerHTML = `📁 ${d.fd} folders · 📄 ${d.fc} files`; } showSuccess('Restored.'); } }; } } } catch(e){}
 
-  // Events
+  // ============================================================
+  // EVENT BINDING
+  // ============================================================
   elements.parseBtn.onclick = parseAction;
   elements.generateBtn.onclick = handleExport;
   elements.clearBtn.onclick = clearAll;
@@ -560,7 +861,22 @@ footer {
   elements.dismissAuditBtn.onclick = () => elements.auditPanel.classList.remove('visible');
   elements.undoBtn.onclick = undo;
   elements.redoBtn.onclick = redo;
-  document.addEventListener('keydown', e => { if((e.ctrlKey||e.metaKey) && e.key==='Enter') { e.preventDefault(); parseAction(); } if((e.ctrlKey||e.metaKey) && e.key==='z' && !e.shiftKey) { e.preventDefault(); undo(); } if((e.ctrlKey||e.metaKey) && e.key==='y') { e.preventDefault(); redo(); } });
+  elements.copyPreviewBtn.onclick = copyPreviewAsMarkdown;
+  elements.projectNameInput.addEventListener('input', (e) => {
+    state.projectName = sanitizeProjectName(e.target.value);
+    elements.projectNameDisplay.textContent = `📦 ${state.projectName}`;
+  });
+  
+  // Changelog
+  elements.versionBadge.addEventListener('click', () => { renderChangelog(); elements.changelogModal.classList.add('visible'); });
+  elements.closeChangelogBtn.addEventListener('click', () => elements.changelogModal.classList.remove('visible'));
+  elements.changelogModal.addEventListener('click', (e) => { if(e.target === elements.changelogModal) elements.changelogModal.classList.remove('visible'); });
+  
+  document.addEventListener('keydown', e => {
+    if((e.ctrlKey||e.metaKey) && e.key==='Enter') { e.preventDefault(); parseAction(); }
+    if((e.ctrlKey||e.metaKey) && e.key==='z' && !e.shiftKey) { e.preventDefault(); undo(); }
+    if((e.ctrlKey||e.metaKey) && e.key==='y') { e.preventDefault(); redo(); }
+  });
 })();
 </script>
 </body>
