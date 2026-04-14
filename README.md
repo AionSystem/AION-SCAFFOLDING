@@ -107,9 +107,10 @@ node cli.js --input tree.txt --dry-run
 ```
 AION-SCAFFOLDING/
 ├── scaffold/
-│   ├── index.html          ← Full web tool (single-file, self-contained)
 │   ├── cli.js              ← CLI tool (Node.js, zero dependencies)
 │   └── README.md           ← Tool documentation
+├── LICENSE
+├── index.html               ← Full web tool (single-file, self-contained)       
 └── README.md               ← This file
 ```
 
