@@ -11,20 +11,22 @@
 [![DOI](https://zenodo.org/badge/1209765535.svg)](https://doi.org/10.5281/zenodo.19560136)
 
 <!-- TOOL METRICS -->
-[![FQI](https://img.shields.io/badge/FQI-0.88-4ade80?style=flat-square)](#the-parser-engine)
-[![Parser](https://img.shields.io/badge/Parser-Indent--Stack-00d4ff?style=flat-square)](#the-parser-engine)
-[![Audit Types](https://img.shields.io/badge/Audit_Types-6-f0a500?style=flat-square)](#audit-issue-registry)
-[![Max Files](https://img.shields.io/badge/Max_Files-10%2C000-4527A0?style=flat-square)](#configuration)
+[![FQI](https://img.shields.io/badge/FQI-0.91-4ade80?style=flat-square)](#the-parser-engine)
+[![Parser](https://img.shields.io/badge/Parser-Shared_Module-00d4ff?style=flat-square)](#shared-parser-architecture)
+[![Audit Types](https://img.shields.io/badge/Audit_Types-8-f0a500?style=flat-square)](#audit-issue-registry)
+[![Max Files](https://img.shields.io/badge/Max_Files-15%2C000-4527A0?style=flat-square)](#configuration)
 
 <!-- TECH STACK -->
 [![Made with HTML](https://img.shields.io/badge/Made%20with-HTML-red)](#)
 [![Made with JavaScript](https://img.shields.io/badge/Made%20with-JavaScript-yellow)](#)
 [![CLI: Node.js](https://img.shields.io/badge/CLI-Node.js_(zero_deps)-brightgreen)](#cli-tool)
 [![JSZip](https://img.shields.io/badge/ZIP-JSZip_3.10.1-4285F4?style=flat-square)](#export-system)
-[![Feedback Welcome](https://img.shields.io/badge/Feedback-welcome-brightgreen)](https://github.com/AionSystem/AION-SCAFFOLDING/issues/new/choose)
+[![Free Forever](https://img.shields.io/badge/Free-Forever-4ade80?style=flat-square)](#license)
+[![No Tracking](https://img.shields.io/badge/No-Tracking-00d4ff?style=flat-square)](#architects-note-on-ai-use)
 
 > **Intelligent tree-to-filesystem scaffolding.**
 > Paste a tree structure. Audit issues. Fix automatically. Download a complete folder hierarchy.
+> **Free forever · No tracking · Shared parser for perfect consistency.**
 
 ---
 
@@ -35,6 +37,7 @@
 - [Repository Structure](#repository-structure)
 - [Audit Issue Registry](#audit-issue-registry)
 - [Overview](#overview)
+- [Shared Parser Architecture](#shared-parser-architecture)
 - [The Parser Engine](#the-parser-engine)
 - [Audit & Fix System](#audit--fix-system)
 - [Export System](#export-system)
@@ -54,9 +57,11 @@
 
 This tool was designed, architected, and directed by Sheldon K. Salmon. AI tools (including large language models) were used as instruments in development — the same way a carpenter uses a saw.
 
-The intellectual core — the indent-stack parser, the six-type audit engine, the graduated folder-merge logic, the FQI metric, the three-stage cursor system, the shared-parser architecture between web and CLI, and the overall design vision — is wholly human-originated.
+The intellectual core — the indent-stack parser, the eight-type audit engine, the graduated folder-merge logic, duplicate file auto-rename, type conflict detection, the FQI metric, the three-stage cursor system, the **shared-parser architecture** between web and CLI, and the overall design vision — is wholly human-originated.
 
 The parser does not guess. It does not generate. It reads a declared structure and builds it exactly — or tells you precisely why it cannot.
+
+**Free forever. No tracking. No data leaves your machine.**
 
 [![↑ Back to Table of Contents](https://img.shields.io/badge/↑_Back_to-Table_of_Contents-374151?style=flat-square)](#table-of-contents)
 
@@ -66,14 +71,14 @@ The parser does not guess. It does not generate. It reads a declared structure a
 
 ### Web Tool
 
-No installation required. Runs entirely in your browser.
+No installation required. Runs entirely in your browser. **No tracking. No data leaves your machine.**
 
 Visit **[aionsystem.github.io/AION-SCAFFOLDING](https://aionsystem.github.io/AION-SCAFFOLDING)**
 
 1. Paste your tree structure into the input panel
-2. Click **Fix & Merge** to audit and repair issues automatically
+2. Click **Audit & Fix** to detect and repair issues automatically
 3. Click **Parse** to preview the resolved structure
-4. Select your export format (ZIP · Shell Script · Tree)
+4. Select your export format (ZIP · Shell Script · Tree · JSON)
 5. Click **Generate & Download**
 
 > **Auto-recovery:** The tool saves your session automatically. If you close the tab and return within 24 hours, a restore prompt appears in the stats bar.
@@ -81,14 +86,20 @@ Visit **[aionsystem.github.io/AION-SCAFFOLDING](https://aionsystem.github.io/AIO
 ### CLI Tool
 
 ```bash
-# From file
-node cli.js --input my-tree.txt --output ./my-project
+# From file with custom project name
+node cli.js --input my-tree.txt --output ./my-project --name my-app
 
 # From pipe (AI output)
 cat tree.txt | node cli.js --pipe --output ./my-project
 
-# Export as shell script
+# Export as shell script (with placeholders)
 node cli.js --input tree.txt --format script > scaffold.sh
+
+# Audit only (no file generation)
+node cli.js --input tree.txt --audit
+
+# Generate empty files only
+node cli.js --input tree.txt --no-placeholders
 
 # Validate only (dry run)
 node cli.js --input tree.txt --dry-run
@@ -102,19 +113,21 @@ node cli.js --input tree.txt --dry-run
 
 ## Repository Structure
 
-> Key files: `scaffold/index.html` (full web tool · single-file · self-contained) · `scaffold/cli.js` (CLI · zero dependencies) · `scaffold/README.md` (tool documentation)
+> Key files: `parser.js` (shared module — single source of truth) · `scaffold/index.html` (full web tool) · `scaffold/cli.js` (CLI · zero dependencies)
 
 ```
 AION-SCAFFOLDING/
 ├── scaffold/
-│   ├── cli.js              ← CLI tool (Node.js, zero dependencies)
-│   └── README.md           ← Tool documentation
+│   ├── parser.js            ← Shared parser module (single source of truth)
+│   ├── cli.js               ← CLI tool (Node.js, zero dependencies)
+│   ├── index.html           ← Full web tool (imports parser.js)
+│   └── README.md            ← Tool documentation
 ├── LICENSE
-├── index.html               ← Full web tool (single-file, self-contained)       
-└── README.md               ← This file
+├── package.json             ← npm publishing
+└── README.md                ← This file
 ```
 
-> The web tool and CLI tool share identical parser logic. When the parser is updated, both surfaces stay in sync. This is a deliberate architectural constraint — one behavioral source, two delivery surfaces.
+> **Shared Parser Constraint:** The web tool and CLI tool share identical parser logic via `parser.js`. When the parser is updated, both surfaces stay in sync automatically. This is a deliberate architectural constraint — one behavioral source, two delivery surfaces.
 
 [![↑ Back to Table of Contents](https://img.shields.io/badge/↑_Back_to-Table_of_Contents-374151?style=flat-square)](#table-of-contents)
 
@@ -122,20 +135,22 @@ AION-SCAFFOLDING/
 
 ## Audit Issue Registry
 
-The audit engine detects and classifies six issue types before any filesystem is built.
+The audit engine detects and classifies eight issue types before any filesystem is built.
 
 | ID | Issue Type | Fixable | Description |
 |----|-----------|---------|-------------|
 | 01 | `mixed_indent` | ✅ Auto | Mixed tabs and spaces — converted to 4-space standard |
 | 02 | `has_comments` | ✅ Auto | Inline `#` or `//` comments present — stripped before parsing |
-| 03 | `invalid_chars` | ❌ Manual | Filesystem-illegal characters (`< > : " \| ? *`) — must be corrected by hand |
-| 04 | `duplicate_folder` | ✅ Auto | Same folder path declared more than once — children merged into one |
-| 05 | `duplicate_file` | ❌ Manual | Same file path declared more than once — cannot be resolved automatically |
-| 06 | `type_conflict` | ❌ Manual | Same path declared as both file and folder — cannot be resolved automatically |
+| 03 | `invalid_chars` | ✅ Auto | Filesystem-illegal characters (`< > : " \| ? *`) — sanitized to hyphens |
+| 04 | `file_with_slash` | ✅ Auto | File declared with trailing `/` — slash removed |
+| 05 | `missing_tree_chars` | ✅ Auto | Line missing `├──` or `└──` — inferred from indentation |
+| 06 | `inconsistent_indent` | ✅ Auto | Indentation not multiple of 4 — normalized |
+| 07 | `duplicate_file` | ⚠️ Auto-Rename | Same file path declared more than once — auto-renamed with warning |
+| 08 | `type_conflict` | ⚠️ Auto-Rename | Same path declared as both file and folder — auto-renamed with warning |
 
-> Issues 01, 02, and 04 are repaired automatically by "Apply Fixes." Issues 03, 05, and 06 require manual correction before the tree can be parsed.
+> Issues 01–06 are repaired automatically by "Apply Fixes." Issues 07–08 are auto-renamed with clear warnings but require architect acknowledgment.
 
-> After any fix pass, the audit panel updates. Auto-fixable issues are highlighted in amber. Unfixable issues display in plain text with a manual-fix prompt.
+> After any fix pass, the audit panel updates. Auto-fixable issues are highlighted in amber. Auto-renamed issues display in red with rename details.
 
 [![↑ Back to Table of Contents](https://img.shields.io/badge/↑_Back_to-Table_of_Contents-374151?style=flat-square)](#table-of-contents)
 
@@ -152,10 +167,44 @@ The difference is **epistemic direction.** Most tools generate then validate. AI
 **How it works — three steps:**
 
 1. Paste any ASCII tree structure. Comments are stripped automatically. Tabs are normalized. The source doesn't matter — AI output, hand-typed, documentation copy.
-2. The audit engine classifies all issues as auto-fixable or manual. One click applies all automatic repairs. The preview panel shows the resolved structure before any file is touched.
-3. Choose your output format and download. ZIP archives preserve full folder hierarchy with placeholder content. Shell scripts are portable and version-controllable. Tree exports are clean and ready for re-use.
+2. The audit engine classifies all issues as auto-fixable or auto-renamed. One click applies all automatic repairs. The preview panel shows the resolved structure before any file is touched.
+3. Choose your output format and download. ZIP archives preserve full folder hierarchy with placeholder content. Shell scripts are portable and version-controllable. Tree exports are clean and ready for re-use. JSON export for programmatic consumption.
 
-- [![Live Tool](https://img.shields.io/badge/Live_Tool-AION_Scaffold-4ade80?style=flat-square&logo=github&logoColor=white)](https://aionsystem.github.io/AION-SCAFFOLDING)
+[![Live Tool](https://img.shields.io/badge/Live_Tool-AION_Scaffold-4ade80?style=flat-square&logo=github&logoColor=white)](https://aionsystem.github.io/AION-SCAFFOLDING)
+
+[![↑ Back to Table of Contents](https://img.shields.io/badge/↑_Back_to-Table_of_Contents-374151?style=flat-square)](#table-of-contents)
+
+---
+
+## Shared Parser Architecture
+
+The parser is not duplicated between web and CLI. Both surfaces import the same `parser.js` module.
+
+```
+parser.js  (single source of truth)
+    ├── index.html  (web tool — imports via <script src="parser.js">)
+    └── cli.js      (CLI tool — const parser = require('./parser.js'))
+```
+
+### Shared Functions
+
+| Function | Description |
+|----------|-------------|
+| `stripComments(line)` | Removes inline `#` and `//` comments |
+| `sanitizeProjectName(name)` | Converts to kebab-case |
+| `sanitizeName(name)` | Removes filesystem-illegal characters |
+| `auditTree(input, projectName)` | Full pre-parse audit with issue classification |
+| `applyFixes(input, issues)` | Applies auto-fixes to raw input |
+| `parseTree(input, projectName)` | Core indent-stack parser |
+| `calculateFQI(manual, fixable, fileCount)` | Computes Format Quality Index |
+| `generatePlaceholder(name, path, include, projectName)` | Contextual placeholder content |
+| `exportAsJSON(tree)` | JSON serialization |
+| `exportAsTree(tree)` | Clean ASCII tree output |
+| `exportAsShellScript(tree, include, projectName)` | Portable shell script |
+
+### Architectural Constraint
+
+A fix to the parser applies to both surfaces simultaneously. A test against the web tool validates the CLI. This is a deliberate architectural constraint — one behavioral source, two delivery surfaces.
 
 [![↑ Back to Table of Contents](https://img.shields.io/badge/↑_Back_to-Table_of_Contents-374151?style=flat-square)](#table-of-contents)
 
@@ -174,7 +223,9 @@ The parser is the core of AION Scaffold — an indent-stack traversal engine tha
 | 3 | Indent Stack | Each line pushed/popped by indentation depth — parent-child relationships resolved |
 | 4 | Node Classification | Trailing `/` → folder node · All others → file node |
 | 5 | Duplicate Merge | Duplicate folder names at same path are merged rather than rejected |
-| 6 | Constraint Check | `MAX_FILES` and `MAX_FOLDERS` enforced before graph is returned |
+| 6 | Duplicate File Rename | Duplicate files auto-renamed (`file.txt` → `file_1.txt`) |
+| 7 | Type Conflict Resolution | Path declared as both file and folder → auto-renamed with warning |
+| 8 | Constraint Check | `MAX_FILES`, `MAX_FOLDERS`, and `MAX_DEPTH` enforced |
 
 ### Node Types
 
@@ -186,19 +237,19 @@ The parser is the core of AION Scaffold — an indent-stack traversal engine tha
 
 ### FQI — Format Quality Index
 
-Every parsed tree carries an FQI score [0.0–1.0] measuring structural cleanliness before fixes are applied.
+Every parsed tree carries an FQI score [0.0–1.0] measuring structural cleanliness. Auto-rename issues penalize FQI more heavily than auto-fix issues.
 
 | FQI Range | Status | Meaning |
 |-----------|--------|---------|
-| 0.85–1.00 | Clean | No auto-fix required — parse directly |
-| 0.60–0.84 | Acceptable | Minor issues present — fix recommended before export |
-| < 0.60 | Degraded | Structural issues detected — fix before parse |
+| 0.90–1.00 | Clean | No auto-rename issues — parse directly |
+| 0.80–0.89 | Acceptable | Minor auto-rename issues present — review recommended |
+| < 0.80 | Degraded | Multiple auto-rename issues — fix before parse |
 
-> Current deployment FQI baseline: **0.88** — representing a typical AI-generated tree with minor formatting inconsistencies.
+> Current deployment FQI baseline: **0.91** — representing a typical AI-generated tree with minor formatting inconsistencies.
 
 ### Placeholder Content Generation
 
-For ZIP exports, the parser generates contextually appropriate placeholder content per file type:
+For ZIP and shell script exports, the parser generates contextually appropriate placeholder content per file type:
 
 | File | Generated Content |
 |------|------------------|
@@ -225,20 +276,24 @@ RAW INPUT
 → Comment detection (# or //)
 → Indentation analysis (tab/space mixing)
 → Character validation (filesystem-illegal chars)
+→ Tree character inference (missing ├── or └──)
 → Path resolution (duplicate folders · duplicate files · type conflicts)
-→ Issue classification (fixable / manual)
+→ Issue classification (auto-fix / auto-rename)
 → Audit Report generated
-→ Architect reviews — applies fixes or corrects manually
+→ Architect reviews — applies fixes or acknowledges renames
 → FIXED INPUT → Parser
 ```
 
 ### Fix Application Order
 
-When "Apply Fixes" is clicked, the engine processes fixable issues in sequence:
+When "Apply Fixes" is clicked, the engine processes issues in sequence:
 
 1. **Comment strip** — applied first, cleans lines before further analysis
 2. **Tab conversion** — all `\t` characters replaced with 4 spaces
-3. **Duplicate folder merge** — duplicate declaration lines removed; children preserved in the surviving declaration
+3. **File slash removal** — trailing `/` removed from file declarations
+4. **Character sanitization** — illegal chars replaced with `-`
+5. **Tree character inference** — missing `├──` added based on indentation
+6. **Indentation normalization** — rounded to nearest 4-space increment
 
 > The original input is preserved in history before any fix is applied. `Ctrl+Z` restores the pre-fix state.
 
@@ -246,9 +301,9 @@ When "Apply Fixes" is clicked, the engine processes fixable issues in sequence:
 
 | Setting | Value |
 |---------|-------|
-| Maximum snapshots | 20 |
-| Scope | Per-session (in-memory) |
-| Triggers | Parse · Fix · Load Example · Clean Comments |
+| Maximum snapshots | 30 |
+| Scope | Per-session (in-memory + localStorage) |
+| Triggers | Parse · Fix · Load Example · Clean Comments · Undo/Redo |
 | Keyboard | `Ctrl+Z` undo · `Ctrl+Y` redo |
 
 [![↑ Back to Table of Contents](https://img.shields.io/badge/↑_Back_to-Table_of_Contents-374151?style=flat-square)](#table-of-contents)
@@ -257,15 +312,16 @@ When "Apply Fixes" is clicked, the engine processes fixable issues in sequence:
 
 ## Export System
 
-AION Scaffold produces three output formats. All three are generated client-side — no server required.
+AION Scaffold produces four output formats. All are generated client-side — no server required.
 
 ### Format Comparison
 
 | Format | Extension | Content | Best For |
 |--------|-----------|---------|---------|
 | ZIP Archive | `.zip` | Full folder hierarchy + placeholder files | Starting a project immediately |
-| Shell Script | `.sh` | `mkdir` + `touch` commands | Version-controllable setup · CI pipelines |
+| Shell Script | `.sh` | `mkdir` + `touch` + heredoc placeholders | Version-controllable setup · CI pipelines |
 | Tree File | `.txt` | Clean, comment-free ASCII tree | Documentation · re-use as parser input |
+| JSON | `.json` | Full node graph serialization | Programmatic consumption · tool integration |
 
 ### ZIP Export Detail
 
@@ -278,15 +334,19 @@ AION Scaffold produces three output formats. All three are generated client-side
 ### Shell Script Export
 
 ```bash
-#!/bin/bash
+#!/usr/bin/env bash
+set -e
 mkdir -p "project-name"
 cd "project-name"
 mkdir -p "src/components"
 touch "src/components/App.tsx"
+cat > "package.json" << 'EOF'
+{ "name": "project-name", "version": "1.0.0" }
+EOF
 # ...continues for all nodes
 ```
 
-> Shell scripts are portable — they run on any POSIX system and can be committed to version control to reproduce the project structure in any environment.
+> Shell scripts use heredoc (`<< 'EOF'`) for multi-line placeholder content — clean, reliable, and portable.
 
 [![↑ Back to Table of Contents](https://img.shields.io/badge/↑_Back_to-Table_of_Contents-374151?style=flat-square)](#table-of-contents)
 
@@ -298,29 +358,37 @@ Two surfaces. One parser.
 
 | Surface | Entry Point | Dependencies | Unique Capabilities |
 |---------|-------------|-------------|---------------------|
-| Web Tool | `scaffold/index.html` | JSZip (CDN) | Undo/Redo · Auto-save · ZIP export · Canvas UI · ARIA |
-| CLI Tool | `scaffold/cli.js` | None (Node.js built-ins only) | Dry run · Pipe input · CI integration |
+| Web Tool | `scaffold/index.html` | JSZip (CDN) | Undo/Redo · Auto-save · ZIP export · Canvas UI · ARIA · Changelog modal |
+| CLI Tool | `scaffold/cli.js` | None (Node.js built-ins only) | Dry run · Pipe input · CI integration · Colored output · `--audit` flag |
 
 ### Feature Matrix
 
 | Feature | Web | CLI |
 |---------|:---:|:---:|
 | Parse ASCII tree structures | ✅ | ✅ |
-| Audit & auto-fix issues | ✅ | ✅ |
+| Audit & auto-fix issues (8 types) | ✅ | ✅ |
 | Duplicate folder merging | ✅ | ✅ |
+| Duplicate file auto-rename | ✅ | ✅ |
+| Type conflict resolution | ✅ | ✅ |
 | Binary file detection | ✅ | ✅ |
+| Custom project name | ✅ | ✅ |
 | Undo / Redo | ✅ | ❌ |
 | Auto-save recovery | ✅ | ❌ |
 | ZIP export | ✅ | ❌ |
 | Shell script export | ✅ | ✅ |
 | Tree file export | ✅ | ✅ |
+| JSON export | ✅ | ✅ |
+| Clean tree download | ✅ | ❌ |
+| Copy preview as Markdown | ✅ | ❌ |
 | Dry run (validate only) | ❌ | ✅ |
 | Pipe input (`cat tree.txt \| cli.js`) | ❌ | ✅ |
+| `--audit` flag (audit only) | ❌ | ✅ |
+| `--no-placeholders` flag | ✅ (toggle) | ✅ |
+| `--verbose` flag | ❌ | ✅ |
+| Colored output | ❌ | ✅ |
 | Accessibility (ARIA) | ✅ | ❌ |
-
-### Shared Parser Constraint
-
-The parser logic is identical between web and CLI. When updating the parser, both files must be synced. This is a deliberate architectural constraint — a single behavioral source, two delivery surfaces. Testing the web tool validates the CLI parser.
+| Three-stage cursor | ✅ | ❌ |
+| Changelog modal | ✅ | ❌ |
 
 [![↑ Back to Table of Contents](https://img.shields.io/badge/↑_Back_to-Table_of_Contents-374151?style=flat-square)](#table-of-contents)
 
@@ -331,11 +399,13 @@ The parser logic is identical between web and CLI. When updating the parser, bot
 | Layer | Technology | Why |
 |-------|-----------|-----|
 | Web App Shell | Single-file HTML + Vanilla JS | Zero build step · self-contained · deployable anywhere |
+| Shared Parser | `parser.js` module | Single source of truth for web + CLI |
 | ZIP Generation | JSZip 3.10.1 (CDN) | Client-side compression · no server required |
 | Canvas Background | HTML5 Canvas API | 45-symbol math/logic field with mouse-repulsion physics |
 | Custom Cursor | CSS + JS (three-stage) | Ring → hover → idle magnify at 1.8s threshold |
-| Session Recovery | localStorage | 24-hour session backup · key `aion-scaffold-backup-v2_4` |
+| Session Recovery | localStorage | 24-hour session backup |
 | CLI Runtime | Node.js (built-ins only) | Zero npm dependencies · runs anywhere Node.js is installed |
+| CLI Colors | ANSI escape codes | Green/yellow/red/cyan — zero dependencies |
 | Typography | Share Tech Mono · Barlow Condensed · Crimson Pro · JetBrains Mono | Coherent with AionSystem design language |
 | Deployment | GitHub Pages | Static · no server · no configuration |
 | License | MIT | Unrestricted use |
@@ -353,11 +423,13 @@ For a developer who has an AI-generated tree structure and needs to materialize 
 - Paste any ASCII tree structure (AI output, hand-typed, documentation copy)
 - Inline comments stripped automatically (`#` and `//`)
 - Tabs normalized to 4-space standard
-- Duplicate folders merged rather than rejected
+- Duplicate folders merged, duplicate files auto-renamed
+- Type conflicts resolved with clear warnings
 - Preview panel shows resolved structure before any file is built
-- Undo/redo history (20 snapshots)
+- Undo/redo history (30 snapshots)
 - Session auto-saved to localStorage — restore within 24 hours
-- Three export formats: ZIP, Shell Script, Tree
+- Four export formats: ZIP, Shell Script, Tree, JSON
+- Copy preview as Markdown · Download clean tree
 
 ---
 
@@ -369,6 +441,9 @@ For a developer who wants to integrate tree-to-filesystem scaffolding into a bui
 # Scaffold directly from AI output
 llm "generate a React project tree" | node cli.js --pipe --output ./my-app
 
+# Audit only — see issues before building
+node cli.js --input tree.txt --audit
+
 # Validate before committing
 node cli.js --input project.tree.txt --dry-run
 
@@ -377,20 +452,23 @@ node cli.js --input tree.txt --format script > setup.sh
 ```
 
 - Zero npm dependencies — Node.js built-ins only
+- Shared parser with web tool — identical behavior
 - Pipe-compatible — works inline in shell pipelines
 - Dry-run mode — validates and reports without writing any files
-- Shell script output — portable, version-controllable, CI-safe
+- `--audit` flag — full pre-parse audit report with issue classification
+- Colored output — green/yellow/red/cyan for readability
+- Shell script output with heredoc — portable, version-controllable, CI-safe
 
 ---
 
 ### 🔧 Shared Parser — Single Behavioral Truth
 
-The parser is not duplicated between web and CLI. Both surfaces call the same traversal logic.
+The parser is not duplicated between web and CLI. Both surfaces import `parser.js`.
 
 The parser operates as a pure function:
 
 ```
-parseTree(input: string) → { root, fileCount, folderCount }
+parseTree(input: string, projectName: string) → { root, fileCount, folderCount, warnings }
 ```
 
 No side effects. No I/O. Fully testable in isolation. A fix to the parser applies to both surfaces simultaneously. A test against the web tool validates the CLI.
@@ -425,12 +503,14 @@ my-project/
 | Indentation | 4 spaces preferred · tabs auto-converted |
 | Comments | `#` or `//` after content are stripped automatically |
 | Binary files | Extensions in binary list receive placeholder warning — not built as real binaries |
+| Duplicate files | Auto-renamed (`file.txt` → `file_1.txt`) with warning |
+| Type conflicts | Auto-renamed (`src` file vs folder → `src.txt` or `src_folder`) with warning |
 
 ### Binary Extension List
 
-The following extensions are treated as binary and receive placeholder content in ZIP exports:
+The following extensions are treated as binary and receive placeholder content:
 
-`gguf` · `safetensors` · `png` · `jpg` · `jpeg` · `gif` · `ico` · `db` · `sqlite` · `bin` · `wasm` · `zip` · `tar` · `gz` · `webp` · `svg` · `mp4` · `mp3` · `wav`
+`gguf` · `safetensors` · `png` · `jpg` · `jpeg` · `gif` · `ico` · `webp` · `svg` · `db` · `sqlite` · `bin` · `wasm` · `zip` · `tar` · `gz` · `mp4` · `mp3` · `wav` · `ttf` · `woff` · `woff2` · `eot` · `pdf` · `doc` · `docx` · `xls` · `xlsx`
 
 [![↑ Back to Table of Contents](https://img.shields.io/badge/↑_Back_to-Table_of_Contents-374151?style=flat-square)](#table-of-contents)
 
@@ -438,20 +518,32 @@ The following extensions are treated as binary and receive placeholder content i
 
 ## Configuration
 
-Edit the `CONFIG` block at the top of `index.html` (web) or `cli.js` (CLI):
+Edit the `CONFIG` block in `parser.js` — affects both web and CLI simultaneously:
 
 ```javascript
 const CONFIG = {
-  MAX_FILES: 10000,           // Maximum files per scaffold
-  MAX_FOLDERS: 5000,          // Maximum folders per scaffold
-  MAX_HISTORY: 20,            // Undo/redo snapshot limit (web only)
-  IDLE_MAGNIFY_DELAY: 1800,   // Milliseconds before cursor enters magnify mode (web only)
-  AUTO_SAVE_KEY: 'aion-scaffold-backup-v2_4', // localStorage key (web only)
+  MAX_FILES: 15000,           // Maximum files per scaffold
+  MAX_FOLDERS: 7500,          // Maximum folders per scaffold
+  MAX_DEPTH: 100,             // Maximum nesting depth
+  MAX_INPUT_SIZE: 500000,     // Maximum input size (500KB)
   BINARY_EXTENSIONS: [        // Extensions treated as binary — placeholder content only
     'gguf', 'safetensors', 'png', 'jpg', 'jpeg', 'gif',
-    'ico', 'db', 'sqlite', 'bin', 'wasm', 'zip', 'tar',
-    'gz', 'webp', 'svg', 'mp4', 'mp3', 'wav'
+    'ico', 'webp', 'svg', 'db', 'sqlite', 'bin', 'wasm',
+    'zip', 'tar', 'gz', 'mp4', 'mp3', 'wav', 'ttf', 'woff',
+    'woff2', 'eot', 'pdf', 'doc', 'docx', 'xls', 'xlsx'
   ]
+};
+```
+
+Web-only configuration (in `index.html`):
+
+```javascript
+const WEB_CONFIG = {
+  MAX_HISTORY: 30,                          // Undo/redo snapshot limit
+  IDLE_MAGNIFY_DELAY: 1200,                 // Milliseconds before cursor magnify
+  AUTO_SAVE_KEY: 'aion-scaffold-v2_6_1',   // localStorage key
+  PREVIEW_MAX_NODES: 500,                   // Preview render limit
+  PREVIEW_MAX_DEPTH: 4                      // Preview depth limit
 };
 ```
 
@@ -499,15 +591,15 @@ chmod +x cli.js
 ./cli.js --input example.txt
 ```
 
-**Requirements:** Node.js (any modern version). No `npm install` required.
+> **Requirements:** Node.js (any modern version). No `npm install` required.
 
-### npm (Optional)
+### npm
 
 ```bash
-# Publish to npm (requires account)
-npm publish
+# Install globally
+npm install -g aion-scaffold
 
-# Users can then run:
+# Or run directly
 npx aion-scaffold --input tree.txt
 ```
 
@@ -521,7 +613,7 @@ The web tool deploys automatically via GitHub Pages. No configuration required �
 
 ## License
 
-AION Scaffold is released under the MIT License — unrestricted use for all contexts.
+AION Scaffold is released under the MIT License — unrestricted use for all contexts. Free forever. No tracking.
 
 | User Type | Status |
 |-----------|--------|
@@ -552,7 +644,8 @@ For questions: [aionsystem@outlook.com](mailto:aionsystem@outlook.com)
 
 This is a developer tool built on the AION Constitutional Stack. The parser reads exactly what you declare and builds it exactly — or tells you why it can't. No generation. No guessing. Epistemic direction from declaration to filesystem.
 
+**Free forever. No tracking. Shared parser for perfect consistency.**
+
 ---
 
-AION Scaffold v2.4 · FQI 0.88 · Parser: Indent-Stack · Audit Types: 6 · Export Formats: 3
-
+AION Scaffold v2.6.1 · FQI 0.91 · Parser: Shared Module · Audit Types: 8 · Export Formats: 4
