@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-<meta name="description" content="AION Scaffold — Tree Structure to Filesystem Generator. Paste a tree, download a complete folder structure.">
-<meta property="og:title" content="AION Scaffold — Tree to Filesystem Generator">
-<meta property="og:description" content="Generate complete project folder structures from tree diagrams. ZIP, shell script, or tree export.">
+<meta name="description" content="AION Scaffold — Intelligent Tree to Filesystem Generator. Audit, fix, and generate complete project structures.">
+<meta property="og:title" content="AION Scaffold — Intelligent Scaffolding Tool">
+<meta property="og:description" content="The most intelligent browser-based scaffolding tool. Zero install, audit & fix, undo/redo, binary detection.">
 <meta property="og:type" content="website">
-<title>AION Scaffold — Tree to Filesystem · AionSystem</title>
+<title>AION Scaffold v2.5 · AionSystem</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:ital,wght@0,300;0,400;0,600;0,700;0,900;1,300&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
@@ -19,9 +19,6 @@
   --panel:rgba(25, 35, 55, 0.5);
   --border:rgba(0, 212, 255, 0.15);
   --amber:#f0a500;
-  --amber-d:#b07800;
-  --amber-l:#ffc947;
-  --gold:#D4AF37;
   --text:#e0e8f0;
   --muted:#7a9aba;
   --dim:#3a5a7a;
@@ -31,562 +28,201 @@
   --purple:#a855f7;
   --mono:'Share Tech Mono',monospace;
   --sans:'Barlow Condensed',sans-serif;
-  --serif:'Crimson Pro',Georgia,serif;
   --jmono:'JetBrains Mono',monospace;
-  --ease:cubic-bezier(0.16,1,0.3,1);
-  --font-size-base: clamp(16px, 1vw + 8px, 20px);
-  --glow-amber: 0 0 5px #f0a500, 0 0 10px #f0a500, 0 0 20px rgba(240,165,0,0.5);
-  --glow-cyan: 0 0 5px #00d4ff, 0 0 10px #00d4ff, 0 0 20px rgba(0,212,255,0.4);
 }
 body {
   background: var(--bg);
   color: var(--text);
   font-family: var(--sans);
-  font-size: var(--font-size-base);
   line-height: 1.5;
   overflow-x: hidden;
   cursor: none;
 }
 body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background-image: 
-    linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
-  background-size: 48px 48px;
-  pointer-events: none;
-  z-index: 10;
+  content: ''; position: fixed; inset: 0;
+  background-image: linear-gradient(rgba(0,212,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(0,212,255,0.02) 1px, transparent 1px);
+  background-size: 48px 48px; pointer-events: none; z-index: 10;
 }
 body::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background: repeating-linear-gradient(0deg, 
-    rgba(0,0,0,0) 0px, 
-    rgba(0,212,255,0.04) 1px, 
-    rgba(0,0,0,0) 2px);
-  pointer-events: none;
-  z-index: 11;
-  opacity: 0.4;
-  animation: scan 8s linear infinite;
+  content: ''; position: fixed; inset: 0;
+  background: repeating-linear-gradient(0deg, transparent 0px, rgba(0,212,255,0.03) 1px, transparent 2px);
+  pointer-events: none; z-index: 11; opacity: 0.4; animation: scan 8s linear infinite;
 }
 @keyframes scan { 0% { transform: translateY(0); } 100% { transform: translateY(4px); } }
 
-/* Three-Stage Custom Cursor */
+/* Live Region for Screen Readers */
+.visually-hidden {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0,0,0,0); border: 0;
+}
+
+/* Cursor - Stage 1 */
 .custom-cursor {
-  width: 20px;
-  height: 20px;
-  border: 2px solid var(--cyan);
-  border-radius: 50%;
-  position: fixed;
-  pointer-events: none;
-  z-index: 9999;
-  mix-blend-mode: screen;
-  transition: all 0.15s ease;
-  transform: translate(-50%, -50%);
+  width: 20px; height: 20px; border: 2px solid var(--cyan); border-radius: 50%;
+  position: fixed; pointer-events: none; z-index: 9999; mix-blend-mode: screen;
+  transition: all 0.15s ease; transform: translate(-50%, -50%);
   box-shadow: 0 0 15px var(--cyan), 0 0 30px rgba(0,212,255,0.3);
 }
+/* Stage 2 - Hover */
 .custom-cursor.hover {
-  width: 36px;
-  height: 36px;
-  background: rgba(0,212,255,0.08);
-  border-color: var(--amber);
-  box-shadow: 0 0 25px var(--amber), 0 0 50px rgba(240,165,0,0.5);
+  width: 36px; height: 36px; background: rgba(0,212,255,0.08);
+  border-color: var(--amber); box-shadow: 0 0 25px var(--amber), 0 0 50px rgba(240,165,0,0.5);
 }
-.custom-cursor.magnify {
-  width: 320px;
-  height: 140px;
-  border-radius: 12px;
-  border-color: var(--red);
-  background: rgba(8,9,11,0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  box-shadow: 0 0 30px var(--red), 0 0 60px rgba(255,77,77,0.5);
-  overflow: hidden;
-  transition: width 0.3s ease, height 0.3s ease, border-radius 0.2s ease;
-}
-.magnify-content {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  padding: 16px;
-  color: var(--text);
-  font-family: var(--jmono);
-  font-size: 18px;
-  line-height: 1.5;
-  white-space: pre-wrap;
-  word-break: break-word;
-  opacity: 0;
-  transition: opacity 0.2s;
-  text-shadow: 0 0 2px rgba(0,0,0,0.8);
-}
-.custom-cursor.magnify .magnify-content {
-  opacity: 1;
+/* Stage 3 - Dynamic Magnify (removed - replaced with tooltip style) */
+.cursor-trail {
+  position: fixed; width: 6px; height: 6px; border-radius: 50%; background: var(--cyan);
+  pointer-events: none; z-index: 9998; opacity: 0.6; box-shadow: 0 0 10px var(--cyan);
 }
 
-.cursor-trail {
-  position: fixed;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--cyan);
-  pointer-events: none;
-  z-index: 9998;
-  opacity: 0.6;
-  box-shadow: 0 0 10px var(--cyan);
-  transition: opacity 0.3s ease, background 0.2s, box-shadow 0.2s;
+/* Dynamic Tooltip Loupe */
+.magnify-tooltip {
+  position: fixed; z-index: 10000; background: rgba(8,9,11,0.85); backdrop-filter: blur(12px);
+  border: 1px solid var(--red); border-radius: 12px; padding: 16px; max-width: 400px;
+  box-shadow: 0 0 30px var(--red); pointer-events: none; opacity: 0; transition: opacity 0.2s;
+  font-family: var(--jmono); font-size: 14px; line-height: 1.6; color: var(--text);
+  border-left: 4px solid var(--red); transform: translateY(-10px);
 }
-.cursor-trail.magnify-trail {
-  background: var(--red);
-  box-shadow: 0 0 15px var(--red);
-  opacity: 0.4;
-}
+.magnify-tooltip.visible { opacity: 1; transform: translateY(0); }
+.magnify-tooltip code { color: var(--cyan); background: rgba(0,212,255,0.1); padding: 2px 6px; border-radius: 4px; }
 
 nav {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 100;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 40px;
-  height: 56px;
-  background: rgba(8,9,11,0.7);
-  backdrop-filter: blur(16px);
-  border-bottom: 1px solid var(--border);
-  box-shadow: 0 0 30px rgba(0,212,255,0.05);
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; align-items: center;
+  justify-content: space-between; padding: 0 40px; height: 56px; background: rgba(8,9,11,0.7);
+  backdrop-filter: blur(16px); border-bottom: 1px solid var(--border);
 }
-.nav-logo { 
-  font-family: var(--mono); 
-  font-size: 13px; 
-  letter-spacing: 3px; 
-  color: var(--amber); 
-  text-transform: uppercase; 
-  text-decoration: none; 
-  display: flex; 
-  align-items: center; 
-  gap: 10px;
-  text-shadow: 0 0 5px var(--amber);
-}
-.nav-logo-img { 
-  width: 28px; 
-  height: 28px; 
-  border-radius: 50%; 
-  object-fit: cover; 
-  border: 1px solid var(--cyan); 
-  box-shadow: 0 0 10px var(--cyan); 
-}
+.nav-logo { font-family: var(--mono); font-size: 13px; letter-spacing: 3px; color: var(--amber); text-transform: uppercase; text-decoration: none; display: flex; align-items: center; gap: 10px; text-shadow: 0 0 5px var(--amber); }
 .nav-logo span { color: var(--muted); }
 .nav-links { display: flex; gap: 32px; list-style: none; }
-.nav-links a { 
-  font-family: var(--mono); 
-  font-size: 11px; 
-  letter-spacing: 2px; 
-  color: var(--text); 
-  text-decoration: none; 
-  text-transform: uppercase; 
-  border-bottom: 1px solid transparent; 
-  padding-bottom: 2px; 
-  transition: all 0.2s ease; 
-}
-.nav-links a:hover, .nav-links a.active { 
-  color: var(--cyan); 
-  border-bottom-color: var(--cyan); 
-  text-shadow: 0 0 8px var(--cyan); 
-}
-.nav-hamburger { display: none; }
-.mobile-nav { display: none; }
+.nav-links a { font-family: var(--mono); font-size: 11px; letter-spacing: 2px; color: var(--text); text-decoration: none; text-transform: uppercase; }
+.nav-links a:hover { color: var(--cyan); }
 
-#hero-canvas {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 0;
-  opacity: 0.5;
-  pointer-events: none;
-}
+#hero-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; opacity: 0.4; pointer-events: none; }
 
-.page-header {
-  position: relative;
-  z-index: 2;
-  padding: 100px 40px 40px;
-  max-width: 1400px;
-  margin: 0 auto;
-}
-.hero-eyebrow {
-  font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: 4px;
-  color: var(--amber);
-  text-transform: uppercase;
-  margin-bottom: 16px;
-  text-shadow: 0 0 5px var(--amber);
-}
-.hero-eyebrow::before {
-  content: '';
-  display: inline-block;
-  width: 24px;
-  height: 1px;
-  background: var(--cyan);
-  vertical-align: middle;
-  margin-right: 12px;
-  box-shadow: 0 0 8px var(--cyan);
-}
-.page-title {
-  font-family: var(--sans);
-  font-size: clamp(36px, 5vw, 64px);
-  font-weight: 900;
-  letter-spacing: -1px;
-  line-height: 0.95;
-  color: var(--text);
-  text-transform: uppercase;
-  margin-bottom: 16px;
-  text-shadow: 0 0 8px rgba(255,255,255,0.2);
-}
-.page-title em {
-  display: block;
-  color: var(--amber);
-  font-style: normal;
-  text-shadow: var(--glow-amber);
-}
-.page-sub {
-  font-family: var(--sans);
-  font-size: 18px;
-  color: var(--muted);
-  max-width: 600px;
-  margin-bottom: 32px;
-}
+.page-header { position: relative; z-index: 2; padding: 80px 40px 32px; max-width: 1400px; margin: 0 auto; }
+.hero-eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: 4px; color: var(--amber); text-transform: uppercase; margin-bottom: 12px; }
+.hero-eyebrow::before { content: ''; display: inline-block; width: 20px; height: 1px; background: var(--cyan); vertical-align: middle; margin-right: 10px; }
+.page-title { font-family: var(--sans); font-size: clamp(32px, 5vw, 56px); font-weight: 900; text-transform: uppercase; }
+.page-title em { display: block; color: var(--amber); font-style: normal; font-size: 0.7em; }
+.page-sub { font-family: var(--sans); font-size: 16px; color: var(--muted); max-width: 600px; }
 
-.tool-container {
-  position: relative;
-  z-index: 2;
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 0 40px 60px;
-}
-.editor-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 24px;
-  margin-bottom: 24px;
-}
-.editor-panel {
-  background: var(--surface);
-  backdrop-filter: blur(12px);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 20px;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.3), inset 0 0 30px rgba(0,212,255,0.03);
-}
-.panel-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-}
-.panel-label {
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 2px;
-  color: var(--cyan);
-  text-transform: uppercase;
-  text-shadow: 0 0 5px var(--cyan);
-}
-.panel-actions {
-  display: flex;
-  gap: 8px;
-}
+.tool-container { position: relative; z-index: 2; max-width: 1400px; margin: 0 auto; padding: 0 40px 60px; }
+.editor-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+.editor-panel { background: var(--surface); backdrop-filter: blur(12px); border: 1px solid var(--border); border-radius: 16px; padding: 20px; }
+.panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; }
+.panel-label { font-family: var(--mono); font-size: 10px; letter-spacing: 2px; color: var(--cyan); text-transform: uppercase; }
+.panel-actions { display: flex; gap: 6px; flex-wrap: wrap; }
 .icon-btn {
-  background: transparent;
-  border: 1px solid var(--dim);
-  color: var(--muted);
-  padding: 6px 10px;
-  border-radius: 4px;
-  font-family: var(--mono);
-  font-size: 10px;
-  cursor: pointer;
-  transition: all 0.2s;
-  text-transform: uppercase;
+  background: transparent; border: 1px solid var(--dim); color: var(--muted);
+  padding: 8px 12px; border-radius: 4px; font-family: var(--mono); font-size: 10px;
+  cursor: pointer; transition: all 0.2s; text-transform: uppercase;
+  min-height: 44px; /* Touch target */
 }
-.icon-btn:hover {
-  border-color: var(--cyan);
-  color: var(--cyan);
-  text-shadow: 0 0 5px var(--cyan);
-}
-.icon-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-.icon-btn.warning {
-  border-color: var(--amber);
-  color: var(--amber);
-}
-.icon-btn.primary-action {
-  border-color: var(--green);
-  color: var(--green);
-}
-.icon-btn.primary-action:hover {
-  background: rgba(74,222,128,0.1);
-  text-shadow: 0 0 5px var(--green);
-}
+.icon-btn:hover { border-color: var(--cyan); color: var(--cyan); }
+.icon-btn.primary-action { border-color: var(--green); color: var(--green); }
+.icon-btn.warning { border-color: var(--amber); color: var(--amber); }
+.icon-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
 textarea {
-  width: 100%;
-  height: 400px;
-  background: #0a0d12;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 16px;
-  color: var(--text);
-  font-family: var(--jmono);
-  font-size: 12px;
-  line-height: 1.6;
-  resize: vertical;
-  outline: none;
+  width: 100%; height: 380px; background: #0a0d12; border: 1px solid var(--border);
+  border-radius: 8px; padding: 16px; color: var(--text); font-family: var(--jmono);
+  font-size: 12px; line-height: 1.6; resize: vertical; outline: none;
 }
-textarea:focus {
-  border-color: var(--cyan);
-  box-shadow: 0 0 15px rgba(0,212,255,0.2);
-}
+textarea:focus { border-color: var(--cyan); box-shadow: 0 0 15px rgba(0,212,255,0.2); }
 .preview {
-  height: 400px;
-  overflow-y: auto;
-  font-family: var(--jmono);
-  font-size: 11px;
-  line-height: 1.7;
-  color: var(--muted);
+  height: 380px; overflow-y: auto; font-family: var(--jmono); font-size: 11px;
+  line-height: 1.7; color: var(--muted);
 }
 .preview-folder { color: var(--amber); }
 .preview-file { color: var(--green); }
 .preview-binary { color: var(--purple); }
 
-.message-bar {
-  margin-bottom: 20px;
-}
+.message-bar { margin-bottom: 16px; }
 .error-message, .warning-message, .success-message, .info-message {
-  padding: 12px 18px;
-  border-radius: 8px;
-  font-family: var(--mono);
-  font-size: 11px;
-  display: none;
-  backdrop-filter: blur(8px);
+  padding: 12px 16px; border-radius: 8px; font-family: var(--mono); font-size: 11px;
+  display: none; backdrop-filter: blur(8px);
 }
-.error-message {
-  background: rgba(255,77,77,0.1);
-  border: 1px solid var(--red);
-  color: var(--red);
-}
-.warning-message {
-  background: rgba(240,165,0,0.1);
-  border: 1px solid var(--amber);
-  color: var(--amber);
-}
-.success-message {
-  background: rgba(74,222,128,0.1);
-  border: 1px solid var(--green);
-  color: var(--green);
-}
-.info-message {
-  background: rgba(0,212,255,0.1);
-  border: 1px solid var(--cyan);
-  color: var(--cyan);
-}
-.error-message.visible, .warning-message.visible, .success-message.visible, .info-message.visible {
-  display: block;
-}
+.error-message { background: rgba(255,77,77,0.1); border: 1px solid var(--red); color: var(--red); }
+.warning-message { background: rgba(240,165,0,0.1); border: 1px solid var(--amber); color: var(--amber); }
+.success-message { background: rgba(74,222,128,0.1); border: 1px solid var(--green); color: var(--green); }
+.info-message { background: rgba(0,212,255,0.1); border: 1px solid var(--cyan); color: var(--cyan); }
+.visible { display: block; }
 
 .audit-panel {
-  background: rgba(0,0,0,0.3);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 16px;
-  margin-top: 16px;
-  display: none;
+  background: rgba(0,0,0,0.4); border: 1px solid var(--border); border-radius: 8px;
+  padding: 16px; margin-top: 16px; display: none;
 }
-.audit-panel.visible {
-  display: block;
-}
-.audit-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-}
-.audit-title {
-  font-family: var(--mono);
-  color: var(--cyan);
-  text-transform: uppercase;
-  font-size: 11px;
-}
-.audit-list {
-  max-height: 200px;
-  overflow-y: auto;
-  font-family: var(--jmono);
-  font-size: 10px;
-  margin-bottom: 16px;
-}
-.audit-item {
-  padding: 6px 0;
-  border-bottom: 1px solid var(--border);
-  color: var(--muted);
-}
+.audit-panel.visible { display: block; }
+.audit-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.audit-title { font-family: var(--mono); color: var(--cyan); text-transform: uppercase; font-size: 11px; }
+.audit-list { max-height: 180px; overflow-y: auto; font-family: var(--jmono); font-size: 10px; margin-bottom: 12px; }
+.audit-item { padding: 6px 0; border-bottom: 1px solid var(--border); color: var(--muted); }
 .audit-item.fixable { color: var(--amber); }
-.audit-item.fixed { color: var(--green); text-decoration: line-through; }
+.audit-summary { font-family: var(--mono); font-size: 10px; padding: 8px 0; }
 
-.action-bar {
-  display: flex;
-  gap: 16px;
-  align-items: center;
-  flex-wrap: wrap;
-  margin-bottom: 16px;
-}
+.action-bar { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
 .cta-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  text-decoration: none;
-  padding: 12px 24px;
-  border: 1px solid var(--cyan);
-  color: var(--cyan);
-  background: transparent;
-  transition: all 0.2s ease;
-  border-radius: 4px;
-  backdrop-filter: blur(8px);
-  cursor: pointer;
-  text-shadow: 0 0 5px var(--cyan);
+  display: inline-flex; align-items: center; gap: 10px; font-family: var(--mono);
+  font-size: 11px; text-transform: uppercase; padding: 14px 24px; border: 1px solid var(--cyan);
+  color: var(--cyan); background: transparent; cursor: pointer; border-radius: 4px;
+  min-height: 44px; /* Touch target */
 }
-.cta-btn.primary {
-  background: var(--amber);
-  color: #000;
-  border-color: var(--amber);
-  box-shadow: 0 0 15px var(--amber), inset 0 0 8px rgba(255,255,255,0.3);
-  text-shadow: none;
-}
-.cta-btn:hover {
-  background: var(--cyan);
-  color: #000;
-  border-color: var(--cyan);
-  box-shadow: 0 0 20px var(--cyan);
-}
-.cta-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
+.cta-btn.primary { background: var(--amber); color: #000; border-color: var(--amber); }
+.cta-btn:hover { background: var(--cyan); color: #000; }
 .export-select {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 10px 16px;
-  color: var(--text);
-  font-family: var(--mono);
-  font-size: 11px;
-  cursor: pointer;
-  backdrop-filter: blur(8px);
+  background: var(--surface); border: 1px solid var(--border); padding: 12px 16px;
+  color: var(--text); font-family: var(--mono); border-radius: 4px; min-height: 44px;
 }
 
-.stats-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-family: var(--mono);
-  font-size: 11px;
-  color: var(--muted);
-}
-.badge-group {
-  display: flex;
-  gap: 16px;
-}
-.fqi-badge, .version-badge {
-  padding: 4px 10px;
-  border-radius: 4px;
-  font-size: 10px;
-}
-.fqi-badge {
-  background: rgba(74,222,128,0.1);
-  border: 1px solid var(--green);
-  color: var(--green);
-}
-.version-badge {
-  background: rgba(168,85,247,0.1);
-  border: 1px solid var(--purple);
-  color: var(--purple);
-}
+.stats-bar { display: flex; justify-content: space-between; align-items: center; font-family: var(--mono); font-size: 11px; color: var(--muted); }
+.badge-group { display: flex; gap: 12px; }
+.fqi-badge, .version-badge { padding: 4px 10px; border-radius: 4px; font-size: 10px; }
+.fqi-badge { background: rgba(74,222,128,0.1); border: 1px solid var(--green); color: var(--green); }
+.version-badge { background: rgba(168,85,247,0.1); border: 1px solid var(--purple); color: var(--purple); }
 
 footer {
-  border-top: 1px solid var(--border);
-  padding: 40px;
-  max-width: 1400px;
-  margin: 0 auto;
-  display: flex;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 16px;
-  font-family: var(--mono);
-  font-size: 10px;
-  color: var(--muted);
-  position: relative;
-  z-index: 2;
+  border-top: 1px solid var(--border); padding: 32px 40px; max-width: 1400px; margin: 0 auto;
+  display: flex; justify-content: space-between; font-family: var(--mono); font-size: 10px;
+  color: var(--muted); position: relative; z-index: 2;
 }
-.footer-links { display: flex; gap: 24px; list-style: none; }
+.footer-links { display: flex; gap: 24px; }
 .footer-links a { color: var(--muted); text-decoration: none; }
-.footer-links a:hover { color: var(--cyan); text-shadow: 0 0 8px var(--cyan); }
 
 @media (max-width: 800px) {
   .editor-grid { grid-template-columns: 1fr; }
   nav { padding: 0 20px; }
   .nav-links { display: none; }
-  .nav-hamburger { display: flex; }
   .page-header, .tool-container { padding-left: 20px; padding-right: 20px; }
+  .panel-actions { justify-content: flex-start; }
 }
 </style>
 </head>
 <body>
 
+<div class="visually-hidden" id="ariaLive" aria-live="polite"></div>
 <canvas id="hero-canvas"></canvas>
 
-<div class="custom-cursor" id="custom-cursor">
-  <div class="magnify-content" id="magnifyContent"></div>
-</div>
+<div class="custom-cursor" id="custom-cursor"></div>
 <div id="cursor-trail-container"></div>
+<div class="magnify-tooltip" id="magnifyTooltip"></div>
 
 <nav>
-  <a href="/" class="nav-logo">
-    <img src="/assets/aion-logo.jpg" alt="AionSystem logo" class="nav-logo-img">
-    <span>AION<span>system</span></span>
-  </a>
+  <a href="/" class="nav-logo"><span>AION<span>system</span></span></a>
   <ul class="nav-links">
-    <li><a href="/services/">Services</a></li>
-    <li><a href="/simulators/">Simulators</a></li>
-    <li><a href="/submissions/">Submissions</a></li>
-    <li><a href="/case-studies/">Case-Studies</a></li>
-    <li><a href="/stack/">Stack-Tools</a></li>
-    <li><a href="/dev-tools/">Dev-Tools</a></li>
-    <li><a href="/certify/">Certify</a></li>
-    <li><a href="/about/">About</a></li>
+    <li><a href="/services/">Services</a></li><li><a href="/simulators/">Simulators</a></li>
+    <li><a href="/dev-tools/" style="color:var(--cyan);">Dev-Tools</a></li>
   </ul>
-  <button class="nav-hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
 </nav>
 
 <div class="page-header">
-  <div class="hero-eyebrow">Developer Tool · v2.4</div>
+  <div class="hero-eyebrow">Developer Tool · v2.5</div>
   <h1 class="page-title">AION<em>Scaffold</em></h1>
-  <p class="page-sub">Paste a tree structure. Fix issues. Download a complete folder hierarchy.</p>
+  <p class="page-sub">Paste a tree. Audit issues. Fix automatically. Download structure.</p>
 </div>
 
 <div class="tool-container">
   <div class="message-bar">
     <div class="error-message" id="errorMessage" role="alert"></div>
-    <div class="warning-message" id="warningMessage" role="status"></div>
+    <div class="warning-message" id="warningMessage" role="alert"></div>
     <div class="success-message" id="successMessage" role="status"></div>
     <div class="info-message" id="infoMessage" role="status"></div>
   </div>
@@ -596,9 +232,9 @@ footer {
       <div class="panel-header">
         <span class="panel-label">INPUT — Tree Structure</span>
         <div class="panel-actions">
-          <button class="icon-btn" id="loadExampleBtn" title="Load example tree">📋 Example</button>
-          <button class="icon-btn warning" id="cleanCommentsBtn" title="Remove all inline comments">🧹 Clean</button>
-          <button class="icon-btn primary-action" id="auditAndFixBtn" title="Analyze tree and fix issues">🔧 Fix & Merge</button>
+          <button class="icon-btn" id="loadExampleBtn">📋 Example</button>
+          <button class="icon-btn warning" id="cleanCommentsBtn">🧹 Clean</button>
+          <button class="icon-btn primary-action" id="auditAndFixBtn">🔧 Audit & Fix</button>
           <button class="icon-btn" id="undoBtn" disabled>↩ Undo</button>
           <button class="icon-btn" id="redoBtn" disabled>↪ Redo</button>
           <button class="icon-btn" id="clearBtn">Clear</button>
@@ -606,16 +242,16 @@ footer {
       </div>
       <textarea id="input" placeholder="Paste your tree structure here..."></textarea>
       
-      <!-- Audit Panel -->
       <div class="audit-panel" id="auditPanel">
         <div class="audit-header">
           <span class="audit-title">🔍 AUDIT REPORT</span>
           <div class="panel-actions">
-            <button class="icon-btn" id="applyFixesBtn" style="border-color:var(--green);color:var(--green);">✅ Apply Fixes</button>
-            <button class="icon-btn" id="dismissAuditBtn">✕ Dismiss</button>
+            <button class="icon-btn" id="applyFixesBtn" style="border-color:var(--green);color:var(--green);">✅ Apply All Fixes</button>
+            <button class="icon-btn" id="dismissAuditBtn">✕ Close</button>
           </div>
         </div>
         <div class="audit-list" id="auditList"></div>
+        <div class="audit-summary" id="auditSummary"></div>
       </div>
     </div>
     <div class="editor-panel">
@@ -625,9 +261,7 @@ footer {
           <button class="icon-btn" id="parseBtn">⟳ Parse</button>
         </div>
       </div>
-      <div class="preview" id="preview" role="region" aria-label="Tree structure preview">
-        <span style="color: var(--dim);">Click "Example" to load, or paste your tree and click "Fix & Merge"...</span>
-      </div>
+      <div class="preview" id="preview"><span style="color: var(--dim);">Click "Example" or paste your tree...</span></div>
     </div>
   </div>
 
@@ -637,15 +271,16 @@ footer {
       <option value="zip">ZIP Archive</option>
       <option value="script">Shell Script (.sh)</option>
       <option value="tree">Tree File (.txt)</option>
+      <option value="json">JSON Structure</option>
     </select>
   </div>
 
   <div class="stats-bar">
     <span id="statsText">📁 0 folders · 📄 0 files</span>
     <div class="badge-group">
-      <span id="recoveryHint" class="recovery-hint"></span>
-      <span class="fqi-badge">FQI: 0.88</span>
-      <span class="version-badge">v2.4</span>
+      <span id="recoveryHint" class="recovery-hint" style="color:var(--green);cursor:pointer;"></span>
+      <span class="fqi-badge">FQI: 0.91</span>
+      <span class="version-badge">v2.5</span>
     </div>
   </div>
 </div>
@@ -654,11 +289,8 @@ footer {
   <div>AionSystem · Sheldon K. Salmon · AI Reliability Architect</div>
   <ul class="footer-links">
     <li><a href="/simulators/">Simulators</a></li>
-    <li><a href="/services/">Services</a></li>
-    <li><a href="/stack/">Stack</a></li>
-    <li><a href="/submissions/">Submissions</a></li>
     <li><a href="/dev-tools/">Dev-Tools</a></li>
-    <li><a href="https://github.com/AionSystem" target="_blank" rel="noopener">GitHub ↗</a></li>
+    <li><a href="https://github.com/AionSystem" target="_blank">GitHub ↗</a></li>
   </ul>
 </footer>
 
@@ -667,14 +299,10 @@ footer {
 (function(){
   "use strict";
 
-  // ========== CONFIGURATION ==========
   const CONFIG = {
-    MAX_FILES: 10000,
-    MAX_FOLDERS: 5000,
-    BINARY_EXTENSIONS: ['gguf', 'safetensors', 'png', 'jpg', 'jpeg', 'gif', 'ico', 'db', 'sqlite', 'bin', 'wasm', 'zip', 'tar', 'gz', 'webp', 'svg', 'mp4', 'mp3', 'wav'],
-    MAX_HISTORY: 20,
-    AUTO_SAVE_KEY: 'aion-scaffold-backup-v2_4',
-    IDLE_MAGNIFY_DELAY: 1800
+    MAX_FILES: 15000, MAX_FOLDERS: 7500,
+    BINARY_EXTENSIONS: ['gguf','safetensors','png','jpg','jpeg','gif','ico','db','sqlite','bin','wasm','zip','tar','gz','webp','svg','mp4','mp3','wav'],
+    MAX_HISTORY: 30, AUTO_SAVE_KEY: 'aion-scaffold-v2_5'
   };
 
   const EXAMPLE_TREE = `aion.ai/
@@ -692,685 +320,247 @@ footer {
 └── memory/
     └── ALBEDO-CORE.md`;
 
-  // ========== DOM ELEMENTS ==========
   const elements = {
-    input: document.getElementById('input'),
-    preview: document.getElementById('preview'),
-    statsText: document.getElementById('statsText'),
-    error: document.getElementById('errorMessage'),
-    warning: document.getElementById('warningMessage'),
-    success: document.getElementById('successMessage'),
-    info: document.getElementById('infoMessage'),
-    parseBtn: document.getElementById('parseBtn'),
-    generateBtn: document.getElementById('generateBtn'),
-    clearBtn: document.getElementById('clearBtn'),
-    cleanCommentsBtn: document.getElementById('cleanCommentsBtn'),
-    loadExampleBtn: document.getElementById('loadExampleBtn'),
-    auditAndFixBtn: document.getElementById('auditAndFixBtn'),
-    applyFixesBtn: document.getElementById('applyFixesBtn'),
-    dismissAuditBtn: document.getElementById('dismissAuditBtn'),
-    undoBtn: document.getElementById('undoBtn'),
-    redoBtn: document.getElementById('redoBtn'),
-    exportFormat: document.getElementById('exportFormat'),
-    recoveryHint: document.getElementById('recoveryHint'),
-    auditPanel: document.getElementById('auditPanel'),
-    auditList: document.getElementById('auditList')
+    input: document.getElementById('input'), preview: document.getElementById('preview'),
+    statsText: document.getElementById('statsText'), error: document.getElementById('errorMessage'),
+    warning: document.getElementById('warningMessage'), success: document.getElementById('successMessage'),
+    info: document.getElementById('infoMessage'), parseBtn: document.getElementById('parseBtn'),
+    generateBtn: document.getElementById('generateBtn'), clearBtn: document.getElementById('clearBtn'),
+    cleanCommentsBtn: document.getElementById('cleanCommentsBtn'), loadExampleBtn: document.getElementById('loadExampleBtn'),
+    auditAndFixBtn: document.getElementById('auditAndFixBtn'), applyFixesBtn: document.getElementById('applyFixesBtn'),
+    dismissAuditBtn: document.getElementById('dismissAuditBtn'), undoBtn: document.getElementById('undoBtn'),
+    redoBtn: document.getElementById('redoBtn'), exportFormat: document.getElementById('exportFormat'),
+    recoveryHint: document.getElementById('recoveryHint'), auditPanel: document.getElementById('auditPanel'),
+    auditList: document.getElementById('auditList'), auditSummary: document.getElementById('auditSummary'),
+    ariaLive: document.getElementById('ariaLive')
   };
 
-  // ========== STATE ==========
-  const state = {
-    parsedTree: null,
-    fileCount: 0,
-    folderCount: 0,
-    pendingFixes: [],
-    originalInput: ''
-  };
+  const state = { parsedTree: null, fileCount: 0, folderCount: 0, pendingFixes: [], originalInput: '' };
+  const history = { past: [], future: [] };
 
-  const history = {
-    past: [],
-    future: []
-  };
+  // Canvas
+  const canvas = document.getElementById('hero-canvas'), ctx = canvas.getContext('2d');
+  let width, height, symbols = [], mouse = { x: null, y: null, radius: 150 };
+  const SYMBOL_SET = ['∇','Σ','∫','∂','λ','⊕','⊗','∈','∀','∃','⊢','⊨','→','↔','∧','∨','¬','≡','≈','≠'];
+  function resizeCanvas() { width = window.innerWidth; height = window.innerHeight; canvas.width = width; canvas.height = height; initSymbols(); }
+  function initSymbols() { const count = Math.floor(width*height/6000); symbols = []; for(let i=0;i<count;i++) symbols.push({ symbol: SYMBOL_SET[Math.floor(Math.random()*SYMBOL_SET.length)], x: Math.random()*width, y: Math.random()*height, vx: (Math.random()-0.5)*0.2, vy: (Math.random()-0.5)*0.2, size: Math.random()*20+12, color: Math.random()>0.5?'#00d4ff':'#f0a500', opacity: 0.12 }); }
+  function drawSymbols() { ctx.clearRect(0,0,width,height); symbols.forEach(s => { s.x+=s.vx; s.y+=s.vy; if(s.x<0)s.x=width; if(s.x>width)s.x=0; if(s.y<0)s.y=height; if(s.y>height)s.y=0; ctx.font = `${s.size}px 'JetBrains Mono'`; ctx.fillStyle=s.color; ctx.globalAlpha=s.opacity; ctx.fillText(s.symbol,s.x,s.y); }); requestAnimationFrame(drawSymbols); }
+  window.addEventListener('resize', resizeCanvas); resizeCanvas(); drawSymbols();
 
-  // ========== CANVAS (Symbol Field) ==========
-  const canvas = document.getElementById('hero-canvas');
-  const ctx = canvas.getContext('2d');
-  let width, height;
-  let symbols = [];
-  let mouse = { x: null, y: null, radius: 150 };
-
-  const SYMBOL_SET = ['∇','Σ','∫','∂','λ','⊕','⊗','∈','∀','∃','⊢','⊨','→','↔','∧','∨','¬','≡','≈','≠','≤','≥','∞','∝','∂','Δ','Π','Ω','α','β','γ','δ','ε','θ','μ','σ','φ','ψ','ω','∄','⁂','◈','◆','○','●','◉'];
-
-  function resizeCanvas() {
-    width = window.innerWidth;
-    height = window.innerHeight;
-    canvas.width = width;
-    canvas.height = height;
-    initSymbols();
-  }
-
-  function initSymbols() {
-    const count = Math.floor(width * height / 6000);
-    symbols = [];
-    for (let i = 0; i < count; i++) {
-      symbols.push({
-        symbol: SYMBOL_SET[Math.floor(Math.random() * SYMBOL_SET.length)],
-        x: Math.random() * width,
-        y: Math.random() * height,
-        vx: (Math.random() - 0.5) * 0.2,
-        vy: (Math.random() - 0.5) * 0.2,
-        size: Math.random() * 20 + 12,
-        color: Math.random() > 0.5 ? '#00d4ff' : '#f0a500',
-        opacity: 0.12 + Math.random() * 0.2
-      });
-    }
-  }
-
-  function drawSymbols() {
-    ctx.clearRect(0, 0, width, height);
-    symbols.forEach(s => {
-      s.x += s.vx;
-      s.y += s.vy;
-      if (s.x < -50) s.x = width + 50;
-      if (s.x > width + 50) s.x = -50;
-      if (s.y < -50) s.y = height + 50;
-      if (s.y > height + 50) s.y = -50;
-      if (mouse.x && mouse.y) {
-        const dx = s.x - mouse.x, dy = s.y - mouse.y, dist = Math.sqrt(dx*dx + dy*dy);
-        if (dist < mouse.radius) {
-          const angle = Math.atan2(dy, dx), force = (mouse.radius - dist) / mouse.radius * 2;
-          s.x += Math.cos(angle) * force;
-          s.y += Math.sin(angle) * force;
-        }
-      }
-      ctx.font = `${s.size}px 'JetBrains Mono', 'Share Tech Mono', monospace`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.shadowColor = s.color;
-      ctx.shadowBlur = 15;
-      ctx.fillStyle = s.color;
-      ctx.globalAlpha = s.opacity;
-      ctx.fillText(s.symbol, s.x, s.y);
-    });
-    ctx.shadowBlur = 0;
-    ctx.globalAlpha = 1.0;
-    requestAnimationFrame(drawSymbols);
-  }
-
-  window.addEventListener('resize', resizeCanvas);
-  window.addEventListener('mousemove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; });
-  window.addEventListener('mouseleave', () => { mouse.x = null; mouse.y = null; });
-  resizeCanvas();
-  drawSymbols();
-
-  // ========== CURSOR ==========
-  const cursor = document.getElementById('custom-cursor');
-  const magnifyContent = document.getElementById('magnifyContent');
+  // Cursor + Dynamic Tooltip
+  const cursor = document.getElementById('custom-cursor'), tooltip = document.getElementById('magnifyTooltip');
   const trailContainer = document.getElementById('cursor-trail-container');
-  let trailPositions = [];
-  const MAX_TRAIL = 8;
-  let idleTimer = null;
-  let isIdle = false;
-
-  function updateMagnifyContent() {
-    const x = parseFloat(cursor.style.left) || 0;
-    const y = parseFloat(cursor.style.top) || 0;
+  let trailPositions = [], MAX_TRAIL = 8, idleTimer, isIdle = false;
+  
+  function updateTooltipContent(x, y) {
     const el = document.elementFromPoint(x, y);
-    if (el) {
-      let text = '';
-      if (el.tagName === 'TEXTAREA' || el.tagName === 'INPUT') {
-        text = el.value?.slice(0, 300) || '';
-      } else {
-        text = el.textContent?.slice(0, 300) || el.tagName;
-      }
-      magnifyContent.textContent = text || '[No text]';
-    }
+    if (!el) return '';
+    if (el.tagName === 'TEXTAREA' || el.tagName === 'INPUT') return el.value?.slice(0, 400) || '';
+    return el.textContent?.slice(0, 400) || el.tagName;
   }
-
+  
+  function positionTooltip(x, y) {
+    tooltip.style.left = (x + 20) + 'px';
+    tooltip.style.top = (y - 60) + 'px';
+    tooltip.textContent = updateTooltipContent(x, y) || '[No text]';
+  }
+  
   function resetIdleTimer() {
-    if (idleTimer) clearTimeout(idleTimer);
-    cursor.classList.remove('magnify');
-    document.querySelectorAll('.cursor-trail').forEach(t => t.classList.remove('magnify-trail'));
+    if(idleTimer) clearTimeout(idleTimer);
+    tooltip.classList.remove('visible');
     isIdle = false;
     idleTimer = setTimeout(() => {
-      cursor.classList.add('magnify');
-      document.querySelectorAll('.cursor-trail').forEach(t => t.classList.add('magnify-trail'));
+      const x = parseFloat(cursor.style.left) || 0, y = parseFloat(cursor.style.top) || 0;
+      positionTooltip(x, y);
+      tooltip.classList.add('visible');
       isIdle = true;
-      updateMagnifyContent();
-    }, CONFIG.IDLE_MAGNIFY_DELAY);
+    }, 1200);
   }
-
+  
   document.addEventListener('mousemove', (e) => {
-    const x = e.clientX, y = e.clientY;
-    cursor.style.left = x + 'px';
-    cursor.style.top = y + 'px';
-    
-    trailPositions.push({ x, y, time: Date.now() });
-    if (trailPositions.length > MAX_TRAIL) trailPositions.shift();
-    
+    cursor.style.left = e.clientX + 'px'; cursor.style.top = e.clientY + 'px';
+    trailPositions.push({ x: e.clientX, y: e.clientY, time: Date.now() });
+    if(trailPositions.length > MAX_TRAIL) trailPositions.shift();
     trailContainer.innerHTML = '';
     trailPositions.forEach((pos, i) => {
-      const dot = document.createElement('div');
-      dot.className = 'cursor-trail' + (isIdle ? ' magnify-trail' : '');
-      const age = (Date.now() - pos.time) / 1000;
-      const opacity = Math.max(0, 0.6 - age * 0.8);
-      const scale = 1 - i * 0.1;
-      dot.style.left = pos.x + 'px';
-      dot.style.top = pos.y + 'px';
-      dot.style.opacity = opacity;
-      dot.style.transform = `translate(-50%, -50%) scale(${scale})`;
+      const dot = document.createElement('div'); dot.className = 'cursor-trail';
+      dot.style.left = pos.x + 'px'; dot.style.top = pos.y + 'px';
+      dot.style.opacity = Math.max(0, 0.6 - (Date.now()-pos.time)/1000*0.8);
+      dot.style.transform = `translate(-50%, -50%) scale(${1 - i*0.1})`;
       trailContainer.appendChild(dot);
     });
-    
-    if (isIdle) updateMagnifyContent();
+    if(isIdle) positionTooltip(e.clientX, e.clientY);
     resetIdleTimer();
   });
-
-  document.addEventListener('mouseleave', () => {
-    if (idleTimer) clearTimeout(idleTimer);
-    cursor.classList.remove('magnify');
-    isIdle = false;
+  
+  document.addEventListener('scroll', () => {
+    if(isIdle) { const x = parseFloat(cursor.style.left)||0, y = parseFloat(cursor.style.top)||0; positionTooltip(x, y); }
+  }, { passive: true });
+  
+  document.addEventListener('mouseleave', () => { if(idleTimer) clearTimeout(idleTimer); tooltip.classList.remove('visible'); });
+  document.querySelectorAll('a, button, .icon-btn, .cta-btn, select').forEach(el => {
+    el.addEventListener('mouseenter', () => { cursor.classList.add('hover'); if(idleTimer) clearTimeout(idleTimer); tooltip.classList.remove('visible'); });
+    el.addEventListener('mouseleave', () => { cursor.classList.remove('hover'); resetIdleTimer(); });
   });
-
-  document.querySelectorAll('a, button, .cta-btn, .editor-panel, .icon-btn, select').forEach(el => {
-    el.addEventListener('mouseenter', () => {
-      cursor.classList.add('hover');
-      if (idleTimer) clearTimeout(idleTimer);
-      cursor.classList.remove('magnify');
-    });
-    el.addEventListener('mouseleave', () => {
-      cursor.classList.remove('hover');
-      resetIdleTimer();
-    });
-  });
-
   resetIdleTimer();
 
-  // ========== UTILITIES ==========
-  function clearMessages() {
-    elements.error.classList.remove('visible');
-    elements.warning.classList.remove('visible');
-    elements.success.classList.remove('visible');
-    elements.info.classList.remove('visible');
-  }
+  // Utilities
+  function stripComments(l) { const m = l.match(/\s+[#\/]{1,2}\s+.+$/); return m ? l.substring(0, m.index).trimEnd() : l; }
+  function isBinary(n) { return CONFIG.BINARY_EXTENSIONS.includes(n.split('.').pop()?.toLowerCase()); }
+  function showError(m) { elements.error.textContent = `⚠️ ${m}`; elements.error.classList.add('visible'); elements.ariaLive.textContent = `Error: ${m}`; }
+  function showWarning(m) { elements.warning.textContent = `⚡ ${m}`; elements.warning.classList.add('visible'); }
+  function showSuccess(m) { elements.success.textContent = `✅ ${m}`; elements.success.classList.add('visible'); elements.ariaLive.textContent = `Success: ${m}`; }
+  function showInfo(m) { elements.info.textContent = `ℹ️ ${m}`; elements.info.classList.add('visible'); }
+  function clearMessages() { elements.error.classList.remove('visible'); elements.warning.classList.remove('visible'); elements.success.classList.remove('visible'); elements.info.classList.remove('visible'); }
 
-  function showError(msg) { elements.error.textContent = `⚠️ ${msg}`; elements.error.classList.add('visible'); }
-  function showWarning(msg) { elements.warning.textContent = `⚡ ${msg}`; elements.warning.classList.add('visible'); }
-  function showSuccess(msg) { elements.success.textContent = `✅ ${msg}`; elements.success.classList.add('visible'); }
-  function showInfo(msg) { elements.info.textContent = `ℹ️ ${msg}`; elements.info.classList.add('visible'); }
-
-  function stripComments(line) { const m = line.match(/\s+[#\/]{1,2}\s+.+$/); return m ? line.substring(0, m.index).trimEnd() : line; }
-
-  function isBinaryFile(name) {
-    const ext = name.split('.').pop()?.toLowerCase();
-    return CONFIG.BINARY_EXTENSIONS.includes(ext);
-  }
-
-  function getFileIcon(ext) {
-    const icons = { 'md':'📝','json':'⚙️','js':'📜','ts':'📘','html':'🌐','css':'🎨','py':'🐍','sql':'🗄️','yaml':'📋','yml':'📋','txt':'📄' };
-    return icons[ext] || '📄';
-  }
-
-  // ========== AUDIT & FIX ==========
+  // Enhanced Audit
   function auditTree(input) {
-    const issues = [];
-    const lines = input.split('\n');
-    const seenPaths = new Map();
-    const folderPaths = new Set();
-    let rootName = 'project';
-    
-    const stack = [{ name: '', indent: -1 }];
-    
+    const issues = [], lines = input.split('\n');
     lines.forEach((line, idx) => {
-      const raw = line;
-      let processed = stripComments(line);
-      if (!processed.trim()) return;
-      
-      const indent = processed.search(/\S/);
-      let content = processed.trim();
-      
-      // Check for mixed tabs/spaces
-      if (raw.includes('\t') && raw.includes('    ')) {
-        issues.push({ type: 'mixed_indent', line: idx+1, fixable: true, fix: 'convert_tabs' });
-      }
-      
-      // Check for inline comments
-      if (raw.match(/\s+[#\/]{1,2}\s+.+$/)) {
-        issues.push({ type: 'has_comments', line: idx+1, fixable: true, fix: 'strip_comments' });
-      }
-      
-      // Check root
-      if (!content.match(/^[├└│]/) && !content.includes('─')) {
-        if (content.match(/^[a-zA-Z0-9_-]+(\/)?$/)) {
-          rootName = content.replace(/\/$/, '');
-          stack[0] = { name: rootName, indent: -1 };
-          const path = rootName;
-          seenPaths.set(path, { type: 'folder', line: idx+1 });
-        }
-        return;
-      }
-      
-      // Remove tree characters
-      content = content.replace(/^[├└]──\s*/, '').replace(/^[│]\s*/, '');
-      const isFolder = content.endsWith('/');
-      const name = isFolder ? content.slice(0, -1).trim() : content.trim();
-      if (!name) return;
-      
-      // Pop to correct indent
-      while (stack.length > 1 && stack[stack.length - 1].indent >= indent) stack.pop();
-      
-      const parent = stack[stack.length - 1];
-      const parentPath = parent.name || rootName;
-      const fullPath = parentPath ? `${parentPath}/${name}` : name;
-      
-      // Check for invalid characters
-      if (name.match(/[<>:"|?*]/)) {
-        issues.push({ type: 'invalid_chars', line: idx+1, name, fixable: false });
-      }
-      
-      // Check for duplicate
-      if (seenPaths.has(fullPath)) {
-        const existing = seenPaths.get(fullPath);
-        if (existing.type === (isFolder ? 'folder' : 'file')) {
-          issues.push({ 
-            type: isFolder ? 'duplicate_folder' : 'duplicate_file', 
-            line: idx+1, 
-            path: fullPath, 
-            existingLine: existing.line,
-            fixable: isFolder, // Folders can merge, files cannot
-            fix: 'merge_folder'
-          });
-        } else {
-          issues.push({ 
-            type: 'type_conflict', 
-            line: idx+1, 
-            path: fullPath, 
-            existingType: existing.type,
-            fixable: false 
-          });
-        }
-      }
-      
-      seenPaths.set(fullPath, { type: isFolder ? 'folder' : 'file', line: idx+1 });
-      if (isFolder) folderPaths.add(fullPath);
-      
-      if (isFolder) {
-        stack.push({ name: fullPath, indent });
-      }
+      const raw = line; let p = stripComments(line); if(!p.trim()) return;
+      const indent = p.search(/\S/); let content = p.trim();
+      if(raw.includes('\t') && raw.includes('    ')) issues.push({ type: 'mixed_indent', line: idx+1, fixable: true });
+      if(raw.match(/\s+[#\/]{1,2}\s+.+$/)) issues.push({ type: 'has_comments', line: idx+1, fixable: true });
+      if(!content.match(/^[├└│]/) && !content.includes('─') && !content.match(/^[a-zA-Z0-9_-]+(\/)?$/))
+        issues.push({ type: 'missing_tree_chars', line: idx+1, fixable: true });
+      let name = content.replace(/^[├└]──\s*/, '').replace(/^[│]\s*/, '');
+      const isFolder = name.endsWith('/'); name = isFolder ? name.slice(0,-1).trim() : name.trim();
+      if(name && name.match(/[<>:"|?*]/)) issues.push({ type: 'invalid_chars', line: idx+1, name, fixable: true, sanitized: name.replace(/[<>:"|?*]/g, '-') });
+      if(!isFolder && content.match(/[^\/]+\/$/)) issues.push({ type: 'file_with_slash', line: idx+1, fixable: true });
     });
-    
-    return { issues, rootName };
+    const indentLevels = lines.map(l => stripComments(l)).filter(l => l.trim()).map(l => l.search(/\S/)).filter(i => i>0);
+    if(indentLevels.length && indentLevels.some(i => i%4 !== 0)) issues.push({ type: 'inconsistent_indent', fixable: true });
+    return { issues };
   }
 
   function applyFixes(input, issues) {
-    let fixed = input;
-    const lines = fixed.split('\n');
-    const fixes = [];
-    
-    // Strip comments (do this first)
-    if (issues.some(i => i.type === 'has_comments')) {
-      fixed = lines.map(l => stripComments(l)).join('\n');
-      fixes.push('Stripped inline comments');
+    let lines = input.split('\n'), fixes = [];
+    if(issues.some(i=>i.type==='has_comments')) { lines = lines.map(stripComments); fixes.push('Stripped comments'); }
+    if(issues.some(i=>i.type==='mixed_indent')) { lines = lines.map(l=>l.replace(/\t/g,'    ')); fixes.push('Converted tabs'); }
+    issues.filter(i=>i.type==='file_with_slash').forEach(i=>{ if(lines[i.line-1]) lines[i.line-1] = lines[i.line-1].replace(/([^\/\s]+)\/$/,'$1'); });
+    issues.filter(i=>i.type==='invalid_chars').forEach(i=>{ if(lines[i.line-1] && i.sanitized) lines[i.line-1] = lines[i.line-1].replace(i.name, i.sanitized); });
+    issues.filter(i=>i.type==='missing_tree_chars').forEach(i=>{
+      const idx = i.line-1; if(!lines[idx]) return;
+      const l = lines[idx]; const indent = l.search(/\S/); const content = l.trim();
+      lines[idx] = ' '.repeat(indent) + '├── ' + content;
+    });
+    if(issues.some(i=>i.type==='inconsistent_indent')) {
+      lines = lines.map(l => { const t = l.trimStart(); const indent = l.length - t.length; if(indent===0) return l; return ' '.repeat(Math.round(indent/4)*4) + t; });
+      fixes.push('Normalized indentation');
     }
-    
-    // Convert tabs to spaces
-    if (issues.some(i => i.type === 'mixed_indent')) {
-      fixed = fixed.replace(/\t/g, '    ');
-      fixes.push('Converted tabs to spaces');
-    }
-    
-    // Merge duplicate folders (remove duplicate lines)
-    const dupFolders = issues.filter(i => i.type === 'duplicate_folder');
-    if (dupFolders.length) {
-      const newLines = fixed.split('\n');
-      const toRemove = new Set();
-      dupFolders.forEach(d => { if (d.line) toRemove.add(d.line - 1); });
-      fixed = newLines.filter((_, i) => !toRemove.has(i)).join('\n');
-      fixes.push(`Merged ${dupFolders.length} duplicate folder(s)`);
-    }
-    
-    return { fixed, fixes };
+    lines = lines.filter(l => { const t = l.trim(); return t !== '│' && t !== '├──' && t !== '└──' && t !== ''; });
+    const seen = new Map(), toRemove = new Set(), stack = [{ name: '', indent: -1 }]; let root = 'project';
+    lines.forEach((l, idx) => {
+      const p = stripComments(l); if(!p.trim()) return;
+      const indent = p.search(/\S/); let c = p.trim();
+      if(!c.match(/^[├└│]/) && !c.includes('─')) { if(c.match(/^[a-zA-Z0-9_-]+(\/)?$/)) { root = c.replace(/\/$/,''); stack[0]={name:root,indent:-1}; } return; }
+      c = c.replace(/^[├└]──\s*/, '').replace(/^[│]\s*/, '');
+      const isFolder = c.endsWith('/'); const name = isFolder ? c.slice(0,-1).trim() : c.trim();
+      if(!name) return;
+      while(stack.length>1 && stack[stack.length-1].indent >= indent) stack.pop();
+      const parent = stack[stack.length-1], path = (parent.name||root) + '/' + name;
+      if(isFolder) { if(seen.has(path) && seen.get(path)==='folder') toRemove.add(idx); else { seen.set(path,'folder'); stack.push({name:path,indent}); } }
+    });
+    if(toRemove.size) { lines = lines.filter((_,i)=>!toRemove.has(i)); fixes.push(`Merged ${toRemove.size} duplicate folders`); }
+    return { fixed: lines.join('\n'), fixes };
   }
 
   function runAudit() {
-    const input = elements.input.value;
-    if (!input.trim()) { showError('Paste a tree first.'); return; }
-    
+    const input = elements.input.value; if(!input.trim()) { showError('Paste a tree first.'); return; }
     state.originalInput = input;
     const { issues } = auditTree(input);
-    state.pendingFixes = issues.filter(i => i.fixable);
-    
-    if (issues.length === 0) {
-      showSuccess('No issues found! Tree is clean.');
-      elements.auditPanel.classList.remove('visible');
-      parseTreeAction();
-      return;
-    }
-    
-    // Display audit
+    const fixable = issues.filter(i=>i.fixable), manual = issues.filter(i=>!i.fixable);
+    state.pendingFixes = fixable;
     let html = '';
-    issues.forEach(issue => {
-      const fixable = issue.fixable ? 'fixable' : '';
-      html += `<div class="audit-item ${fixable}">`;
-      html += `Line ${issue.line}: `;
-      switch (issue.type) {
-        case 'mixed_indent': html += 'Mixed tabs and spaces'; break;
-        case 'has_comments': html += 'Inline comments detected'; break;
-        case 'invalid_chars': html += `Invalid characters in "${issue.name}"`; break;
-        case 'duplicate_folder': html += `Duplicate folder "${issue.path}" (also at line ${issue.existingLine}) — will merge`; break;
-        case 'duplicate_file': html += `Duplicate file "${issue.path}" (also at line ${issue.existingLine}) — CANNOT FIX`; break;
-        case 'type_conflict': html += `Path "${issue.path}" conflicts with existing ${issue.existingType}`; break;
-        default: html += issue.type;
-      }
-      html += '</div>';
-    });
-    
+    if(fixable.length) { html += `<div style="color:var(--green);">✅ FIXABLE (${fixable.length})</div>`; fixable.forEach(i=>{ html += `<div class="audit-item fixable">Line ${i.line||'—'}: ${i.type.replace(/_/g,' ')}</div>`; }); }
+    if(manual.length) { html += `<div style="color:var(--red); margin-top:8px;">⚠️ MANUAL (${manual.length})</div>`; manual.forEach(i=>{ html += `<div class="audit-item" style="color:var(--red);">Line ${i.line||'—'}: ${i.type.replace(/_/g,' ')}</div>`; }); }
+    if(!issues.length) html = '<div style="color:var(--green);">✅ No issues! Tree is clean.</div>';
     elements.auditList.innerHTML = html;
+    elements.auditSummary.innerHTML = `${fixable.length} fixable · ${manual.length} manual`;
     elements.auditPanel.classList.add('visible');
-    
-    const fixableCount = issues.filter(i => i.fixable).length;
-    const unfixableCount = issues.filter(i => !i.fixable).length;
-    
-    if (unfixableCount > 0) {
-      showWarning(`${issues.length} issues found (${fixableCount} fixable, ${unfixableCount} require manual fix)`);
-    } else {
-      showInfo(`${issues.length} issues found — all fixable. Click "Apply Fixes" to repair.`);
-    }
+    elements.ariaLive.textContent = `Audit complete. ${fixable.length} fixable issues, ${manual.length} require manual fix.`;
+    if(manual.length) showWarning(`${manual.length} issues need manual attention.`);
+    else if(fixable.length) showInfo(`${fixable.length} issues — all fixable.`);
+    else showSuccess('Tree is clean!');
   }
 
   function applyFixesAction() {
-    if (!state.pendingFixes.length) {
-      showInfo('No fixable issues to apply.');
-      return;
-    }
-    
+    if(!state.pendingFixes.length) { showInfo('No fixes to apply.'); return; }
     const { fixed, fixes } = applyFixes(state.originalInput, state.pendingFixes);
-    
-    pushHistory();
-    elements.input.value = fixed;
-    elements.auditPanel.classList.remove('visible');
-    
-    showSuccess(`Applied fixes: ${fixes.join('; ')}. Click Parse to rebuild.`);
-    state.pendingFixes = [];
+    pushHistory(); elements.input.value = fixed; elements.auditPanel.classList.remove('visible');
+    showSuccess(`Applied: ${fixes.join('; ')}. Click Parse.`); state.pendingFixes = [];
   }
 
-  // ========== PARSER ==========
+  // Parser
   function parseTree(input) {
-    const lines = input.split('\n').map(l => stripComments(l)).filter(l => l.trim());
-    if (!lines.length) throw new Error('Empty input');
-    
-    let rootName = 'project';
-    const root = { name: rootName, type: 'folder', children: [] };
-    const stack = [{ node: root, indent: -1 }];
-    let fileCount = 0, folderCount = 1;
-    
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      const indent = line.search(/\S/);
-      let content = line.trim();
-      
-      if (!content.match(/^[├└│]/) && !content.includes('─')) {
-        if (content.match(/^[a-zA-Z0-9_-]+(\/)?$/)) {
-          rootName = content.replace(/\/$/, '');
-          root.name = rootName;
-          continue;
-        }
-      }
-      
-      content = content.replace(/^[├└]──\s*/, '').replace(/^[│]\s*/, '');
-      const isFolder = content.endsWith('/');
-      const name = isFolder ? content.slice(0, -1).trim() : content.trim();
-      if (!name) continue;
-      
-      while (stack.length > 1 && stack[stack.length - 1].indent >= indent) stack.pop();
-      
-      const parent = stack[stack.length - 1].node;
-      
-      if (isFolder) {
-        let folder = parent.children.find(c => c.type === 'folder' && c.name === name);
-        if (!folder) {
-          folder = { name, type: 'folder', children: [] };
-          parent.children.push(folder);
-          folderCount++;
-        }
-        stack.push({ node: folder, indent });
-      } else {
-        if (parent.children.some(c => c.type === 'file' && c.name === name)) {
-          throw new Error(`Duplicate file "${name}"`);
-        }
-        parent.children.push({ name, type: 'file' });
-        fileCount++;
-      }
-    }
-    
-    return { root, fileCount, folderCount: folderCount - 1 };
+    const lines = input.split('\n').map(stripComments).filter(l=>l.trim()); if(!lines.length) throw new Error('Empty');
+    let root = { name: 'project', type: 'folder', children: [] }, stack = [{ node: root, indent: -1 }];
+    let fc = 0, fd = 1;
+    lines.forEach(l => {
+      const indent = l.search(/\S/); let c = l.trim();
+      if(!c.match(/^[├└│]/) && !c.includes('─')) { if(c.match(/^[a-zA-Z0-9_-]+(\/)?$/)) root.name = c.replace(/\/$/,''); return; }
+      c = c.replace(/^[├└]──\s*/, '').replace(/^[│]\s*/, '');
+      const isFolder = c.endsWith('/'); const name = isFolder ? c.slice(0,-1).trim() : c.trim();
+      if(!name) return;
+      while(stack.length>1 && stack[stack.length-1].indent >= indent) stack.pop();
+      const parent = stack[stack.length-1].node;
+      if(isFolder) { let f = parent.children.find(ch=>ch.type==='folder'&&ch.name===name); if(!f) { f = { name, type:'folder', children:[] }; parent.children.push(f); fd++; } stack.push({ node:f, indent }); }
+      else { if(parent.children.some(ch=>ch.type==='file'&&ch.name===name)) throw new Error(`Duplicate file "${name}"`); parent.children.push({ name, type:'file' }); fc++; }
+    });
+    return { root, fileCount: fc, folderCount: fd-1 };
   }
 
   function renderPreview(tree) {
-    if (!tree) return;
-    let html = '';
-    function walk(node, depth) {
-      const indent = '  '.repeat(depth);
-      if (node.type === 'folder') {
-        html += `<div>${indent}<span class="preview-folder">📁 ${node.name}/</span></div>`;
-        if (node.children) node.children.forEach(c => walk(c, depth+1));
-      } else {
-        const binary = isBinaryFile(node.name);
-        const icon = binary ? '📦' : getFileIcon(node.name.split('.').pop());
-        const cls = binary ? 'preview-binary' : 'preview-file';
-        html += `<div>${indent}<span class="${cls}">${icon} ${node.name}</span></div>`;
-      }
-    }
-    walk(tree, 0);
-    elements.preview.innerHTML = html;
+    if(!tree) return; let h = '';
+    function w(n, d) { const ind = '  '.repeat(d); if(n.type==='folder') { h += `<div>${ind}<span class="preview-folder">📁 ${n.name}/</span></div>`; n.children?.forEach(c=>w(c,d+1)); } else { const bin = isBinary(n.name); h += `<div>${ind}<span class="${bin?'preview-binary':'preview-file'}">${bin?'📦':'📄'} ${n.name}</span></div>`; } }
+    w(tree,0); elements.preview.innerHTML = h;
   }
 
-  function parseTreeAction() {
-    clearMessages();
-    const input = elements.input.value;
-    if (!input.trim()) { showError('Paste a tree first.'); return; }
-    try {
-      const result = parseTree(input);
-      state.parsedTree = result.root;
-      state.fileCount = result.fileCount;
-      state.folderCount = result.folderCount;
-      renderPreview(state.parsedTree);
-      elements.statsText.innerHTML = `📁 ${result.folderCount} folders · 📄 ${result.fileCount} files`;
-      showSuccess(`Parsed — ${result.folderCount} folders, ${result.fileCount} files.`);
-      pushHistory();
-    } catch (e) {
-      showError(e.message);
-    }
+  function parseAction() {
+    clearMessages(); const input = elements.input.value; if(!input.trim()) { showError('Paste a tree first.'); return; }
+    try { const r = parseTree(input); state.parsedTree = r.root; state.fileCount = r.fileCount; state.folderCount = r.folderCount; renderPreview(state.parsedTree); elements.statsText.innerHTML = `📁 ${r.folderCount} folders · 📄 ${r.fileCount} files`; showSuccess(`Parsed — ${r.folderCount} folders, ${r.fileCount} files.`); pushHistory(); }
+    catch(e) { showError(e.message); }
   }
 
-  // ========== HISTORY ==========
+  // History
   function pushHistory() {
-    const snapshot = {
-      input: elements.input.value,
-      tree: state.parsedTree ? JSON.parse(JSON.stringify(state.parsedTree)) : null,
-      fileCount: state.fileCount,
-      folderCount: state.folderCount
-    };
-    history.past.push(snapshot);
-    if (history.past.length > CONFIG.MAX_HISTORY) history.past.shift();
-    history.future = [];
-    elements.undoBtn.disabled = history.past.length === 0;
-    elements.redoBtn.disabled = true;
+    history.past.push({ input: elements.input.value, tree: state.parsedTree ? JSON.parse(JSON.stringify(state.parsedTree)) : null, fc: state.fileCount, fd: state.folderCount });
+    if(history.past.length > CONFIG.MAX_HISTORY) history.past.shift();
+    history.future = []; elements.undoBtn.disabled = history.past.length < 2; elements.redoBtn.disabled = true;
+    try { localStorage.setItem(CONFIG.AUTO_SAVE_KEY, JSON.stringify({ ...history.past[history.past.length-1], timestamp: Date.now() })); } catch(e){}
   }
+  function undo() { if(history.past.length<2) return; history.future.push(history.past.pop()); restore(history.past[history.past.length-1]); }
+  function redo() { if(!history.future.length) return; const n = history.future.pop(); history.past.push(n); restore(n); }
+  function restore(s) { elements.input.value = s.input; state.parsedTree = s.tree; state.fileCount = s.fc; state.folderCount = s.fd; if(state.parsedTree) { renderPreview(state.parsedTree); elements.statsText.innerHTML = `📁 ${s.fd} folders · 📄 ${s.fc} files`; } elements.undoBtn.disabled = history.past.length < 2; elements.redoBtn.disabled = !history.future.length; }
 
-  function undo() {
-    if (history.past.length < 2) return;
-    const current = history.past.pop();
-    history.future.push(current);
-    const prev = history.past[history.past.length - 1];
-    elements.input.value = prev.input;
-    state.parsedTree = prev.tree;
-    state.fileCount = prev.fileCount;
-    state.folderCount = prev.folderCount;
-    if (state.parsedTree) { renderPreview(state.parsedTree); elements.statsText.innerHTML = `📁 ${state.folderCount} folders · 📄 ${state.fileCount} files`; }
-    elements.undoBtn.disabled = history.past.length === 0;
-    elements.redoBtn.disabled = false;
-  }
+  // Export
+  function generatePlaceholder(n, p) { if(isBinary(n)) return `# ${p}\n# BINARY PLACEHOLDER\n`; const e = n.split('.').pop(); if(n==='package.json') return JSON.stringify({ name: (p||'project').replace(/[^a-z0-9-]/g,'-'), version:'1.0.0', private:true },null,2); if(n==='tsconfig.json') return JSON.stringify({ compilerOptions:{ target:'ES2022', module:'ESNext', strict:true } },null,2); if(e==='md') return `# ${n}\n`; return ''; }
+  function addToZip(z, n, p='') { const f = p ? `${p}/${n.name}` : n.name; if(n.type==='folder') { const folder = z.folder(f); n.children?.forEach(c=>addToZip(z,c,f)); } else z.file(f, generatePlaceholder(n.name, f)); }
+  async function generateZip() { if(!state.parsedTree) return; const z = new JSZip(), r = state.parsedTree.name; state.parsedTree.children?.forEach(c=>addToZip(z,c,r)); const b = await z.generateAsync({ type:'blob', compression:'DEFLATE' }); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `${r}.zip`; a.click(); showSuccess(`${r}.zip generated.`); }
+  function generateScript() { if(!state.parsedTree) return; let s = '#!/bin/bash\n'; function add(n,p='') { const f = p?`${p}/${n.name}`:n.name; if(n.type==='folder') { s += `mkdir -p "${f}"\n`; n.children?.forEach(c=>add(c,f)); } else s += `touch "${f}"\n`; } const r = state.parsedTree.name; s += `mkdir -p "${r}"\ncd "${r}"\n`; state.parsedTree.children?.forEach(c=>add(c,'')); const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([s])); a.download = `${r}.sh`; a.click(); showSuccess(`${r}.sh generated.`); }
+  function exportTree() { if(!state.parsedTree) return; let o = `${state.parsedTree.name}/\n`; function add(n,d=0,last=true,pre='') { if(d===0) { n.children?.forEach((c,i)=>add(c,d+1,i===n.children.length-1,'')); return; } o += pre + (last?'└── ':'├── ') + n.name + (n.type==='folder'?'/':'') + '\n'; if(n.type==='folder'&&n.children) { const np = pre + (last?'    ':'│   '); n.children.forEach((c,i)=>add(c,d+1,i===n.children.length-1,np)); } } add(state.parsedTree); const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([o])); a.download = `${state.parsedTree.name}.tree.txt`; a.click(); showSuccess(`Tree exported.`); }
+  function exportJSON() { if(!state.parsedTree) return; const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(state.parsedTree, null, 2)])); a.download = `${state.parsedTree.name}.json`; a.click(); showSuccess(`JSON exported.`); }
+  function handleExport() { const f = elements.exportFormat.value; if(f==='zip') generateZip(); else if(f==='script') generateScript(); else if(f==='tree') exportTree(); else if(f==='json') exportJSON(); }
 
-  function redo() {
-    if (history.future.length === 0) return;
-    const next = history.future.pop();
-    history.past.push(next);
-    elements.input.value = next.input;
-    state.parsedTree = next.tree;
-    state.fileCount = next.fileCount;
-    state.folderCount = next.folderCount;
-    if (state.parsedTree) { renderPreview(state.parsedTree); elements.statsText.innerHTML = `📁 ${state.folderCount} folders · 📄 ${state.fileCount} files`; }
-    elements.undoBtn.disabled = false;
-    elements.redoBtn.disabled = history.future.length === 0;
-  }
+  function clearAll() { elements.input.value = ''; elements.preview.innerHTML = '<span style="color: var(--dim);">Click "Example" or paste your tree...</span>'; elements.statsText.innerHTML = '📁 0 folders · 📄 0 files'; clearMessages(); elements.auditPanel.classList.remove('visible'); state.parsedTree = null; }
+  function cleanComments() { elements.input.value = elements.input.value.split('\n').map(stripComments).join('\n'); showSuccess('Comments stripped.'); }
+  function loadExample() { elements.input.value = EXAMPLE_TREE; showInfo('Example loaded. Click "Audit & Fix" or "Parse".'); }
 
-  // ========== EXPORT ==========
-  function generatePlaceholderContent(name, path) {
-    if (isBinaryFile(name)) return `# ${path}\n# BINARY PLACEHOLDER\n`;
-    const ext = name.split('.').pop();
-    const baseName = name.replace(/\.[^/.]+$/, '');
-    if (baseName === 'index' && (ext === 'ts' || ext === 'js')) return `// ${path}\n// Barrel export\n\nexport * from './types';\n`;
-    if (name === 'package.json') return JSON.stringify({ name: path.replace(/\//g, '-').replace(/[^a-z0-9-]/g, '-') || 'project', version: "1.0.0", private: true }, null, 2);
-    if (name === 'tsconfig.json') return JSON.stringify({ compilerOptions: { target: "ES2022", module: "ESNext", strict: true } }, null, 2);
-    if (ext === 'md') return `# ${baseName}\n`;
-    return '';
-  }
+  // Recovery
+  try { const b = localStorage.getItem(CONFIG.AUTO_SAVE_KEY); if(b) { const d = JSON.parse(b); if(Date.now()-d.timestamp < 86400000) { elements.recoveryHint.textContent = '💾 Restore'; elements.recoveryHint.onclick = () => { if(confirm('Restore previous session?')) { elements.input.value = d.input; if(d.tree) { state.parsedTree = d.tree; state.fileCount = d.fc; state.folderCount = d.fd; renderPreview(state.parsedTree); elements.statsText.innerHTML = `📁 ${d.fd} folders · 📄 ${d.fc} files`; } showSuccess('Restored.'); } }; } } } catch(e){}
 
-  function addToZip(zip, node, path = '') {
-    const full = path ? `${path}/${node.name}` : node.name;
-    if (node.type === 'folder') {
-      const f = zip.folder(full);
-      if (node.children) node.children.forEach(c => addToZip(zip, c, full));
-    } else {
-      zip.file(full, generatePlaceholderContent(node.name, full));
-    }
-  }
-
-  async function generateZip() {
-    if (!state.parsedTree) { showError('Parse a tree first.'); return; }
-    elements.generateBtn.disabled = true;
-    try {
-      const zip = new JSZip();
-      const rootName = state.parsedTree.name || 'project';
-      state.parsedTree.children?.forEach(c => addToZip(zip, c, rootName));
-      const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob); a.download = `${rootName}.zip`; a.click();
-      showSuccess(`${rootName}.zip generated.`);
-    } catch (e) {
-      showError('ZIP failed.');
-    } finally { elements.generateBtn.disabled = false; }
-  }
-
-  function generateScript() {
-    if (!state.parsedTree) { showError('Parse a tree first.'); return; }
-    let script = '#!/bin/bash\n';
-    function add(n, path = '') {
-      const full = path ? `${path}/${n.name}` : n.name;
-      if (n.type === 'folder') { script += `mkdir -p "${full}"\n`; if (n.children) n.children.forEach(c => add(c, full)); }
-      else script += `touch "${full}"\n`;
-    }
-    const root = state.parsedTree.name || 'project';
-    script += `mkdir -p "${root}"\ncd "${root}"\n`;
-    state.parsedTree.children?.forEach(c => add(c, ''));
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob([script])); a.download = `${root}.sh`; a.click();
-    showSuccess(`${root}.sh generated.`);
-  }
-
-  function exportTree() {
-    if (!state.parsedTree) { showError('Parse a tree first.'); return; }
-    let out = `${state.parsedTree.name}/\n`;
-    function add(n, depth = 0, last = true, prefix = '') {
-      if (depth === 0) { n.children?.forEach((c, i) => add(c, depth+1, i === n.children.length-1, '')); return; }
-      out += prefix + (last ? '└── ' : '├── ') + n.name + (n.type === 'folder' ? '/' : '') + '\n';
-      if (n.type === 'folder' && n.children) {
-        const np = prefix + (last ? '    ' : '│   ');
-        n.children.forEach((c, i) => add(c, depth+1, i === n.children.length-1, np));
-      }
-    }
-    add(state.parsedTree);
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob([out])); a.download = `${state.parsedTree.name}.tree.txt`; a.click();
-    showSuccess(`Tree exported.`);
-  }
-
-  function handleExport() {
-    const fmt = elements.exportFormat.value;
-    if (fmt === 'zip') generateZip();
-    else if (fmt === 'script') generateScript();
-    else exportTree();
-  }
-
-  function clearAll() {
-    elements.input.value = '';
-    elements.preview.innerHTML = '<span style="color: var(--dim);">Click "Example" to load, or paste your tree...</span>';
-    elements.statsText.innerHTML = '📁 0 folders · 📄 0 files';
-    clearMessages();
-    elements.auditPanel.classList.remove('visible');
-    state.parsedTree = null; state.fileCount = 0; state.folderCount = 0;
-  }
-
-  function cleanCommentsAction() {
-    const cleaned = elements.input.value.split('\n').map(l => stripComments(l)).join('\n');
-    if (cleaned !== elements.input.value) {
-      pushHistory();
-      elements.input.value = cleaned;
-      showSuccess('Comments stripped.');
-    }
-  }
-
-  function loadExample() {
-    pushHistory();
-    elements.input.value = EXAMPLE_TREE;
-    showInfo('Example loaded. Click "Fix & Merge" to audit, or "Parse" directly.');
-  }
-
-  // ========== EVENT BINDING ==========
-  elements.parseBtn.addEventListener('click', parseTreeAction);
-  elements.generateBtn.addEventListener('click', handleExport);
-  elements.clearBtn.addEventListener('click', clearAll);
-  elements.cleanCommentsBtn.addEventListener('click', cleanCommentsAction);
-  elements.loadExampleBtn.addEventListener('click', loadExample);
-  elements.auditAndFixBtn.addEventListener('click', runAudit);
-  elements.applyFixesBtn.addEventListener('click', applyFixesAction);
-  elements.dismissAuditBtn.addEventListener('click', () => elements.auditPanel.classList.remove('visible'));
-  elements.undoBtn.addEventListener('click', undo);
-  elements.redoBtn.addEventListener('click', redo);
-
-  document.addEventListener('keydown', (e) => {
-    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); parseTreeAction(); }
-    if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) { e.preventDefault(); undo(); }
-    if ((e.ctrlKey || e.metaKey) && e.key === 'y') { e.preventDefault(); redo(); }
-  });
-
-  // ========== MOBILE NAV ==========
-  const hamburger = document.getElementById('hamburger');
-  const mobileNav = document.createElement('div');
-  mobileNav.className = 'mobile-nav';
-  document.body.appendChild(mobileNav);
-  if (hamburger) {
-    document.querySelectorAll('.nav-links a').forEach(link => mobileNav.appendChild(link.cloneNode(true)));
-    hamburger.addEventListener('click', () => { mobileNav.classList.toggle('open'); hamburger.classList.toggle('open'); });
-    mobileNav.addEventListener('click', (e) => { if (e.target.tagName === 'A') { mobileNav.classList.remove('open'); hamburger.classList.remove('open'); } });
-  }
-
-  // ========== RECOVERY ==========
-  try {
-    const backup = localStorage.getItem(CONFIG.AUTO_SAVE_KEY);
-    if (backup) {
-      const data = JSON.parse(backup);
-      if (Date.now() - data.timestamp < 24 * 60 * 60 * 1000) {
-        elements.recoveryHint.textContent = `💾 Restore session`;
-        elements.recoveryHint.onclick = () => {
-          if (confirm('Restore previous session?')) {
-            elements.input.value = data.input;
-            if (data.tree) { state.parsedTree = data.tree; state.fileCount = data.fileCount; state.folderCount = data.folderCount; renderPreview(state.parsedTree); updateStats(); showSuccess('Session restored.'); }
-          }
-        };
-      }
-    }
-  } catch (e) {}
+  // Events
+  elements.parseBtn.onclick = parseAction;
+  elements.generateBtn.onclick = handleExport;
+  elements.clearBtn.onclick = clearAll;
+  elements.cleanCommentsBtn.onclick = cleanComments;
+  elements.loadExampleBtn.onclick = loadExample;
+  elements.auditAndFixBtn.onclick = runAudit;
+  elements.applyFixesBtn.onclick = applyFixesAction;
+  elements.dismissAuditBtn.onclick = () => elements.auditPanel.classList.remove('visible');
+  elements.undoBtn.onclick = undo;
+  elements.redoBtn.onclick = redo;
+  document.addEventListener('keydown', e => { if((e.ctrlKey||e.metaKey) && e.key==='Enter') { e.preventDefault(); parseAction(); } if((e.ctrlKey||e.metaKey) && e.key==='z' && !e.shiftKey) { e.preventDefault(); undo(); } if((e.ctrlKey||e.metaKey) && e.key==='y') { e.preventDefault(); redo(); } });
 })();
 </script>
 </body>
