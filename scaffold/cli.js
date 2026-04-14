@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 /**
- * AION Scaffold CLI v2.6.1
- * Intelligent tree-to-filesystem scaffolding for the command line.
+ * AION Scaffold CLI v2.6.5
+ * FORGE-Hardened — Intelligent tree-to-filesystem scaffolding for the command line.
  * Uses shared parser.js for consistency with web version.
  * 
  * @author Sheldon K. Salmon
  * @license MIT
- * @version 2.6.1
+ * @version 2.6.5
  */
 
 const fs = require('fs');
@@ -89,7 +89,7 @@ function writeTree(tree, basePath, options = {}) {
 function printHelp() {
   console.log(`
 ${colors.cyan}${'═'.repeat(60)}${colors.reset}
-${colors.cyan}AION SCAFFOLD CLI v2.6.1${colors.reset}
+${colors.cyan}AION SCAFFOLD CLI v2.6.5 — FORGE-Hardened${colors.reset}
 Intelligent tree-to-filesystem scaffolding
 ${colors.cyan}${'═'.repeat(60)}${colors.reset}
 
@@ -141,7 +141,7 @@ ${colors.cyan}${'═'.repeat(60)}${colors.reset}
 }
 
 function printVersion() {
-  console.log(`${colors.green}AION Scaffold CLI v2.6.1${colors.reset}`);
+  console.log(`${colors.green}AION Scaffold CLI v2.6.5 — FORGE-Hardened${colors.reset}`);
 }
 
 function parseArgs(args) {
@@ -209,6 +209,7 @@ function readInput(options) {
   }
 }
 
+// FORGE FIX: Updated to handle structured warnings
 function printAuditReport(auditResult) {
   const { issues, fixable, manual, fixableCount, manualCount } = auditResult;
   
@@ -238,6 +239,35 @@ function printAuditReport(auditResult) {
   const fqiColor = fqi >= 0.90 ? colors.green : (fqi >= 0.80 ? colors.yellow : colors.red);
   console.log(`\n${colors.cyan}FQI: ${fqiColor}${fqi.toFixed(2)}${colors.reset} (${fixableCount} fixable, ${manualCount} manual)`);
   console.log(`${'─'.repeat(40)}`);
+}
+
+// FORGE FIX: Handle structured warnings from parseTree
+function printParseWarnings(warnings, verbose) {
+  if (!warnings.length) return;
+  
+  // Group warnings by severity
+  const errors = warnings.filter(w => w.severity === 'error');
+  const warns = warnings.filter(w => w.severity === 'warn');
+  const infos = warnings.filter(w => w.severity === 'info');
+  
+  const limit = verbose ? warnings.length : Math.min(5, warnings.length);
+  const displayWarnings = warnings.slice(0, limit);
+  
+  console.log(`\n${colors.yellow}⚠️  ${warnings.length} warning(s):${colors.reset}`);
+  displayWarnings.forEach(w => {
+    const color = w.severity === 'error' ? colors.red : (w.severity === 'warn' ? colors.yellow : colors.dim);
+    const lineInfo = w.line ? `Line ${w.line}: ` : '';
+    console.log(`   ${color}${lineInfo}${w.message}${colors.reset}`);
+  });
+  
+  if (warnings.length > limit) {
+    console.log(`   ${colors.dim}... and ${warnings.length - limit} more${colors.reset}`);
+  }
+  
+  // Summary by severity if verbose
+  if (verbose && (errors.length || warns.length || infos.length)) {
+    console.log(`\n   ${colors.red}Errors: ${errors.length}${colors.reset} · ${colors.yellow}Warns: ${warns.length}${colors.reset} · ${colors.dim}Infos: ${infos.length}${colors.reset}`);
+  }
 }
 
 // ============================================================
@@ -291,21 +321,15 @@ function main() {
     // Parse
     if (!options.quiet) console.log(`${colors.cyan}📦 Parsing tree...${colors.reset}`);
     
-    const { root, fileCount, folderCount, warnings } = parseTree(processedContent, sanitizedName);
+    const parseResult = parseTree(processedContent, sanitizedName);
+    const { root, fileCount, folderCount } = parseResult;
+    const warnings = parseResult.warnings || [];
     
     if (!options.quiet) {
       console.log(`${colors.green}📁 ${folderCount} folders, 📄 ${fileCount} files${colors.reset}`);
       
-      if (warnings.length && (options.verbose || !options.quiet)) {
-        console.log(`\n${colors.yellow}⚠️  ${warnings.length} warning(s):${colors.reset}`);
-        const limit = options.verbose ? warnings.length : Math.min(5, warnings.length);
-        warnings.slice(0, limit).forEach(w => console.log(`   ${w}`));
-        if (warnings.length > limit) console.log(`   ${colors.dim}... and ${warnings.length - limit} more${colors.reset}`);
-      }
-      
-      // Show depth info if truncated
-      if (warnings.some(w => w.includes('Depth exceeds'))) {
-        console.log(`${colors.yellow}⚠️  Tree depth truncated at ${CONFIG.MAX_DEPTH} levels${colors.reset}`);
+      if (warnings.length) {
+        printParseWarnings(warnings, options.verbose);
       }
     }
     
@@ -351,5 +375,6 @@ if (require.main === module) {
 // ============================================================
 module.exports = {
   writeTree,
-  printAuditReport
+  printAuditReport,
+  printParseWarnings
 };
