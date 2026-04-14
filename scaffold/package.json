@@ -1,25 +1,58 @@
 {
   "name": "aion-scaffold",
   "version": "2.6.5",
-  "description": "Intelligent tree-to-filesystem scaffolding — FORGE-hardened",
+  "description": "Intelligent tree-to-filesystem scaffolding. Parse ASCII trees, audit issues, fix automatically. FORGE-hardened.",
   "main": "cli.js",
   "bin": {
-    "aion-scaffold": "./cli.js"
+    "aion-scaffold": "./cli.js",
+    "scaffold": "./cli.js"
   },
   "files": [
     "cli.js",
-    "parser.js"
+    "parser.js",
+    "README.md",
+    "LICENSE"
   ],
+  "scripts": {
+    "test": "echo \"No tests yet — FORGE EV 0.45 (calibration debt)\"",
+    "start": "node cli.js",
+    "prepublishOnly": "echo '✅ Ready for npm publish'"
+  },
   "keywords": [
-    "scaffold", "tree", "filesystem", "generator", "ai", "claude", "gpt", "project-structure"
+    "scaffold",
+    "scaffolding",
+    "tree",
+    "filesystem",
+    "generator",
+    "project-structure",
+    "ai",
+    "claude",
+    "gpt",
+    "deepseek",
+    "llm",
+    "folder",
+    "directory",
+    "builder",
+    "aion",
+    "forge",
+    "certainty"
   ],
-  "author": "Sheldon K. Salmon <aionsystem@outlook.com>",
+  "author": {
+    "name": "Sheldon K. Salmon",
+    "email": "aionsystem@outlook.com",
+    "url": "https://aionsystem.github.io"
+  },
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/AionSystem/AION-SCAFFOLDING"
   },
+  "bugs": {
+    "url": "https://github.com/AionSystem/AION-SCAFFOLDING/issues"
+  },
+  "homepage": "https://aionsystem.github.io/AION-SCAFFOLDING",
   "engines": {
     "node": ">=14.0.0"
-  }
+  },
+  "preferGlobal": true
 }
