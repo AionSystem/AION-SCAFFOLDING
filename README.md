@@ -4,7 +4,7 @@
 
 <!-- STATUS · VERSION · BUILD -->
 [![Status](https://img.shields.io/badge/STATUS-Production-1976D2?style=flat-square)](https://github.com/AionSystem/AION-SCAFFOLDING)
-[![Version](https://img.shields.io/badge/version-v2.6.5-orange)](#)
+[![Version](https://img.shields.io/badge/version-v2.7.0-orange)](#)
 [![Build](https://img.shields.io/badge/build-passing-brightgreen)](#)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![ORCID — Sheldon K. Salmon](https://img.shields.io/badge/ORCID-0009--0005--8057--5115-a6ce39?style=flat&logo=orcid&logoColor=white)](https://orcid.org/0009-0005-8057-5115)
