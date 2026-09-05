@@ -4,17 +4,18 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';">
-<meta name="description" content="AION Scaffold v3.2 — Sovereign offline tree-to-filesystem generator with tier templates for AionSystem document red-team packages. No CDN, no external requests.">
-<meta property="og:title" content="AION Scaffold v3.2 · AionSystem">
+<meta name="description" content="AION Scaffold v3.3 — Sovereign offline tree-to-filesystem generator with tier templates for AionSystem document red-team packages. No CDN, no external requests.">
+<meta property="og:title" content="AION Scaffold v3.3 · AionSystem">
 <meta property="og:description" content="Fully offline, air-gap ready. Built-in ZIP, no CDN, session privacy, tier templates for document red-team deliverables.">
 <meta property="og:type" content="website">
-<title>AION Scaffold v3.2 · AionSystem</title>
+<title>AION Scaffold v3.3 · AionSystem</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 :root {
   --bg:#010101;
   --surface:rgba(10,5,4,0.72);
   --panel:rgba(18,12,11,0.8);
+  --input-bg:#0a0d12;
   --mid:#5C4841;
   --mid-d:#2A201D;
   --mid-l:#836D65;
@@ -44,6 +45,7 @@ body.light {
   --bg:#f8f8f8;
   --surface:rgba(255,255,255,0.9);
   --panel:rgba(255,255,255,0.95);
+  --input-bg:#ffffff;
   --mid:#b8860b;
   --mid-d:#8b6508;
   --mid-l:#b8860b;
@@ -140,7 +142,7 @@ nav {
 .icon-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
 textarea {
-  width: 100%; height: 340px; background: #0a0d12; border: 1px solid var(--border);
+  width: 100%; height: 340px; background: var(--input-bg); border: 1px solid var(--border);
   border-radius: 8px; padding: 16px; color: var(--text); font-family: var(--mono);
   font-size: 12px; line-height: 1.6; resize: vertical; outline: none;
 }
@@ -167,7 +169,7 @@ textarea:focus { border-color: var(--mid); box-shadow: 0 0 15px rgba(92,72,65,0.
 .visible { display: block; }
 
 .audit-panel {
-  background: rgba(0,0,0,0.4); border: 1px solid var(--border); border-radius: 8px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
   padding: 16px; margin-top: 16px; display: none;
 }
 .audit-panel.visible { display: block; }
@@ -183,7 +185,7 @@ textarea:focus { border-color: var(--mid); box-shadow: 0 0 15px rgba(92,72,65,0.
 }
 .project-name-label { font-family: var(--mono); font-size: 11px; color: var(--text-mid); text-transform: uppercase; }
 .project-name-input {
-  background: #0a0d12; border: 1px solid var(--border); border-radius: 4px;
+  background: var(--input-bg); border: 1px solid var(--border); border-radius: 4px;
   padding: 8px 12px; color: var(--text); font-family: var(--mono); font-size: 12px; width: 200px;
 }
 .project-name-input:focus { outline: none; border-color: var(--mid); }
@@ -285,8 +287,7 @@ footer {
 <nav aria-label="Primary navigation">
   <a href="/" class="nav-logo"><span>AION<span>system</span></span></a>
   <ul class="nav-links">
-    <li><a href="/services/">Services</a></li><li><a href="/simulators/">Simulators</a></li>
-    <li><a href="/dev-tools/" style="color:var(--mid-l);">Dev-Tools</a></li>
+    <li><a href="https://aionsystem.github.io/main-3/services">Services</a></li>
   </ul>
   <button type="button" class="nav-hamburger" id="hamburger" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="mobileNav">
     <span></span><span></span><span></span>
@@ -295,7 +296,7 @@ footer {
 <nav class="mobile-nav" id="mobileNav" aria-label="Mobile navigation" aria-hidden="true"></nav>
 
 <div class="page-header">
-  <div class="hero-eyebrow">Sovereign Tool · v3.2</div>
+  <div class="hero-eyebrow">Sovereign Tool · v3.3</div>
   <h1 class="page-title">AION<em>Scaffold</em></h1>
   <p class="page-sub">Paste a tree or load a tier template. Audit issues. Fix automatically. Fully offline. No CDN.</p>
 </div>
@@ -396,7 +397,7 @@ footer {
     <div class="badge-group">
       <span class="project-badge" id="projectNameDisplay">📦 my-awesome-project</span>
       <span class="project-badge" id="tierBadge" style="display:none;border-color:var(--purple);color:var(--purple);background:rgba(168,85,247,0.1);"></span>
-      <span class="version-badge" id="versionBadge" role="button" tabindex="0" aria-label="View version history">v3.2</span>
+      <span class="version-badge" id="versionBadge" role="button" tabindex="0" aria-label="View version history">v3.3</span>
       <span class="keyboard-hint">Ctrl+Enter Parse · Ctrl+Z Undo · Ctrl+Shift+Z Redo</span>
     </div>
   </div>
@@ -405,8 +406,7 @@ footer {
 <footer>
   <div>AionSystem · Sheldon K. Salmon · AI Reliability Architect</div>
   <ul class="footer-links">
-    <li><a href="/simulators/">Simulators</a></li>
-    <li><a href="/dev-tools/">Dev-Tools</a></li>
+    <li><a href="https://aionsystem.github.io/main-3/services">Services</a></li>
     <li><a href="https://github.com/AionSystem/AION-SCAFFOLDING" target="_blank" rel="noopener">GitHub ↗</a></li>
   </ul>
 </footer>
@@ -450,9 +450,12 @@ const ZipGenerator = (() => {
     
     addToZip(tree);
 
-    // Add tier manifest if present
+    // Add tier manifest if present — its content also respects the
+    // Include Placeholders toggle, same as every other generated file
+    // (previously it ignored the toggle and always shipped full text).
     if (tierManifestContent) {
-      files.push({ name: 'Tier_Manifest.txt', data: encoder.encode(tierManifestContent), isDir: false });
+      const manifestBody = includePlaceholders ? tierManifestContent : '';
+      files.push({ name: 'Tier_Manifest.txt', data: encoder.encode(manifestBody), isDir: false });
     }
 
     const localFileHeaders = [];
@@ -564,7 +567,7 @@ const ZipGenerator = (() => {
     if (name === 'package.json') return JSON.stringify({name:projectName,version:'1.0.0',private:true}, null, 2);
     if (name === 'tsconfig.json') return JSON.stringify({compilerOptions:{target:'ES2022',module:'ESNext',strict:true}}, null, 2);
     if (name === 'README.txt') {
-      return `# ${projectName}\n\nGenerated by AionSystem Scaffold v3.2\n\nReview package for document red-team analysis.\n\nTier: ${tierManifestContent ? tierManifestContent.split('\n')[0] : 'Custom'}\n`;
+      return `# ${projectName}\n\nGenerated by AionSystem Scaffold v3.3\n\nReview package for document red-team analysis.\n\nTier: ${tierManifestContent ? tierManifestContent.split('\n')[0] : 'Custom'}\n`;
     }
     if (name === 'Hash_Manifest.txt') {
       return `# Hash Manifest\n# Generated by AionSystem\n# SHA-256 hashes of package files\n\n`;
@@ -609,7 +612,7 @@ const ZipGenerator = (() => {
 })();
 
 // ============================================================
-// MAIN APPLICATION (v3.2 — Sovereign, No CDN)
+// MAIN APPLICATION (v3.3 — Sovereign, No CDN)
 // ============================================================
 (function(){
   "use strict";
@@ -617,11 +620,16 @@ const ZipGenerator = (() => {
   const CONFIG = {
     MAX_FILES: 15000, MAX_FOLDERS: 7500, MAX_INPUT_SIZE: 500000, MAX_DEPTH: 100,
     BINARY_EXTENSIONS: SHARED_BINARY_EXTENSIONS,
-    MAX_HISTORY: 30, AUTO_SAVE_KEY: 'aion-scaffold-v3_2',
+    MAX_HISTORY: 30, AUTO_SAVE_KEY: 'aion-scaffold-v3_3',
     PREVIEW_MAX_NODES: 500, PREVIEW_MAX_DEPTH: 4
   };
 
   const CHANGELOG = [
+    { version: 'v3.3', date: '2026-09-05', changes: [
+      'Fixed light-mode contrast: the tree-input textarea, project-name field, and audit panel had hardcoded dark backgrounds that made text unreadable in day mode — all three now use theme-aware variables',
+      'Simplified top nav and footer to a single Services link, pointed at https://aionsystem.github.io/main-3/services — removed the old Simulators and Dev-Tools links',
+      'Fixed Tier_Manifest.txt ignoring the Include Placeholders toggle: it previously always shipped full manifest text in both ZIP and shell-script exports regardless of the checkbox — it now respects the toggle like every other generated file'
+    ]},
     { version: 'v3.2', date: '2026-09-05', changes: [
       'Added a day/night theme toggle, matching the main AionSystem site — shares the same "aion-theme" localStorage key, so a preference set on one page carries over to the others',
       'Background canvas symbols now use a light-mode-appropriate palette instead of staying dark-tinted when the page is switched to light',
@@ -1268,7 +1276,11 @@ This is the highest tier. No further upgrades available.`
     }
     s+=`mkdir -p ${shellQuote(state.parsedTree.name)}\ncd ${shellQuote(state.parsedTree.name)}\n`; state.parsedTree.children?.forEach(c=>add(c,''));
     if(state.tierManifest){
-      s+=`cat > ${shellQuote('Tier_Manifest.txt')} << 'AION_EOF'\n${state.tierManifest}\nAION_EOF\n`;
+      if(includePlaceholders){
+        s+=`cat > ${shellQuote('Tier_Manifest.txt')} << 'AION_EOF'\n${state.tierManifest}\nAION_EOF\n`;
+      } else {
+        s+=`touch ${shellQuote('Tier_Manifest.txt')}\n`;
+      }
     }
     const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([s])); a.download=`${state.parsedTree.name}.sh`; a.click(); showSuccess(`${state.parsedTree.name}.sh generated.`);
   }
