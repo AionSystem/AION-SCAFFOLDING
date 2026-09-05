@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';">
-<meta name="description" content="AION Scaffold v3.1 — Sovereign offline tree-to-filesystem generator with tier templates for AionSystem document red-team packages. No CDN, no external requests.">
-<meta property="og:title" content="AION Scaffold v3.1 · AionSystem">
+<meta name="description" content="AION Scaffold v3.2 — Sovereign offline tree-to-filesystem generator with tier templates for AionSystem document red-team packages. No CDN, no external requests.">
+<meta property="og:title" content="AION Scaffold v3.2 · AionSystem">
 <meta property="og:description" content="Fully offline, air-gap ready. Built-in ZIP, no CDN, session privacy, tier templates for document red-team deliverables.">
 <meta property="og:type" content="website">
-<title>AION Scaffold v3.1 · AionSystem</title>
+<title>AION Scaffold v3.2 · AionSystem</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 :root {
@@ -37,6 +37,32 @@
   --mono:'JetBrains Mono',monospace;
   --display:'Space Grotesk',sans-serif;
   --body:'Inter',sans-serif;
+  --ease:cubic-bezier(0.16,1,0.3,1);
+  --ease-spring:cubic-bezier(0.175,0.885,0.32,1.275);
+}
+body.light {
+  --bg:#f8f8f8;
+  --surface:rgba(255,255,255,0.9);
+  --panel:rgba(255,255,255,0.95);
+  --mid:#b8860b;
+  --mid-d:#8b6508;
+  --mid-l:#b8860b;
+  --peri:#8b6508;
+  --peri-l:#6b4d0a;
+  --accent:#8b6508;
+  --red:#c0392b;
+  --border:rgba(0,0,0,0.1);
+  --border-h:rgba(0,0,0,0.3);
+  --glow:0 0 20px rgba(0,0,0,0.05);
+  --glow-strong:0 0 30px rgba(0,0,0,0.1),0 0 60px rgba(0,0,0,0.05);
+  --text:#111111;
+  --text-mid:#444444;
+  --text-dim:#888888;
+  --amber:#b45309;
+  --green:#15803d;
+  --red2:#c0392b;
+  --cyan:#0e7490;
+  --purple:#7e22ce;
 }
 body {
   background: var(--bg);
@@ -73,6 +99,20 @@ nav {
 .nav-links { display: flex; gap: 32px; list-style: none; }
 .nav-links a { font-family: var(--mono); font-size: 11px; letter-spacing: 2px; color: var(--text); text-decoration: none; text-transform: uppercase; }
 .nav-links a:hover { color: var(--mid-l); }
+.nav-hamburger { display: none; background: none; border: none; cursor: pointer; width: 32px; height: 32px; flex-direction: column; justify-content: space-between; align-items: flex-end; padding: 4px 0; }
+.nav-hamburger span { display: block; height: 2px; background: var(--text-mid); transition: all 0.3s var(--ease-spring); border-radius: 2px; }
+.nav-hamburger span:nth-child(1){width:100%}.nav-hamburger span:nth-child(2){width:70%}.nav-hamburger span:nth-child(3){width:100%}
+.nav-hamburger.open span:nth-child(1){transform:translateY(10px) rotate(45deg)}.nav-hamburger.open span:nth-child(2){opacity:0;transform:scaleX(0)}.nav-hamburger.open span:nth-child(3){transform:translateY(-10px) rotate(-45deg)}
+.mobile-nav { position: fixed; top: 56px; left: 0; right: 0; bottom: 0; z-index: 99; background: var(--surface); backdrop-filter: blur(24px); display: flex; flex-direction: column; align-content: start; transform: translateY(-110%); visibility: hidden; transition: transform 0.4s var(--ease-spring), visibility 0s linear 0.4s; overflow-y: auto; pointer-events: none; border-top: 1px solid var(--border); }
+.mobile-nav.open { transform: translateY(0); visibility: visible; pointer-events: all; transition: transform 0.4s var(--ease-spring), visibility 0s linear 0s; }
+.mobile-nav a { font-family: var(--mono); font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-mid); text-decoration: none; padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; transition: all 0.15s; opacity: 0; transform: translateY(6px); }
+.mobile-nav.open a { opacity: 1; transform: translateY(0); }
+.mobile-nav a::before { content: ''; display: block; width: 4px; height: 4px; border-radius: 50%; background: var(--text-dim); flex-shrink: 0; transition: background 0.15s, box-shadow 0.15s; }
+.mobile-nav a:hover::before { background: var(--mid-l); box-shadow: 0 0 6px var(--mid-l); }
+.mobile-nav a:hover { color: var(--mid-l); background: rgba(92,72,65,0.04); }
+
+.theme-toggle { position: fixed; bottom: 24px; left: 24px; z-index: 200; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface); backdrop-filter: blur(12px); color: var(--text-mid); font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.25s var(--ease); }
+.theme-toggle:hover, .theme-toggle:focus-visible { border-color: var(--mid); color: var(--mid-l); box-shadow: var(--glow); outline: none; }
 
 #hero-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; opacity: 0.35; pointer-events: none; }
 
@@ -215,18 +255,24 @@ footer {
   .editor-grid { grid-template-columns: 1fr; }
   nav { padding: 0 20px; }
   .nav-links { display: none; }
+  .nav-hamburger { display: flex; }
   .page-header, .tool-container { padding-left: 20px; padding-right: 20px; }
   .panel-actions { justify-content: flex-start; }
   .stats-bar { flex-direction: column; align-items: flex-start; }
   .toggle-group { margin-left: 0; }
   .tier-select-row { flex-direction: column; align-items: flex-start; }
 }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+  #hero-canvas { display: none; }
+}
 </style>
 </head>
 <body>
 
 <div class="visually-hidden" id="ariaLive" aria-live="polite"></div>
-<canvas id="hero-canvas"></canvas>
+<canvas id="hero-canvas" aria-hidden="true"></canvas>
+<button type="button" class="theme-toggle" id="theme-toggle" aria-label="Toggle day/night mode">☀</button>
 
 <div class="modal-overlay" id="changelogModal">
   <div class="modal-content">
@@ -236,16 +282,20 @@ footer {
   </div>
 </div>
 
-<nav>
+<nav aria-label="Primary navigation">
   <a href="/" class="nav-logo"><span>AION<span>system</span></span></a>
   <ul class="nav-links">
     <li><a href="/services/">Services</a></li><li><a href="/simulators/">Simulators</a></li>
     <li><a href="/dev-tools/" style="color:var(--mid-l);">Dev-Tools</a></li>
   </ul>
+  <button type="button" class="nav-hamburger" id="hamburger" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="mobileNav">
+    <span></span><span></span><span></span>
+  </button>
 </nav>
+<nav class="mobile-nav" id="mobileNav" aria-label="Mobile navigation" aria-hidden="true"></nav>
 
 <div class="page-header">
-  <div class="hero-eyebrow">Sovereign Tool · v3.1</div>
+  <div class="hero-eyebrow">Sovereign Tool · v3.2</div>
   <h1 class="page-title">AION<em>Scaffold</em></h1>
   <p class="page-sub">Paste a tree or load a tier template. Audit issues. Fix automatically. Fully offline. No CDN.</p>
 </div>
@@ -346,7 +396,7 @@ footer {
     <div class="badge-group">
       <span class="project-badge" id="projectNameDisplay">📦 my-awesome-project</span>
       <span class="project-badge" id="tierBadge" style="display:none;border-color:var(--purple);color:var(--purple);background:rgba(168,85,247,0.1);"></span>
-      <span class="version-badge" id="versionBadge" role="button" tabindex="0" aria-label="View version history">v3.1</span>
+      <span class="version-badge" id="versionBadge" role="button" tabindex="0" aria-label="View version history">v3.2</span>
       <span class="keyboard-hint">Ctrl+Enter Parse · Ctrl+Z Undo · Ctrl+Shift+Z Redo</span>
     </div>
   </div>
@@ -514,7 +564,7 @@ const ZipGenerator = (() => {
     if (name === 'package.json') return JSON.stringify({name:projectName,version:'1.0.0',private:true}, null, 2);
     if (name === 'tsconfig.json') return JSON.stringify({compilerOptions:{target:'ES2022',module:'ESNext',strict:true}}, null, 2);
     if (name === 'README.txt') {
-      return `# ${projectName}\n\nGenerated by AionSystem Scaffold v3.1\n\nReview package for document red-team analysis.\n\nTier: ${tierManifestContent ? tierManifestContent.split('\n')[0] : 'Custom'}\n`;
+      return `# ${projectName}\n\nGenerated by AionSystem Scaffold v3.2\n\nReview package for document red-team analysis.\n\nTier: ${tierManifestContent ? tierManifestContent.split('\n')[0] : 'Custom'}\n`;
     }
     if (name === 'Hash_Manifest.txt') {
       return `# Hash Manifest\n# Generated by AionSystem\n# SHA-256 hashes of package files\n\n`;
@@ -559,7 +609,7 @@ const ZipGenerator = (() => {
 })();
 
 // ============================================================
-// MAIN APPLICATION (v3.1 — Sovereign, No CDN)
+// MAIN APPLICATION (v3.2 — Sovereign, No CDN)
 // ============================================================
 (function(){
   "use strict";
@@ -567,11 +617,17 @@ const ZipGenerator = (() => {
   const CONFIG = {
     MAX_FILES: 15000, MAX_FOLDERS: 7500, MAX_INPUT_SIZE: 500000, MAX_DEPTH: 100,
     BINARY_EXTENSIONS: SHARED_BINARY_EXTENSIONS,
-    MAX_HISTORY: 30, AUTO_SAVE_KEY: 'aion-scaffold-v3_1',
+    MAX_HISTORY: 30, AUTO_SAVE_KEY: 'aion-scaffold-v3_2',
     PREVIEW_MAX_NODES: 500, PREVIEW_MAX_DEPTH: 4
   };
 
   const CHANGELOG = [
+    { version: 'v3.2', date: '2026-09-05', changes: [
+      'Added a day/night theme toggle, matching the main AionSystem site — shares the same "aion-theme" localStorage key, so a preference set on one page carries over to the others',
+      'Background canvas symbols now use a light-mode-appropriate palette instead of staying dark-tinted when the page is switched to light',
+      'Added prefers-reduced-motion support: the animated background canvas is now skipped entirely for people who\'ve asked their OS to reduce motion, matching the main site',
+      'Fixed a real mobile navigation gap: below 800px the nav links previously just vanished with no replacement — added the same hamburger + slide-down menu pattern used on the main site',
+    ]},
     { version: 'v3.1', date: '2026-09-05', changes: [
       'Fixed tree-depth parsing: "last branch" indentation (plain spaces, no pipe) was silently flattening nested content — reproducible on the bundled Example tree itself',
       'Added support for Windows ASCII tree /F output (+ \\ | -) alongside the existing Unicode box-drawing dialect',
@@ -869,7 +925,9 @@ This is the highest tier. No further upgrades available.`
     changelogContent: document.getElementById('changelogContent'), copyPreviewBtn: document.getElementById('copyPreviewBtn'),
     includePlaceholders: document.getElementById('includePlaceholders'), downloadCleanTreeBtn: document.getElementById('downloadCleanTreeBtn'),
     tierSelect: document.getElementById('tierSelect'), folderImportBtn: document.getElementById('folderImportBtn'),
-    folderImportInput: document.getElementById('folderImportInput'), tierBadge: document.getElementById('tierBadge')
+    folderImportInput: document.getElementById('folderImportInput'), tierBadge: document.getElementById('tierBadge'),
+    themeToggle: document.getElementById('theme-toggle'), hamburger: document.getElementById('hamburger'),
+    mobileNav: document.getElementById('mobileNav')
   };
 
   const state = {
@@ -1360,6 +1418,38 @@ This is the highest tier. No further upgrades available.`
   elements.folderImportBtn.onclick = () => elements.folderImportInput.click();
   elements.folderImportInput.addEventListener('change', (e) => { handleFolderImport(e.target.files); e.target.value = ''; });
 
+  // Theme toggle — shares the same 'aion-theme' localStorage key as the rest
+  // of the AionSystem site (aionsystem.github.io), so a preference set on one
+  // page carries over to the others automatically.
+  if(elements.themeToggle){
+    try{
+      const saved = localStorage.getItem('aion-theme');
+      if(saved === 'light') document.body.classList.add('light');
+    }catch(e){}
+    elements.themeToggle.addEventListener('click', () => {
+      document.body.classList.toggle('light');
+      try{ localStorage.setItem('aion-theme', document.body.classList.contains('light') ? 'light' : 'dark'); }catch(e){}
+      if(window.__aionRefreshSymbolColors) window.__aionRefreshSymbolColors();
+    });
+  }
+
+  // Mobile hamburger nav
+  if(elements.hamburger && elements.mobileNav){
+    document.querySelectorAll('.nav-links a').forEach((link, i) => {
+      const a = document.createElement('a');
+      a.href = link.getAttribute('href'); a.textContent = link.textContent;
+      if(link.getAttribute('style')) a.setAttribute('style', link.getAttribute('style'));
+      a.style.transitionDelay = `${i * 30}ms`;
+      elements.mobileNav.appendChild(a);
+    });
+    let navOpen = false;
+    function openMenu(){ navOpen = true; elements.mobileNav.classList.add('open'); elements.mobileNav.setAttribute('aria-hidden','false'); elements.hamburger.classList.add('open'); elements.hamburger.setAttribute('aria-expanded','true'); }
+    function closeMenu(){ navOpen = false; elements.mobileNav.classList.remove('open'); elements.mobileNav.setAttribute('aria-hidden','true'); elements.hamburger.classList.remove('open'); elements.hamburger.setAttribute('aria-expanded','false'); }
+    elements.hamburger.addEventListener('click', () => navOpen ? closeMenu() : openMenu());
+    elements.mobileNav.addEventListener('click', (e) => { if(e.target.tagName === 'A') closeMenu(); });
+    document.addEventListener('keydown', (e) => { if(e.key === 'Escape' && navOpen) closeMenu(); });
+  }
+
   document.addEventListener('keydown',e=>{
     if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){ e.preventDefault(); parseAction(); return; }
     // Leave native per-keystroke undo/redo alone while the textarea has focus —
@@ -1376,13 +1466,28 @@ This is the highest tier. No further upgrades available.`
 <!-- CANVAS ANIMATION (with idle detection, no cursor) -->
 <script>
 (function(){
-  const canvas = document.getElementById('hero-canvas'), ctx = canvas.getContext('2d');
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const canvas = document.getElementById('hero-canvas');
+  if (reducedMotion || !canvas) return; // matches the CSS rule that hides #hero-canvas entirely
+  const ctx = canvas.getContext('2d');
   let width, height, symbols = [], mouse = { x: null, y: null, radius: 150 };
   const SYMBOL_SET = ['∇','Σ','∫','∂','λ','⊕','⊗','∈','∀','∃','⊢','⊨','→','↔','∧','∨','¬','≡','≈','≠','≤','≥','∞','∝','∂','Δ','Π','Ω','α','β','γ','δ','ε','θ','μ','σ','φ','ψ','ω','∄','⁂','◈','◆','○','●','◉'];
+  // Color palettes: dark mode uses bronze/parchment, light mode uses gold/gray — same
+  // pairing convention as the home page's symbol canvas, so the two feel like one site.
+  const DARK_COLS = ['#5C4841','#B6A096'];
+  const LIGHT_COLS = ['#b8860b','#6b4d0a'];
   let animFrame, isVisible = true, idleTimer, isIdle = false;
-  
+
+  function pickColor() {
+    const cols = document.body.classList.contains('light') ? LIGHT_COLS : DARK_COLS;
+    return cols[Math.floor(Math.random() * cols.length)];
+  }
+
   function resize() { width = window.innerWidth; height = window.innerHeight; canvas.width = width; canvas.height = height; initSymbols(); }
-  function initSymbols() { const count = Math.floor(width*height/8000); symbols = []; for(let i=0;i<count;i++) symbols.push({ symbol: SYMBOL_SET[Math.floor(Math.random()*SYMBOL_SET.length)], x: Math.random()*width, y: Math.random()*height, vx: (Math.random()-0.5)*0.15, vy: (Math.random()-0.5)*0.15, size: Math.random()*18+10, color: Math.random()>0.5?'#5C4841':'#B6A096', opacity: 0.1+Math.random()*0.15 }); }
+  function initSymbols() { const count = Math.floor(width*height/8000); symbols = []; for(let i=0;i<count;i++) symbols.push({ symbol: SYMBOL_SET[Math.floor(Math.random()*SYMBOL_SET.length)], x: Math.random()*width, y: Math.random()*height, vx: (Math.random()-0.5)*0.15, vy: (Math.random()-0.5)*0.15, size: Math.random()*18+10, color: pickColor(), opacity: 0.1+Math.random()*0.15 }); }
+  // Exposed so the theme toggle (in the main app script) can repaint existing
+  // symbols with the new palette immediately, instead of waiting for a resize.
+  window.__aionRefreshSymbolColors = () => { symbols.forEach(s => { s.color = pickColor(); }); };
   
   function draw() {
     if (!isVisible || isIdle) { animFrame = requestAnimationFrame(draw); return; }
