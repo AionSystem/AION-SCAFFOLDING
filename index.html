@@ -3,15 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' https://fonts.gstatic.com; connect-src 'none';">
-<meta name="description" content="AION Scaffold v3.0 — Sovereign offline tree-to-filesystem generator with tier templates for AionSystem document red-team packages. No CDN, no external requests.">
-<meta property="og:title" content="AION Scaffold v3.0 — Sovereign Scaffolding Tool">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';">
+<meta name="description" content="AION Scaffold v3.1 — Sovereign offline tree-to-filesystem generator with tier templates for AionSystem document red-team packages. No CDN, no external requests.">
+<meta property="og:title" content="AION Scaffold v3.1 · AionSystem">
 <meta property="og:description" content="Fully offline, air-gap ready. Built-in ZIP, no CDN, session privacy, tier templates for document red-team deliverables.">
 <meta property="og:type" content="website">
-<title>AION Scaffold v3.0 · AionSystem</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+<title>AION Scaffold v3.1 · AionSystem</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 :root {
@@ -248,7 +245,7 @@ footer {
 </nav>
 
 <div class="page-header">
-  <div class="hero-eyebrow">Sovereign Tool · v3.0</div>
+  <div class="hero-eyebrow">Sovereign Tool · v3.1</div>
   <h1 class="page-title">AION<em>Scaffold</em></h1>
   <p class="page-sub">Paste a tree or load a tier template. Audit issues. Fix automatically. Fully offline. No CDN.</p>
 </div>
@@ -293,6 +290,8 @@ footer {
         <span class="panel-label">INPUT — Tree Structure</span>
         <div class="panel-actions">
           <button class="icon-btn" id="loadExampleBtn" aria-label="Load example tree">📋 Example</button>
+          <button class="icon-btn" id="folderImportBtn" aria-label="Import a local folder structure">📥 Import Folder</button>
+          <input type="file" id="folderImportInput" webkitdirectory directory multiple class="visually-hidden" aria-hidden="true" tabindex="-1">
           <button class="icon-btn warning" id="cleanCommentsBtn" aria-label="Remove comments">🧹 Clean</button>
           <button class="icon-btn primary-action" id="auditAndFixBtn" aria-label="Audit and fix issues">🔧 Audit & Fix</button>
           <button class="icon-btn" id="undoBtn" disabled aria-label="Undo">↩ Undo</button>
@@ -346,8 +345,9 @@ footer {
     </div>
     <div class="badge-group">
       <span class="project-badge" id="projectNameDisplay">📦 my-awesome-project</span>
-      <span class="version-badge" id="versionBadge" role="button" tabindex="0" aria-label="View version history">v3.0</span>
-      <span class="keyboard-hint">Ctrl+Enter Parse · Ctrl+Z Undo</span>
+      <span class="project-badge" id="tierBadge" style="display:none;border-color:var(--purple);color:var(--purple);background:rgba(168,85,247,0.1);"></span>
+      <span class="version-badge" id="versionBadge" role="button" tabindex="0" aria-label="View version history">v3.1</span>
+      <span class="keyboard-hint">Ctrl+Enter Parse · Ctrl+Z Undo · Ctrl+Shift+Z Redo</span>
     </div>
   </div>
 </div>
@@ -363,24 +363,38 @@ footer {
 
 <script>
 // ============================================================
+// Shared constants (used by both the ZIP generator and the main app,
+// kept in one place so the two can't silently drift out of sync)
+// ============================================================
+const SHARED_BINARY_EXTENSIONS = ['gguf','safetensors','png','jpg','jpeg','gif','ico','db','sqlite','bin','wasm','zip','tar','gz','webp','svg','mp4','mp3','wav','pdf','doc','docx','xls','xlsx'];
+
+// ============================================================
 // MINIMAL ZIP GENERATOR (pure JS, no dependencies)
 // ============================================================
 const ZipGenerator = (() => {
+
+  function dosDateTime(d) {
+    const time = ((d.getHours() & 0x1F) << 11) | ((d.getMinutes() & 0x3F) << 5) | ((Math.floor(d.getSeconds() / 2)) & 0x1F);
+    const date = (((d.getFullYear() - 1980) & 0x7F) << 9) | (((d.getMonth() + 1) & 0x0F) << 5) | (d.getDate() & 0x1F);
+    return { time, date };
+  }
+
   function generateZip(tree, projectName, includePlaceholders, tierManifestContent) {
     const files = [];
     const encoder = new TextEncoder();
-    
+    const { time: dosTime, date: dosDate } = dosDateTime(new Date());
+
     function addToZip(node, path = '') {
       const fullPath = path ? `${path}/${node.name}` : node.name;
       if (node.type === 'folder') {
-        files.push({ name: fullPath + '/', data: new Uint8Array(0) });
+        files.push({ name: fullPath + '/', data: new Uint8Array(0), isDir: true });
         if (node.children) node.children.forEach(c => addToZip(c, fullPath));
       } else {
         let content = '';
         if (includePlaceholders) {
           content = generatePlaceholder(node.name, tree.name, tierManifestContent);
         }
-        files.push({ name: fullPath, data: encoder.encode(content) });
+        files.push({ name: fullPath, data: encoder.encode(content), isDir: false });
       }
     }
     
@@ -388,12 +402,19 @@ const ZipGenerator = (() => {
 
     // Add tier manifest if present
     if (tierManifestContent) {
-      files.push({ name: 'Tier_Manifest.txt', data: encoder.encode(tierManifestContent) });
+      files.push({ name: 'Tier_Manifest.txt', data: encoder.encode(tierManifestContent), isDir: false });
     }
 
     const localFileHeaders = [];
     const centralDirectory = [];
     let offset = 0;
+
+    // Unix external attributes: directories get S_IFDIR|0755 in the high word
+    // plus the MS-DOS directory bit in the low word so archive tools that read
+    // external attributes (not just the trailing "/" convention) see real folders.
+    const DOS_DIR_ATTR = 0x10;
+    const UNIX_DIR_ATTR = (0o040755 << 16) | DOS_DIR_ATTR;
+    const UNIX_FILE_ATTR = (0o100644 << 16);
     
     files.forEach((f) => {
       const nameBytes = encoder.encode(f.name);
@@ -401,6 +422,7 @@ const ZipGenerator = (() => {
       const crc = crc32(data);
       const compressedSize = data.length;
       const uncompressedSize = data.length;
+      const externalAttr = f.isDir ? UNIX_DIR_ATTR : UNIX_FILE_ATTR;
       
       const localHeader = new Uint8Array(30 + nameBytes.length);
       const view = new DataView(localHeader.buffer);
@@ -408,8 +430,8 @@ const ZipGenerator = (() => {
       view.setUint16(4, 20, true);
       view.setUint16(6, 0, true);
       view.setUint16(8, 0, true);
-      view.setUint16(10, 0, true);
-      view.setUint16(12, 0, true);
+      view.setUint16(10, dosTime, true);
+      view.setUint16(12, dosDate, true);
       view.setUint32(14, crc, true);
       view.setUint32(18, compressedSize, true);
       view.setUint32(22, uncompressedSize, true);
@@ -420,12 +442,12 @@ const ZipGenerator = (() => {
       const centralHeader = new Uint8Array(46 + nameBytes.length);
       const cview = new DataView(centralHeader.buffer);
       cview.setUint32(0, 0x02014b50, true);
-      cview.setUint16(4, 20, true);
+      cview.setUint16(4, 20 | (3 << 8), true); // version made by: high byte 3 = Unix host, so external attrs are honored
       cview.setUint16(6, 20, true);
       cview.setUint16(8, 0, true);
       cview.setUint16(10, 0, true);
-      cview.setUint16(12, 0, true);
-      cview.setUint16(14, 0, true);
+      cview.setUint16(12, dosTime, true);
+      cview.setUint16(14, dosDate, true);
       cview.setUint32(16, crc, true);
       cview.setUint32(20, compressedSize, true);
       cview.setUint32(24, uncompressedSize, true);
@@ -434,7 +456,7 @@ const ZipGenerator = (() => {
       cview.setUint16(32, 0, true);
       cview.setUint16(34, 0, true);
       cview.setUint16(36, 0, true);
-      cview.setUint32(38, 0, true);
+      cview.setUint32(38, externalAttr, true);
       cview.setUint32(42, offset, true);
       centralHeader.set(nameBytes, 46);
       
@@ -484,7 +506,7 @@ const ZipGenerator = (() => {
   
   function isBinaryName(name) {
     const ext = name.split('.').pop()?.toLowerCase();
-    return ['gguf','safetensors','png','jpg','jpeg','gif','ico','db','sqlite','bin','wasm','zip','tar','gz','webp','svg','mp4','mp3','wav','pdf','doc','docx','xls','xlsx'].includes(ext);
+    return SHARED_BINARY_EXTENSIONS.includes(ext);
   }
 
   function generatePlaceholder(name, projectName, tierManifestContent) {
@@ -492,7 +514,7 @@ const ZipGenerator = (() => {
     if (name === 'package.json') return JSON.stringify({name:projectName,version:'1.0.0',private:true}, null, 2);
     if (name === 'tsconfig.json') return JSON.stringify({compilerOptions:{target:'ES2022',module:'ESNext',strict:true}}, null, 2);
     if (name === 'README.txt') {
-      return `# ${projectName}\n\nGenerated by AionSystem Scaffold v3.0\n\nReview package for document red-team analysis.\n\nTier: ${tierManifestContent ? tierManifestContent.split('\n')[0] : 'Custom'}\n`;
+      return `# ${projectName}\n\nGenerated by AionSystem Scaffold v3.1\n\nReview package for document red-team analysis.\n\nTier: ${tierManifestContent ? tierManifestContent.split('\n')[0] : 'Custom'}\n`;
     }
     if (name === 'Hash_Manifest.txt') {
       return `# Hash Manifest\n# Generated by AionSystem\n# SHA-256 hashes of package files\n\n`;
@@ -527,26 +549,49 @@ const ZipGenerator = (() => {
     if (name.endsWith('.md')) {
       return `# ${name}\n`;
     }
+    if (name.endsWith('.txt')) {
+      return `# ${name}\n\n(Placeholder — replace with actual content.)\n`;
+    }
     return '';
   }
   
-  return { generateZip };
+  return { generateZip, generatePlaceholder, isBinaryName };
 })();
 
 // ============================================================
-// MAIN APPLICATION (v3.0 — Sovereign, No CDN)
+// MAIN APPLICATION (v3.1 — Sovereign, No CDN)
 // ============================================================
 (function(){
   "use strict";
 
   const CONFIG = {
     MAX_FILES: 15000, MAX_FOLDERS: 7500, MAX_INPUT_SIZE: 500000, MAX_DEPTH: 100,
-    BINARY_EXTENSIONS: ['gguf','safetensors','png','jpg','jpeg','gif','ico','db','sqlite','bin','wasm','zip','tar','gz','webp','svg','mp4','mp3','wav','pdf','doc','docx','xls','xlsx'],
-    MAX_HISTORY: 30, AUTO_SAVE_KEY: 'aion-scaffold-v3_0',
+    BINARY_EXTENSIONS: SHARED_BINARY_EXTENSIONS,
+    MAX_HISTORY: 30, AUTO_SAVE_KEY: 'aion-scaffold-v3_1',
     PREVIEW_MAX_NODES: 500, PREVIEW_MAX_DEPTH: 4
   };
 
   const CHANGELOG = [
+    { version: 'v3.1', date: '2026-09-05', changes: [
+      'Fixed tree-depth parsing: "last branch" indentation (plain spaces, no pipe) was silently flattening nested content — reproducible on the bundled Example tree itself',
+      'Added support for Windows ASCII tree /F output (+ \\ | -) alongside the existing Unicode box-drawing dialect',
+      'Added support for plain space/tab indentation with no connector characters at all, with auto-detected indent width',
+      'Removed Google Fonts links — they contradicted the "no CDN / fully offline" claim and were already being blocked by this page\'s own CSP',
+      'Hardened CSP: added object-src, base-uri, form-action, frame-ancestors',
+      'CONFIG.MAX_FILES / MAX_FOLDERS / MAX_INPUT_SIZE / MAX_DEPTH are now actually enforced instead of only declared',
+      'Fixed parse-warning display: warnings were being joined as raw objects ("[object Object]") instead of their message text',
+      'Added reserved Windows device-name detection (CON, NUL, COM1...) with automatic safe renaming',
+      'Added path-length warning (Windows MAX_PATH ceiling)',
+      'De-duplicated the binary-extension list shared by the ZIP generator and the preview/audit logic',
+      'ZIP entries now carry real Unix directory/file attributes and an actual modified date, not attribute 0 / epoch',
+      'Ctrl+Z / Ctrl+Y no longer hijack native textarea undo/redo while typing; added Ctrl+Shift+Z as an alternate redo shortcut',
+      'Load Example / Load Tier / Clear now checkpoint history first, so Undo can recover what was there before',
+      'Keyboard users can now activate the session-restore and version-history controls (Enter/Space), not just mouse click',
+      'Shell script export now embeds placeholder content when "Include Placeholders" is checked, matching ZIP export behavior',
+      'Added folder import (reads a local directory via the file picker, fully offline) to seed the tree from real files',
+      'Added a Tier badge that shows which tier template is currently loaded',
+      'Generate & Download now shows a "Generating…" state so large trees don\'t look frozen'
+    ]},
     { version: 'v3.0', date: '2026-09-05', changes: [
       'Added tier templates for document red-team packages (Tier 1–6)',
       'Added placeholder content generation for specific files',
@@ -823,7 +868,8 @@ This is the highest tier. No further upgrades available.`
     changelogModal: document.getElementById('changelogModal'), closeChangelogBtn: document.getElementById('closeChangelogBtn'),
     changelogContent: document.getElementById('changelogContent'), copyPreviewBtn: document.getElementById('copyPreviewBtn'),
     includePlaceholders: document.getElementById('includePlaceholders'), downloadCleanTreeBtn: document.getElementById('downloadCleanTreeBtn'),
-    tierSelect: document.getElementById('tierSelect')
+    tierSelect: document.getElementById('tierSelect'), folderImportBtn: document.getElementById('folderImportBtn'),
+    folderImportInput: document.getElementById('folderImportInput'), tierBadge: document.getElementById('tierBadge')
   };
 
   const state = {
@@ -842,35 +888,128 @@ This is the highest tier. No further upgrades available.`
   function showInfo(m) { elements.info.textContent='ℹ️ '+m; elements.info.classList.add('visible'); }
   function clearMessages() { elements.error.classList.remove('visible'); elements.warning.classList.remove('visible'); elements.success.classList.remove('visible'); elements.info.classList.remove('visible'); }
 
-  // Parse tree
-  function parseTree(input, projectName) {
-    const TREE_CHARS = /[├└│─]/g;
+  // ----------------------------------------------------------
+  // Tree parsing engine
+  //
+  // Understands three input dialects and mixes of them:
+  //  - Unicode box-drawing, e.g. `tree` on macOS/Linux: ├ └ │ ─
+  //  - ASCII box-drawing, e.g. Windows' `tree /F`: + \ | -
+  //  - Plain space/tab indentation with no connector characters at all
+  //
+  // The key fix vs. earlier versions: a "continuation column" that is just
+  // spaces (used by real tree output for any ancestor that was itself a
+  // last child, so there's no sibling left to draw a pipe for) now counts
+  // as one depth level exactly like a piped column does. Previously only
+  // literal pipe characters incremented depth, which silently flattened
+  // any subtree whose ancestor chain included a "last item" — including
+  // the bundled Example tree's own docs/ARCHITECTURE.md.
+  // ----------------------------------------------------------
+  const RESERVED_WINDOWS_NAMES = new Set(['CON','PRN','AUX','NUL','COM1','COM2','COM3','COM4','COM5','COM6','COM7','COM8','COM9','LPT1','LPT2','LPT3','LPT4','LPT5','LPT6','LPT7','LPT8','LPT9']);
+  const MAX_PATH_WARN = 260; // classic Windows MAX_PATH ceiling
+
+  function fixReservedName(name, isFolder) {
+    const dot = name.lastIndexOf('.');
+    const base = (isFolder || dot <= 0) ? name : name.slice(0, dot);
+    const ext = (isFolder || dot <= 0) ? '' : name.slice(dot);
+    if (RESERVED_WINDOWS_NAMES.has(base.toUpperCase())) {
+      return { renamed: true, name: `${base}_${isFolder ? 'dir' : 'file'}${ext}` };
+    }
+    return { renamed: false, name };
+  }
+
+  // Auto-detects the indentation unit (spaces; tabs normalized to 4 spaces)
+  // for lines that use plain indentation with no tree-drawing characters.
+  // Falls back to 4 — the conventional width — when nothing usable is found.
+  function detectIndentUnit(rawLines) {
+    const widths = [];
+    for (const line of rawLines) {
+      if (!line.trim()) continue;
+      const probe = line.slice(0, 24);
+      if (/[├└│─]/.test(probe)) continue;
+      if (/(^|[ \t])[+\\|](--|-)/.test(probe)) continue;
+      const lead = line.match(/^[ \t]*/)[0];
+      if (!lead) continue;
+      const width = lead.replace(/\t/g, '    ').length;
+      if (width > 0) widths.push(width);
+    }
+    if (!widths.length) return 4;
+    const gcd = (a, b) => (b === 0 ? a : gcd(b, a % b));
+    let g = widths[0];
+    for (const w of widths.slice(1)) g = gcd(g, w);
+    return g > 0 ? g : 4;
+  }
+
+  // Computes { depth, contentStart } for one raw line across all three dialects.
+  function computeLine(line, indentUnit) {
+    const len = line.length;
+    let i = 0, depth = 0, sawConnector = false;
+
+    while (i < len) {
+      const ch = line[i];
+      if (ch === '├' || ch === '└') { i++; sawConnector = true; break; }
+      if ((ch === '+' || ch === '\\') && line[i + 1] === '-') { i++; sawConnector = true; break; }
+      if (ch === '│' || ch === '|') {
+        depth++; i++;
+        let sp = 0;
+        while (i < len && line[i] === ' ' && sp < 3) { i++; sp++; }
+        continue;
+      }
+      if (ch === ' ') {
+        let sp = 0, j = i;
+        while (j < len && line[j] === ' ' && sp < 4) { j++; sp++; }
+        if (sp === 4) { depth++; i = j; continue; }
+        i = j; continue;
+      }
+      if (ch === '\t') { depth++; i++; continue; }
+      break;
+    }
+
+    if (sawConnector) {
+      while (i < len && (line[i] === '─' || line[i] === '-' || line[i] === ' ')) i++;
+      return { depth, contentStart: i };
+    }
+
+    // No connector anywhere on this line: recompute depth from raw leading
+    // whitespace using the auto-detected indent unit instead of trusting
+    // the loop above, which is tuned for connector-based dialects.
+    const lead = line.match(/^[ \t]*/)[0];
+    const width = lead.replace(/\t/g, '    ').length;
+    const plainDepth = indentUnit > 0 ? Math.max(0, Math.round(width / indentUnit) - 1) : 0;
+    return { depth: plainDepth, contentStart: lead.length };
+  }
+
+  function parseTree(input, projectName, limits) {
+    limits = limits || { maxFiles: Infinity, maxFolders: Infinity, maxDepth: Infinity };
     const rawLines = input.split('\n');
+    const indentUnit = detectIndentUnit(rawLines);
     const parsedLines = [];
+    const warnings = [];
+    let depthClamped = false;
+
     for (let i = 0; i < rawLines.length; i++) {
       const line = rawLines[i];
       if (!line.trim()) continue;
-      let depth = 0, j = 0;
-      while (j < line.length) {
-        const ch = line[j];
-        if (ch === '│') { depth++; j++; while (j < line.length && line[j] === ' ') j++; }
-        else if (ch === '├' || ch === '└') break;
-        else if (ch === ' ' || ch === '\t') j++;
-        else break;
-      }
-      let cleanedLine = line.replace(TREE_CHARS, '');
-      let content = cleanedLine.trim();
+      let { depth, contentStart } = computeLine(line, indentUnit);
+      if (depth > limits.maxDepth) { depth = limits.maxDepth; depthClamped = true; }
+      let content = line.slice(contentStart).trim();
       if (!content) continue;
       content = stripComments(content);
       const isFolder = content.endsWith('/');
       const rawName = isFolder ? content.slice(0, -1).trim() : content.trim();
       if (!rawName) continue;
       let name = sanitizeFileName(rawName);
-      name = name.replace(TREE_CHARS, '');
       if (!name) continue;
+      const reserved = fixReservedName(name, isFolder);
+      if (reserved.renamed) {
+        warnings.push({ severity: 'info', type: 'reserved_name', line: i + 1, message: `"${rawName}" is a reserved Windows device name, renamed to "${reserved.name}".` });
+        name = reserved.name;
+      }
       parsedLines.push({ depth, name, isFolder, rawName, lineNumber: i + 1 });
     }
-    if (!parsedLines.length) return { root: { name: sanitizeProjectName(projectName), type: 'folder', children: [] }, fileCount: 0, folderCount: 0, warnings: [{ severity: 'error', type: 'empty_input', message: 'No valid lines found in input' }] };
+
+    if (depthClamped) warnings.push({ severity: 'info', type: 'depth_clamped', message: `Nesting deeper than ${limits.maxDepth} levels was flattened to the limit.` });
+
+    if (!parsedLines.length) return { root: { name: sanitizeProjectName(projectName), type: 'folder', children: [] }, fileCount: 0, folderCount: 0, warnings: [{ severity: 'error', type: 'empty_input', message: 'No valid lines found in input' }], truncated: false };
     
     let rootName = sanitizeProjectName(projectName);
     if (parsedLines[0] && parsedLines[0].depth === 0 && parsedLines[0].isFolder) {
@@ -881,16 +1020,20 @@ This is the highest tier. No further upgrades available.`
     const stack = [{ node: root, depth: -1, path: rootName }];
     const pathMap = new Map();
     let fileCount = 0, folderCount = 1;
-    const warnings = [];
+    let truncated = false;
     
     for (let i = 0; i < parsedLines.length; i++) {
+      if (fileCount >= limits.maxFiles || (folderCount - 1) >= limits.maxFolders) { truncated = true; break; }
       const item = parsedLines[i];
       let { depth, name, isFolder, rawName, lineNumber } = item;
-      name = name.replace(TREE_CHARS, '');
       while (stack.length > 1 && stack[stack.length - 1].depth >= depth) stack.pop();
       const parent = stack[stack.length - 1].node;
       const parentPath = stack[stack.length - 1].path;
       const fullPath = parentPath + '/' + name;
+
+      if (fullPath.length > MAX_PATH_WARN) {
+        warnings.push({ severity: 'warning', type: 'path_too_long', line: lineNumber, message: `Path exceeds ${MAX_PATH_WARN} characters, may fail to extract on Windows: "${fullPath.slice(0, 60)}…"` });
+      }
       
       if (isFolder) {
         if (pathMap.has(fullPath)) {
@@ -919,7 +1062,16 @@ This is the highest tier. No further upgrades available.`
         fileCount++;
       }
     }
-    return { root, fileCount, folderCount: folderCount - 1, warnings };
+    if (truncated) warnings.push({ severity: 'warning', type: 'truncated', message: `Stopped after reaching the ${limits.maxFiles} file / ${limits.maxFolders} folder safety limit.` });
+    return { root, fileCount, folderCount: folderCount - 1, warnings, truncated };
+  }
+
+  function checkInputSize(input) {
+    if (input.length > CONFIG.MAX_INPUT_SIZE) {
+      showError(`Input is ${input.length.toLocaleString()} characters, which exceeds the ${CONFIG.MAX_INPUT_SIZE.toLocaleString()}-character safety limit. Split it into smaller pieces.`);
+      return false;
+    }
+    return true;
   }
 
   // Audit engine
@@ -941,6 +1093,7 @@ This is the highest tier. No further upgrades available.`
   function runAudit() {
     const input = elements.input.value;
     if(!input.trim()){ showError('Paste a tree first.'); return; }
+    if(!checkInputSize(input)) return;
     state.originalInput = input;
     const projectName = sanitizeProjectName(elements.projectNameInput.value);
     const { issues, fixable, manual } = auditTree(input, projectName);
@@ -999,14 +1152,16 @@ This is the highest tier. No further upgrades available.`
   function parseAction() {
     clearMessages(); const input = elements.input.value;
     if(!input.trim()){ showError('Paste a tree first.'); return; }
+    if(!checkInputSize(input)) return;
     state.projectName = sanitizeProjectName(elements.projectNameInput.value);
     elements.projectNameDisplay.textContent = `📦 ${state.projectName}`;
     try {
-      const r = parseTree(input, state.projectName);
+      const limits = { maxFiles: CONFIG.MAX_FILES, maxFolders: CONFIG.MAX_FOLDERS, maxDepth: CONFIG.MAX_DEPTH };
+      const r = parseTree(input, state.projectName, limits);
       state.parsedTree = r.root; state.fileCount = r.fileCount; state.folderCount = r.folderCount;
       renderPreview(state.parsedTree);
       elements.statsText.innerHTML = `📁 ${r.folderCount} folders · 📄 ${r.fileCount} files`;
-      if(r.warnings.length) showWarning(r.warnings.slice(0,3).join(' · '));
+      if(r.warnings.length) showWarning(r.warnings.slice(0,3).map(w=>w.message).join(' · '));
       else showSuccess(`Parsed — ${r.folderCount} folders, ${r.fileCount} files.`);
       pushHistory();
     }catch(e){ showError(e.message); }
@@ -1038,28 +1193,69 @@ This is the highest tier. No further upgrades available.`
     showSuccess(`${state.parsedTree.name}.zip generated.`);
   }
 
+  function shellQuote(s){ return `'${s.replace(/'/g, `'\\''`)}'`; }
+
   function generateScript(){
-    if(!state.parsedTree)return; let s='#!/usr/bin/env bash\nset -e\n'; function add(n,p=''){ const f=p?`${p}/${n.name}`:n.name; if(n.type==='folder'){ s+=`mkdir -p "${f}"\n`; n.children?.forEach(c=>add(c,f)); } else { s+=`touch "${f}"\n`; } }
-    s+=`mkdir -p "${state.parsedTree.name}"\ncd "${state.parsedTree.name}"\n`; state.parsedTree.children?.forEach(c=>add(c,'')); 
+    if(!state.parsedTree)return;
+    const includePlaceholders = elements.includePlaceholders.checked;
+    let s='#!/usr/bin/env bash\nset -e\n';
+    function add(n,p=''){
+      const f=p?`${p}/${n.name}`:n.name;
+      if(n.type==='folder'){ s+=`mkdir -p ${shellQuote(f)}\n`; n.children?.forEach(c=>add(c,f)); }
+      else {
+        const content = includePlaceholders ? ZipGenerator.generatePlaceholder(n.name, state.parsedTree.name, state.tierManifest) : '';
+        if(content){ s+=`cat > ${shellQuote(f)} << 'AION_EOF'\n${content}\nAION_EOF\n`; }
+        else { s+=`touch ${shellQuote(f)}\n`; }
+      }
+    }
+    s+=`mkdir -p ${shellQuote(state.parsedTree.name)}\ncd ${shellQuote(state.parsedTree.name)}\n`; state.parsedTree.children?.forEach(c=>add(c,''));
     if(state.tierManifest){
-      s+=`cat > "Tier_Manifest.txt" << 'EOF'\n${state.tierManifest}\nEOF\n`;
+      s+=`cat > ${shellQuote('Tier_Manifest.txt')} << 'AION_EOF'\n${state.tierManifest}\nAION_EOF\n`;
     }
     const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([s])); a.download=`${state.parsedTree.name}.sh`; a.click(); showSuccess(`${state.parsedTree.name}.sh generated.`);
   }
 
   function exportTree(){ if(!state.parsedTree)return; let o=`${state.parsedTree.name}/\n`; function add(n,d=0,last=true,pre=''){ if(d===0){ n.children?.forEach((c,i)=>add(c,d+1,i===n.children.length-1,'')); return; } o+=pre+(last?'└── ':'├── ')+n.name+(n.type==='folder'?'/':'')+'\n'; if(n.type==='folder'&&n.children){ const np=pre+(last?'    ':'│   '); n.children.forEach((c,i)=>add(c,d+1,i===n.children.length-1,np)); } } add(state.parsedTree); if(state.tierManifest){ o+=`Tier_Manifest.txt\n`; } const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([o])); a.download=`${state.parsedTree.name}.tree.txt`; a.click(); showSuccess(`Tree exported.`); }
   function exportJSON(){ if(!state.parsedTree)return; const obj={tree:state.parsedTree, tierManifest:state.tierManifest}; const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(obj,null,2)])); a.download=`${state.parsedTree.name}.json`; a.click(); showSuccess(`JSON exported.`); }
-  function handleExport(){ const f=elements.exportFormat.value; if(f==='zip')generateZip(); else if(f==='script')generateScript(); else if(f==='tree')exportTree(); else if(f==='json')exportJSON(); }
+  function handleExport(){
+    const f=elements.exportFormat.value;
+    // Tree/JSON exports are cheap regardless of size; ZIP/script building on a
+    // large tree can take a noticeable moment, so give visible feedback and
+    // yield to the browser first so the "Generating…" state actually paints
+    // before the heavy synchronous work runs.
+    if(f==='tree'){ exportTree(); return; }
+    if(f==='json'){ exportJSON(); return; }
+    elements.generateBtn.disabled = true;
+    showInfo('Generating…');
+    setTimeout(() => {
+      try { if(f==='zip') generateZip(); else if(f==='script') generateScript(); }
+      finally { elements.generateBtn.disabled = false; }
+    }, 0);
+  }
 
   function copyPreviewAsMarkdown(){ if(!state.parsedTree){ showError('Parse a tree first.'); return; } let md='```\n'+state.parsedTree.name+'/\n'; function add(n,d=0,last=true,pre=''){ if(d===0){ n.children?.forEach((c,i)=>add(c,d+1,i===n.children.length-1,'')); return; } md+=pre+(last?'└── ':'├── ')+n.name+(n.type==='folder'?'/':'')+'\n'; if(n.type==='folder'&&n.children){ const np=pre+(last?'    ':'│   '); n.children.forEach((c,i)=>add(c,d+1,i===n.children.length-1,np)); } } add(state.parsedTree); md+='```'; navigator.clipboard?.writeText(md).then(()=>showSuccess('Copied!')).catch(()=>showError('Copy failed')); }
   function downloadCleanTree(){ if(!state.parsedTree){ showError('Parse a tree first.'); return; } let o=`${state.parsedTree.name}/\n`; function add(n,d=0,last=true,pre=''){ if(d===0){ n.children?.forEach((c,i)=>add(c,d+1,i===n.children.length-1,'')); return; } o+=pre+(last?'└── ':'├── ')+n.name+(n.type==='folder'?'/':'')+'\n'; if(n.type==='folder'&&n.children){ const np=pre+(last?'    ':'│   '); n.children.forEach((c,i)=>add(c,d+1,i===n.children.length-1,np)); } } add(state.parsedTree); if(state.tierManifest){ o+=`Tier_Manifest.txt\n`; } const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([o])); a.download=`${state.parsedTree.name}.clean.tree.txt`; a.click(); showSuccess(`Clean tree downloaded.`); }
 
-  function clearAll(){ elements.input.value=''; elements.preview.innerHTML='<span style="color: var(--text-dim);">Click "Example" or load a tier template...</span>'; elements.statsText.innerHTML='📁 0 folders · 📄 0 files'; clearMessages(); elements.auditPanel.classList.remove('visible'); state.parsedTree=null; state.tierManifest=''; state.currentTier=null; elements.tierSelect.value=''; }
+  function updateTierBadge() {
+    if(state.currentTier){ elements.tierBadge.textContent = `🏷 ${state.currentTier.toUpperCase()}`; elements.tierBadge.style.display = 'inline-block'; }
+    else { elements.tierBadge.style.display = 'none'; }
+  }
+
+  function checkpointIfDirty() {
+    // Snapshot whatever is currently in the editor before a destructive
+    // action (Load Example / Load Tier / Clear) overwrites it, so Undo
+    // can bring it back. Only worth doing if there's actually something
+    // there — an empty textarea has nothing to lose.
+    if(elements.input.value.trim()) pushHistory();
+  }
+
+  function clearAll(){ checkpointIfDirty(); elements.input.value=''; elements.preview.innerHTML='<span style="color: var(--text-dim);">Click "Example" or load a tier template...</span>'; elements.statsText.innerHTML='📁 0 folders · 📄 0 files'; clearMessages(); elements.auditPanel.classList.remove('visible'); state.parsedTree=null; state.tierManifest=''; state.currentTier=null; elements.tierSelect.value=''; updateTierBadge(); }
   function cleanComments(){ elements.input.value=elements.input.value.split('\n').map(stripComments).join('\n'); showSuccess('Comments stripped.'); }
-  function loadExample(){ elements.input.value=EXAMPLE_TREE; elements.projectNameInput.value='my-saas'; state.projectName='my-saas'; elements.projectNameDisplay.textContent='📦 my-saas'; elements.tierSelect.value=''; state.currentTier=null; state.tierManifest=''; showInfo('Example loaded. Click "Parse" or "Audit & Fix".'); }
+  function loadExample(){ checkpointIfDirty(); elements.input.value=EXAMPLE_TREE; elements.projectNameInput.value='my-saas'; state.projectName='my-saas'; elements.projectNameDisplay.textContent='📦 my-saas'; elements.tierSelect.value=''; state.currentTier=null; state.tierManifest=''; updateTierBadge(); showInfo('Example loaded. Click "Parse" or "Audit & Fix".'); }
 
   function loadTier(tierKey) {
     if(!TIER_TREES[tierKey]) return;
+    checkpointIfDirty();
     elements.input.value = TIER_TREES[tierKey];
     const tierName = tierKey.toUpperCase();
     elements.projectNameInput.value = `ClientName_Document_${tierName}_Date`;
@@ -1067,10 +1263,65 @@ This is the highest tier. No further upgrades available.`
     elements.projectNameDisplay.textContent = `📦 ${state.projectName}`;
     state.currentTier = tierKey;
     state.tierManifest = TIER_MANIFESTS[tierKey] || '';
+    updateTierBadge();
     showInfo(`Tier ${tierName} template loaded. Parse to build.`);
   }
 
+  function handleFolderImport(fileList) {
+    if(!fileList || !fileList.length){ return; }
+    checkpointIfDirty();
+    // Build an indented tree-text representation from the browser's local
+    // FileList (webkitRelativePath), entirely client-side — no upload,
+    // no network request, consistent with the sovereign/offline design.
+    const rootFolders = new Set();
+    const paths = [];
+    for (const f of fileList) {
+      const rel = f.webkitRelativePath || f.name;
+      paths.push(rel);
+      rootFolders.add(rel.split('/')[0]);
+    }
+    if(paths.length > CONFIG.MAX_FILES){ showError(`Selected folder has ${paths.length.toLocaleString()} files, over the ${CONFIG.MAX_FILES.toLocaleString()} safety limit. Choose a smaller folder.`); return; }
+    const rootName = rootFolders.size === 1 ? [...rootFolders][0] : 'imported-project';
+    const tree = { name: sanitizeProjectName(rootName), type: 'folder', children: new Map() };
+    function insert(node, parts) {
+      const [head, ...rest] = parts;
+      if(rest.length === 0){ node.children.set(head, { name: head, type: 'file' }); return; }
+      if(!node.children.has(head) || node.children.get(head).type !== 'folder') node.children.set(head, { name: head, type: 'folder', children: new Map() });
+      insert(node.children.get(head), rest);
+    }
+    for (const rel of paths) {
+      const parts = rel.split('/');
+      insert(tree, rootFolders.size === 1 ? parts.slice(1) : parts);
+    }
+    let out = `${tree.name}/\n`;
+    function render(node, depth, isLast, prefix) {
+      const kids = [...node.children.values()];
+      kids.forEach((child, idx) => {
+        const last = idx === kids.length - 1;
+        out += prefix + (last ? '└── ' : '├── ') + child.name + (child.type === 'folder' ? '/' : '') + '\n';
+        if(child.type === 'folder') render(child, depth + 1, last, prefix + (last ? '    ' : '│   '));
+      });
+    }
+    render(tree, 0, true, '');
+    elements.input.value = out;
+    elements.projectNameInput.value = tree.name;
+    state.projectName = tree.name;
+    elements.projectNameDisplay.textContent = `📦 ${tree.name}`;
+    elements.tierSelect.value = ''; state.currentTier = null; state.tierManifest = ''; updateTierBadge();
+    showInfo(`Imported ${paths.length.toLocaleString()} files from local folder. Click "Parse" to build.`);
+  }
+
   function renderChangelog() { let h=''; CHANGELOG.forEach(v=>{ h+=`<div class="changelog-version">${v.version} — ${v.date}</div>`; v.changes.forEach(c=>{ h+=`<div class="changelog-item">• ${c}</div>`; }); }); elements.changelogContent.innerHTML=h; }
+
+  // Makes a non-native "button" (a <span role="button">) keyboard-activatable:
+  // Enter/Space triggers the same click handler that mouse users get.
+  function makeKeyboardActivatable(el) {
+    el.addEventListener('keydown', (e) => {
+      if(e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar'){ e.preventDefault(); el.click(); }
+    });
+  }
+  makeKeyboardActivatable(elements.versionBadge);
+  makeKeyboardActivatable(elements.recoveryHint);
 
   // Session storage recovery (auto-save)
   try{
@@ -1106,8 +1357,19 @@ This is the highest tier. No further upgrades available.`
   elements.tierSelect.addEventListener('change',(e)=>{
     if(e.target.value) loadTier(e.target.value);
   });
-  
-  document.addEventListener('keydown',e=>{ if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){ e.preventDefault(); parseAction(); } if((e.ctrlKey||e.metaKey)&&e.key==='z'&&!e.shiftKey){ e.preventDefault(); undo(); } if((e.ctrlKey||e.metaKey)&&e.key==='y'){ e.preventDefault(); redo(); } });
+  elements.folderImportBtn.onclick = () => elements.folderImportInput.click();
+  elements.folderImportInput.addEventListener('change', (e) => { handleFolderImport(e.target.files); e.target.value = ''; });
+
+  document.addEventListener('keydown',e=>{
+    if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){ e.preventDefault(); parseAction(); return; }
+    // Leave native per-keystroke undo/redo alone while the textarea has focus —
+    // only intercept Ctrl+Z / Ctrl+Y / Ctrl+Shift+Z as the app-level structural
+    // undo/redo when focus is elsewhere.
+    if(document.activeElement === elements.input) return;
+    if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'&&e.shiftKey){ e.preventDefault(); redo(); return; }
+    if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'&&!e.shiftKey){ e.preventDefault(); undo(); return; }
+    if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='y'){ e.preventDefault(); redo(); return; }
+  });
 })();
 </script>
 
