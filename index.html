@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';">
-<meta name="description" content="AION Scaffold v3.3 — Sovereign offline tree-to-filesystem generator with tier templates for AionSystem document red-team packages. No CDN, no external requests.">
-<meta property="og:title" content="AION Scaffold v3.3 · AionSystem">
+<meta name="description" content="AION Scaffold v3.4 — Sovereign offline tree-to-filesystem generator with tier templates for AionSystem document red-team packages. No CDN, no external requests.">
+<meta property="og:title" content="AION Scaffold v3.4 · AionSystem">
 <meta property="og:description" content="Fully offline, air-gap ready. Built-in ZIP, no CDN, session privacy, tier templates for document red-team deliverables.">
 <meta property="og:type" content="website">
-<title>AION Scaffold v3.3 · AionSystem</title>
+<title>AION Scaffold v3.4 · AionSystem</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 :root {
@@ -284,6 +284,14 @@ footer {
   </div>
 </div>
 
+<div class="modal-overlay" id="reportModal">
+  <div class="modal-content">
+    <button class="modal-close" id="closeReportBtn">&times;</button>
+    <div class="modal-title" id="reportModalTitle">Report</div>
+    <div class="changelog-list" id="reportModalContent"></div>
+  </div>
+</div>
+
 <nav aria-label="Primary navigation">
   <a href="/" class="nav-logo"><span>AION<span>system</span></span></a>
   <ul class="nav-links">
@@ -296,7 +304,7 @@ footer {
 <nav class="mobile-nav" id="mobileNav" aria-label="Mobile navigation" aria-hidden="true"></nav>
 
 <div class="page-header">
-  <div class="hero-eyebrow">Sovereign Tool · v3.3</div>
+  <div class="hero-eyebrow">Sovereign Tool · v3.4</div>
   <h1 class="page-title">AION<em>Scaffold</em></h1>
   <p class="page-sub">Paste a tree or load a tier template. Audit issues. Fix automatically. Fully offline. No CDN.</p>
 </div>
@@ -333,6 +341,42 @@ footer {
       <option value="tier6">Tier 6 — Full Gauntlet ($35–50k)</option>
     </select>
     <span style="font-family:var(--mono);font-size:10px;color:var(--text-dim);">Auto-fills tree and project name.</span>
+    <button class="icon-btn" id="validateTierBtn" aria-label="Validate current tree against loaded tier template">🔍 Validate vs Tier</button>
+  </div>
+
+  <div class="tier-select-row">
+    <span class="tier-label">🔀 Compare Tiers</span>
+    <select id="tierDiffFrom" class="tier-select" aria-label="Compare from tier">
+      <option value="tier1">Tier 1</option>
+      <option value="tier2">Tier 2</option>
+      <option value="tier3" selected>Tier 3</option>
+      <option value="tier4">Tier 4</option>
+      <option value="tier5">Tier 5</option>
+      <option value="tier6">Tier 6</option>
+    </select>
+    <span style="font-family:var(--mono);font-size:12px;color:var(--text-mid);">→</span>
+    <select id="tierDiffTo" class="tier-select" aria-label="Compare to tier">
+      <option value="tier1">Tier 1</option>
+      <option value="tier2">Tier 2</option>
+      <option value="tier3">Tier 3</option>
+      <option value="tier4" selected>Tier 4</option>
+      <option value="tier5">Tier 5</option>
+      <option value="tier6">Tier 6</option>
+    </select>
+    <button class="icon-btn" id="showTierDiffBtn" aria-label="Show file differences between two tiers">Show Diff</button>
+    <span style="font-family:var(--mono);font-size:10px;color:var(--text-dim);">See exactly which files a tier upgrade adds.</span>
+  </div>
+
+  <div class="tier-select-row">
+    <span class="tier-label">💾 Local Presets</span>
+    <input type="text" id="presetNameInput" class="project-name-input" style="width:160px;" placeholder="preset name" maxlength="48" aria-label="Preset name">
+    <button class="icon-btn" id="savePresetBtn" aria-label="Save current tree as a named preset">Save</button>
+    <select id="presetSelect" class="tier-select" aria-label="Saved presets">
+      <option value="">No presets saved</option>
+    </select>
+    <button class="icon-btn" id="loadPresetBtn" aria-label="Load selected preset">Load</button>
+    <button class="icon-btn warning" id="deletePresetBtn" aria-label="Delete selected preset">Delete</button>
+    <span style="font-family:var(--mono);font-size:10px;color:var(--text-dim);">Session-only, like auto-save — cleared when the tab closes.</span>
   </div>
 
   <div class="editor-grid">
@@ -397,14 +441,14 @@ footer {
     <div class="badge-group">
       <span class="project-badge" id="projectNameDisplay">📦 my-awesome-project</span>
       <span class="project-badge" id="tierBadge" style="display:none;border-color:var(--purple);color:var(--purple);background:rgba(168,85,247,0.1);"></span>
-      <span class="version-badge" id="versionBadge" role="button" tabindex="0" aria-label="View version history">v3.3</span>
+      <span class="version-badge" id="versionBadge" role="button" tabindex="0" aria-label="View version history">v3.4</span>
       <span class="keyboard-hint">Ctrl+Enter Parse · Ctrl+Z Undo · Ctrl+Shift+Z Redo</span>
     </div>
   </div>
 </div>
 
 <footer>
-  <div>AionSystem · Sheldon K. Salmon · Red-Team Framework Designer · Structural Integrity Analyst · AI Reliability Architect · Advocatus Diaboli</div>
+  <div>AionSystem · Sheldon K. Salmon · AI Reliability Architect</div>
   <ul class="footer-links">
     <li><a href="https://aionsystem.github.io/main-3/services">Services</a></li>
     <li><a href="https://github.com/AionSystem/AION-SCAFFOLDING" target="_blank" rel="noopener">GitHub ↗</a></li>
@@ -429,7 +473,28 @@ const ZipGenerator = (() => {
     return { time, date };
   }
 
-  function generateZip(tree, projectName, includePlaceholders, tierManifestContent) {
+  async function sha256Hex(data) {
+    const digest = await crypto.subtle.digest('SHA-256', data);
+    return [...new Uint8Array(digest)].map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  // Builds real Hash_Manifest.txt content from actual file bytes, computed
+  // with the browser's native crypto.subtle — no server round-trip, no
+  // dependency, consistent with the "fully offline" design of this tool.
+  // fileEntries: [{ name, data }] — directories and the manifest file
+  // itself are expected to already be excluded by the caller.
+  async function buildHashManifest(fileEntries) {
+    const lines = [];
+    for (const f of fileEntries) {
+      const hex = await sha256Hex(f.data);
+      lines.push(`${hex}  ${f.name}`);
+    }
+    lines.sort();
+    const header = `# Hash Manifest\n# Generated by AionSystem — SHA-256 (browser crypto.subtle), computed at build time\n# Format: <sha256>  <path>\n\n`;
+    return header + lines.join('\n') + (lines.length ? '\n' : '');
+  }
+
+  async function generateZip(tree, projectName, includePlaceholders, tierManifestContent) {
     const files = [];
     const encoder = new TextEncoder();
     const { time: dosTime, date: dosDate } = dosDateTime(new Date());
@@ -440,11 +505,12 @@ const ZipGenerator = (() => {
         files.push({ name: fullPath + '/', data: new Uint8Array(0), isDir: true });
         if (node.children) node.children.forEach(c => addToZip(c, fullPath));
       } else {
+        const isHashManifest = node.name === 'Hash_Manifest.txt';
         let content = '';
-        if (includePlaceholders) {
+        if (includePlaceholders && !isHashManifest) {
           content = generatePlaceholder(node.name, tree.name, tierManifestContent);
         }
-        files.push({ name: fullPath, data: encoder.encode(content), isDir: false });
+        files.push({ name: fullPath, data: encoder.encode(content), isDir: false, isHashManifest });
       }
     }
     
@@ -456,6 +522,19 @@ const ZipGenerator = (() => {
     if (tierManifestContent) {
       const manifestBody = includePlaceholders ? tierManifestContent : '';
       files.push({ name: 'Tier_Manifest.txt', data: encoder.encode(manifestBody), isDir: false });
+    }
+
+    // Fill Hash_Manifest.txt (if the tier tree includes one) with genuine
+    // SHA-256 digests of every other file actually going into this archive,
+    // instead of shipping it as an empty header comment. Skipped when
+    // placeholders are off, since every file is a zero-byte stub then and
+    // hashing them would just repeat the same "empty file" digest.
+    if (includePlaceholders) {
+      const hashManifestFile = files.find(f => f.isHashManifest);
+      if (hashManifestFile) {
+        const hashable = files.filter(f => !f.isDir && !f.isHashManifest);
+        hashManifestFile.data = encoder.encode(await buildHashManifest(hashable));
+      }
     }
 
     const localFileHeaders = [];
@@ -567,7 +646,7 @@ const ZipGenerator = (() => {
     if (name === 'package.json') return JSON.stringify({name:projectName,version:'1.0.0',private:true}, null, 2);
     if (name === 'tsconfig.json') return JSON.stringify({compilerOptions:{target:'ES2022',module:'ESNext',strict:true}}, null, 2);
     if (name === 'README.txt') {
-      return `# ${projectName}\n\nGenerated by AionSystem Scaffold v3.3\n\nReview package for document red-team analysis.\n\nTier: ${tierManifestContent ? tierManifestContent.split('\n')[0] : 'Custom'}\n`;
+      return `# ${projectName}\n\nGenerated by AionSystem Scaffold v3.4\n\nReview package for document red-team analysis.\n\nTier: ${tierManifestContent ? tierManifestContent.split('\n')[0] : 'Custom'}\n`;
     }
     if (name === 'Hash_Manifest.txt') {
       return `# Hash Manifest\n# Generated by AionSystem\n# SHA-256 hashes of package files\n\n`;
@@ -608,7 +687,7 @@ const ZipGenerator = (() => {
     return '';
   }
   
-  return { generateZip, generatePlaceholder, isBinaryName };
+  return { generateZip, generatePlaceholder, isBinaryName, sha256Hex, buildHashManifest };
 })();
 
 // ============================================================
@@ -620,11 +699,20 @@ const ZipGenerator = (() => {
   const CONFIG = {
     MAX_FILES: 15000, MAX_FOLDERS: 7500, MAX_INPUT_SIZE: 500000, MAX_DEPTH: 100,
     BINARY_EXTENSIONS: SHARED_BINARY_EXTENSIONS,
-    MAX_HISTORY: 30, AUTO_SAVE_KEY: 'aion-scaffold-v3_3',
+    MAX_HISTORY: 30, AUTO_SAVE_KEY: 'aion-scaffold-v3_4', PRESETS_KEY: 'aion-scaffold-presets-v3_4',
     PREVIEW_MAX_NODES: 500, PREVIEW_MAX_DEPTH: 4
   };
 
   const CHANGELOG = [
+    { version: 'v3.4', date: '2026-09-05', changes: [
+      'Hash_Manifest.txt now contains real SHA-256 digests of every file in the package, computed at build time with the browser\'s native crypto.subtle — previously it shipped as an empty header comment despite the whole tier system being built around cryptographic verification',
+      'Added "Validate vs Tier" — checks the current parsed tree against the TIER_TREES definition it was loaded from and lists anything missing or extra, so deleting a required file (e.g. Authority_Ownership_Map from a loaded Tier 4) no longer goes unnoticed',
+      'Generate & Download now runs that same tier check automatically before a ZIP or script export and asks for confirmation if required files are missing',
+      'Added "Compare Tiers" — a visual diff between any two tier templates\' file lists, so the upsell in TIER_MANIFESTS ("what you get next tier") is backed by an actual file-by-file view',
+      'Added named local presets — save/load/delete multiple trees by name, session-only via sessionStorage like the existing auto-save, not persisted across browser restarts',
+      'Added a post-build self-check: after a ZIP is generated, its own bytes are re-scanned in-browser (real local-file-header signatures, not just the generator\'s internal counters) and the file/folder counts are confirmed against what was requested before the success message is shown',
+      'Shell script export now embeds the same real SHA-256 Hash_Manifest.txt content as the ZIP export, computed from the same placeholder content it writes into the script'
+    ]},
     { version: 'v3.3', date: '2026-09-05', changes: [
       'Fixed light-mode contrast: the tree-input textarea, project-name field, and audit panel had hardcoded dark backgrounds that made text unreadable in day mode — all three now use theme-aware variables',
       'Simplified top nav and footer to a single Services link, pointed at https://aionsystem.github.io/main-3/services — removed the old Simulators and Dev-Tools links',
@@ -935,7 +1023,15 @@ This is the highest tier. No further upgrades available.`
     tierSelect: document.getElementById('tierSelect'), folderImportBtn: document.getElementById('folderImportBtn'),
     folderImportInput: document.getElementById('folderImportInput'), tierBadge: document.getElementById('tierBadge'),
     themeToggle: document.getElementById('theme-toggle'), hamburger: document.getElementById('hamburger'),
-    mobileNav: document.getElementById('mobileNav')
+    mobileNav: document.getElementById('mobileNav'),
+    validateTierBtn: document.getElementById('validateTierBtn'),
+    tierDiffFrom: document.getElementById('tierDiffFrom'), tierDiffTo: document.getElementById('tierDiffTo'),
+    showTierDiffBtn: document.getElementById('showTierDiffBtn'),
+    reportModal: document.getElementById('reportModal'), closeReportBtn: document.getElementById('closeReportBtn'),
+    reportModalTitle: document.getElementById('reportModalTitle'), reportModalContent: document.getElementById('reportModalContent'),
+    presetNameInput: document.getElementById('presetNameInput'), presetSelect: document.getElementById('presetSelect'),
+    savePresetBtn: document.getElementById('savePresetBtn'), loadPresetBtn: document.getElementById('loadPresetBtn'),
+    deletePresetBtn: document.getElementById('deletePresetBtn')
   };
 
   const state = {
@@ -953,6 +1049,31 @@ This is the highest tier. No further upgrades available.`
   function showSuccess(m) { elements.success.textContent='✅ '+m; elements.success.classList.add('visible'); elements.ariaLive.textContent='Success: '+m; }
   function showInfo(m) { elements.info.textContent='ℹ️ '+m; elements.info.classList.add('visible'); }
   function clearMessages() { elements.error.classList.remove('visible'); elements.warning.classList.remove('visible'); elements.success.classList.remove('visible'); elements.info.classList.remove('visible'); }
+
+  // Flattens a parsed tree into a set of paths relative to (excluding) the
+  // tree's own root name, folders suffixed with '/'. Excluding the root name
+  // lets a tree loaded under one project/client name be compared against a
+  // tier template that uses a different placeholder root name.
+  function getFlatPaths(tree) {
+    const paths = new Set();
+    function walk(node, prefix) {
+      const full = prefix ? `${prefix}/${node.name}` : node.name;
+      if (node.type === 'folder') {
+        paths.add(full + '/');
+        node.children?.forEach(c => walk(c, full));
+      } else {
+        paths.add(full);
+      }
+    }
+    tree.children?.forEach(c => walk(c, ''));
+    return paths;
+  }
+
+  function openReportModal(title, html) {
+    elements.reportModalTitle.textContent = title;
+    elements.reportModalContent.innerHTML = html;
+    elements.reportModal.classList.add('visible');
+  }
 
   // ----------------------------------------------------------
   // Tree parsing engine
@@ -1249,38 +1370,97 @@ This is the highest tier. No further upgrades available.`
     elements.undoBtn.disabled=history.past.length<2; elements.redoBtn.disabled=!history.future.length;
   }
 
-  function generateZip() {
+  // Re-scans the actual bytes of a generated ZIP — real local-file-header
+  // signatures, not the generator's own internal counters — as a "trust
+  // but verify" step on the tool's own output. Walks entries via their
+  // declared (stored, uncompressed) size until it reaches the central
+  // directory, tallying files vs. directories along the way.
+  async function verifyZip(blob) {
+    const buf = new Uint8Array(await blob.arrayBuffer());
+    const view = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
+    let i = 0, files = 0, dirs = 0;
+    while (i + 4 <= buf.length) {
+      const sig = view.getUint32(i, true);
+      if (sig === 0x04034b50) {
+        const compSize = view.getUint32(i + 18, true);
+        const nameLen = view.getUint16(i + 26, true);
+        const extraLen = view.getUint16(i + 28, true);
+        const nameStart = i + 30;
+        const name = new TextDecoder().decode(buf.slice(nameStart, nameStart + nameLen));
+        if (name.endsWith('/')) dirs++; else files++;
+        i = nameStart + nameLen + extraLen + compSize;
+      } else if (sig === 0x02014b50 || sig === 0x06054b50) {
+        break; // reached the central directory / end record — local entries are done
+      } else {
+        i++;
+      }
+    }
+    return { files, dirs };
+  }
+
+  async function generateZip() {
     if(!state.parsedTree){ showError('Parse a tree first.'); return; }
-    const blob = ZipGenerator.generateZip(state.parsedTree, state.projectName, elements.includePlaceholders.checked, state.tierManifest);
+    const blob = await ZipGenerator.generateZip(state.parsedTree, state.projectName, elements.includePlaceholders.checked, state.tierManifest);
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = `${state.parsedTree.name}.zip`;
     a.click();
-    showSuccess(`${state.parsedTree.name}.zip generated.`);
+    const expectedFiles = state.fileCount + (state.tierManifest ? 1 : 0);
+    const expectedDirs = state.folderCount + 1; // +1 for the root folder entry itself
+    const verified = await verifyZip(blob);
+    if(verified.files === expectedFiles && verified.dirs === expectedDirs){
+      showSuccess(`${state.parsedTree.name}.zip generated — verified ${verified.files} files, ${verified.dirs} folders.`);
+    } else {
+      showWarning(`${state.parsedTree.name}.zip generated, but the post-build check found ${verified.files} files / ${verified.dirs} folders inside vs. ${expectedFiles} / ${expectedDirs} expected — inspect before sending.`);
+    }
   }
 
   function shellQuote(s){ return `'${s.replace(/'/g, `'\\''`)}'`; }
 
-  function generateScript(){
+  async function generateScript(){
     if(!state.parsedTree)return;
     const includePlaceholders = elements.includePlaceholders.checked;
+    const encoder = new TextEncoder();
+
+    // Precompute every file's content up front so Hash_Manifest.txt can be
+    // filled with real digests of its siblings before any script text is
+    // written — same approach as the ZIP export, just against strings
+    // instead of zip entries.
+    const fileEntries = []; // { path, content, isHashManifest }
+    function collect(n, p=''){
+      const f = p ? `${p}/${n.name}` : n.name;
+      if(n.type==='folder'){ n.children?.forEach(c=>collect(c,f)); }
+      else {
+        const isHashManifest = n.name === 'Hash_Manifest.txt';
+        const content = (includePlaceholders && !isHashManifest) ? ZipGenerator.generatePlaceholder(n.name, state.parsedTree.name, state.tierManifest) : '';
+        fileEntries.push({ path: f, content, isHashManifest });
+      }
+    }
+    state.parsedTree.children?.forEach(c=>collect(c, ''));
+    if(state.tierManifest) fileEntries.push({ path: 'Tier_Manifest.txt', content: includePlaceholders ? state.tierManifest : '', isHashManifest: false });
+
+    let hashManifestText = '';
+    if(includePlaceholders){
+      const hashable = fileEntries.filter(f => !f.isHashManifest).map(f => ({ name: f.path, data: encoder.encode(f.content) }));
+      hashManifestText = await ZipGenerator.buildHashManifest(hashable);
+    }
+    const contentByPath = new Map(fileEntries.map(f => [f.path, f.isHashManifest ? hashManifestText : f.content]));
+
     let s='#!/usr/bin/env bash\nset -e\n';
     function add(n,p=''){
       const f=p?`${p}/${n.name}`:n.name;
       if(n.type==='folder'){ s+=`mkdir -p ${shellQuote(f)}\n`; n.children?.forEach(c=>add(c,f)); }
       else {
-        const content = includePlaceholders ? ZipGenerator.generatePlaceholder(n.name, state.parsedTree.name, state.tierManifest) : '';
+        const content = contentByPath.get(f) ?? '';
         if(content){ s+=`cat > ${shellQuote(f)} << 'AION_EOF'\n${content}\nAION_EOF\n`; }
         else { s+=`touch ${shellQuote(f)}\n`; }
       }
     }
     s+=`mkdir -p ${shellQuote(state.parsedTree.name)}\ncd ${shellQuote(state.parsedTree.name)}\n`; state.parsedTree.children?.forEach(c=>add(c,''));
     if(state.tierManifest){
-      if(includePlaceholders){
-        s+=`cat > ${shellQuote('Tier_Manifest.txt')} << 'AION_EOF'\n${state.tierManifest}\nAION_EOF\n`;
-      } else {
-        s+=`touch ${shellQuote('Tier_Manifest.txt')}\n`;
-      }
+      const tmContent = contentByPath.get('Tier_Manifest.txt') ?? '';
+      if(tmContent){ s+=`cat > ${shellQuote('Tier_Manifest.txt')} << 'AION_EOF'\n${tmContent}\nAION_EOF\n`; }
+      else { s+=`touch ${shellQuote('Tier_Manifest.txt')}\n`; }
     }
     const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([s])); a.download=`${state.parsedTree.name}.sh`; a.click(); showSuccess(`${state.parsedTree.name}.sh generated.`);
   }
@@ -1292,14 +1472,21 @@ This is the highest tier. No further upgrades available.`
     // Tree/JSON exports are cheap regardless of size; ZIP/script building on a
     // large tree can take a noticeable moment, so give visible feedback and
     // yield to the browser first so the "Generating…" state actually paints
-    // before the heavy synchronous work runs.
+    // before the heavy work runs.
     if(f==='tree'){ exportTree(); return; }
     if(f==='json'){ exportJSON(); return; }
+    if(!checkTierBeforeExport()) return;
     elements.generateBtn.disabled = true;
     showInfo('Generating…');
-    setTimeout(() => {
-      try { if(f==='zip') generateZip(); else if(f==='script') generateScript(); }
-      finally { elements.generateBtn.disabled = false; }
+    setTimeout(async () => {
+      try {
+        if(f==='zip') await generateZip();
+        else if(f==='script') await generateScript();
+      } catch(e) {
+        showError(`Generation failed: ${e.message}`);
+      } finally {
+        elements.generateBtn.disabled = false;
+      }
     }, 0);
   }
 
@@ -1335,6 +1522,114 @@ This is the highest tier. No further upgrades available.`
     state.tierManifest = TIER_MANIFESTS[tierKey] || '';
     updateTierBadge();
     showInfo(`Tier ${tierName} template loaded. Parse to build.`);
+  }
+
+  function validateAgainstTier() {
+    if(!state.currentTier){ showError('Load a tier template first — this checks your tree against the tier it came from.'); return; }
+    if(!state.parsedTree){ showError('Parse the tree first.'); return; }
+    const limits = { maxFiles: Infinity, maxFolders: Infinity, maxDepth: Infinity };
+    const canonical = parseTree(TIER_TREES[state.currentTier], 'x', limits).root;
+    const canonicalPaths = getFlatPaths(canonical);
+    const currentPaths = getFlatPaths(state.parsedTree);
+    const missing = [...canonicalPaths].filter(p => !currentPaths.has(p)).sort();
+    const extra = [...currentPaths].filter(p => !canonicalPaths.has(p)).sort();
+    let html = '';
+    if(!missing.length && !extra.length){
+      html = `<div style="color:var(--green);">✅ Matches the ${state.currentTier.toUpperCase()} template exactly — ${canonicalPaths.size} items.</div>`;
+    } else {
+      if(missing.length){ html += `<div class="changelog-version" style="color:var(--red2);">Missing (${missing.length})</div>`; missing.forEach(p=>html+=`<div class="changelog-item">− ${p}</div>`); }
+      if(extra.length){ html += `<div class="changelog-version" style="color:var(--cyan);">Extra, not in template (${extra.length})</div>`; extra.forEach(p=>html+=`<div class="changelog-item">+ ${p}</div>`); }
+    }
+    openReportModal(`🔍 ${state.currentTier.toUpperCase()} Structure Check`, html);
+    if(missing.length) showWarning(`${missing.length} item(s) required by ${state.currentTier.toUpperCase()} are missing.`);
+    else showSuccess('Tree matches the loaded tier template.');
+  }
+
+  // Runs the same missing-file check silently before an export. Returns
+  // true when it's safe to proceed (no tier loaded, no parsed tree yet, or
+  // nothing missing); otherwise asks for confirmation via the platform
+  // confirm() dialog, naming one example of what's missing.
+  function checkTierBeforeExport() {
+    if(!state.currentTier || !state.parsedTree) return true;
+    const limits = { maxFiles: Infinity, maxFolders: Infinity, maxDepth: Infinity };
+    const canonical = parseTree(TIER_TREES[state.currentTier], 'x', limits).root;
+    const canonicalPaths = getFlatPaths(canonical);
+    const currentPaths = getFlatPaths(state.parsedTree);
+    const missing = [...canonicalPaths].filter(p => !currentPaths.has(p)).sort();
+    if(!missing.length) return true;
+    return confirm(`This tree is missing ${missing.length} item(s) required by the ${state.currentTier.toUpperCase()} template (e.g. "${missing[0]}"). Export anyway?`);
+  }
+
+  function showTierDiff() {
+    const fromKey = elements.tierDiffFrom.value, toKey = elements.tierDiffTo.value;
+    if(fromKey === toKey){ showInfo('Pick two different tiers to compare.'); return; }
+    const limits = { maxFiles: Infinity, maxFolders: Infinity, maxDepth: Infinity };
+    const fromPaths = getFlatPaths(parseTree(TIER_TREES[fromKey], 'x', limits).root);
+    const toPaths = getFlatPaths(parseTree(TIER_TREES[toKey], 'x', limits).root);
+    const added = [...toPaths].filter(p => !fromPaths.has(p)).sort();
+    const removed = [...fromPaths].filter(p => !toPaths.has(p)).sort();
+    let html = '';
+    if(added.length){ html += `<div class="changelog-version" style="color:var(--green);">Added in ${toKey.toUpperCase()} (${added.length})</div>`; added.forEach(p=>html+=`<div class="changelog-item">+ ${p}</div>`); }
+    if(removed.length){ html += `<div class="changelog-version" style="color:var(--red2);">Not present in ${toKey.toUpperCase()} (${removed.length})</div>`; removed.forEach(p=>html+=`<div class="changelog-item">− ${p}</div>`); }
+    if(!added.length && !removed.length) html = `<div style="color:var(--text-mid);">${fromKey.toUpperCase()} and ${toKey.toUpperCase()} contain the same files.</div>`;
+    openReportModal(`🔀 ${fromKey.toUpperCase()} → ${toKey.toUpperCase()}`, html);
+  }
+
+  // ----------------------------------------------------------
+  // Named local presets — session-only (sessionStorage), same privacy
+  // posture as the existing single-slot auto-save. Stored as one JSON
+  // object keyed by preset name, so several trees can be kept side by
+  // side without the single auto-save slot overwriting them.
+  // ----------------------------------------------------------
+  function loadPresetsStore() {
+    try { return JSON.parse(sessionStorage.getItem(CONFIG.PRESETS_KEY) || '{}'); } catch(e) { return {}; }
+  }
+  function savePresetsStore(obj) {
+    try { sessionStorage.setItem(CONFIG.PRESETS_KEY, JSON.stringify(obj)); } catch(e) {}
+  }
+  function refreshPresetSelect() {
+    const store = loadPresetsStore();
+    const names = Object.keys(store).sort();
+    elements.presetSelect.innerHTML = names.length
+      ? names.map(n => `<option value="${n.replace(/"/g,'&quot;')}">${n}</option>`).join('')
+      : `<option value="">No presets saved</option>`;
+  }
+  function savePreset() {
+    const name = elements.presetNameInput.value.trim();
+    if(!name){ showError('Give the preset a name first.'); return; }
+    if(!elements.input.value.trim()){ showError('Nothing to save — paste or load a tree first.'); return; }
+    const store = loadPresetsStore();
+    store[name] = { input: elements.input.value, projectName: state.projectName, tier: state.currentTier, tierManifest: state.tierManifest };
+    savePresetsStore(store);
+    refreshPresetSelect();
+    elements.presetSelect.value = name;
+    showSuccess(`Preset "${name}" saved for this session.`);
+  }
+  function loadPreset() {
+    const name = elements.presetSelect.value;
+    if(!name){ showInfo('Pick a saved preset first.'); return; }
+    const store = loadPresetsStore();
+    const p = store[name];
+    if(!p){ showError('That preset no longer exists.'); return; }
+    checkpointIfDirty();
+    elements.input.value = p.input;
+    elements.projectNameInput.value = p.projectName || 'my-awesome-project';
+    state.projectName = sanitizeProjectName(elements.projectNameInput.value);
+    elements.projectNameDisplay.textContent = `📦 ${state.projectName}`;
+    state.currentTier = p.tier || null;
+    state.tierManifest = p.tierManifest || '';
+    elements.tierSelect.value = state.currentTier || '';
+    updateTierBadge();
+    showInfo(`Preset "${name}" loaded. Click "Parse" to rebuild.`);
+  }
+  function deletePreset() {
+    const name = elements.presetSelect.value;
+    if(!name){ showInfo('Pick a saved preset first.'); return; }
+    const store = loadPresetsStore();
+    delete store[name];
+    savePresetsStore(store);
+    refreshPresetSelect();
+    showSuccess(`Preset "${name}" deleted.`);
   }
 
   function handleFolderImport(fileList) {
@@ -1429,6 +1724,14 @@ This is the highest tier. No further upgrades available.`
   });
   elements.folderImportBtn.onclick = () => elements.folderImportInput.click();
   elements.folderImportInput.addEventListener('change', (e) => { handleFolderImport(e.target.files); e.target.value = ''; });
+  elements.validateTierBtn.onclick = validateAgainstTier;
+  elements.showTierDiffBtn.onclick = showTierDiff;
+  elements.closeReportBtn.addEventListener('click', () => elements.reportModal.classList.remove('visible'));
+  elements.reportModal.addEventListener('click', (e) => { if(e.target === elements.reportModal) elements.reportModal.classList.remove('visible'); });
+  elements.savePresetBtn.onclick = savePreset;
+  elements.loadPresetBtn.onclick = loadPreset;
+  elements.deletePresetBtn.onclick = deletePreset;
+  refreshPresetSelect();
 
   // Theme toggle — shares the same 'aion-theme' localStorage key as the rest
   // of the AionSystem site (aionsystem.github.io), so a preference set on one
