@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';">
-<meta name="description" content="AION Scaffold v3.4 — Sovereign offline tree-to-filesystem generator with tier templates for AionSystem document red-team packages. No CDN, no external requests.">
-<meta property="og:title" content="AION Scaffold v3.4 · AionSystem">
+<meta name="description" content="AION Scaffold v3.5 — Sovereign offline tree-to-filesystem generator with tier templates for AionSystem document red-team packages. No CDN, no external requests.">
+<meta property="og:title" content="AION Scaffold v3.5 · AionSystem">
 <meta property="og:description" content="Fully offline, air-gap ready. Built-in ZIP, no CDN, session privacy, tier templates for document red-team deliverables.">
 <meta property="og:type" content="website">
-<title>AION Scaffold v3.4 · AionSystem</title>
+<title>AION Scaffold v3.5 · AionSystem</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 :root {
@@ -304,7 +304,7 @@ footer {
 <nav class="mobile-nav" id="mobileNav" aria-label="Mobile navigation" aria-hidden="true"></nav>
 
 <div class="page-header">
-  <div class="hero-eyebrow">Sovereign Tool · v3.4</div>
+  <div class="hero-eyebrow">Sovereign Tool · v3.5</div>
   <h1 class="page-title">AION<em>Scaffold</em></h1>
   <p class="page-sub">Paste a tree or load a tier template. Audit issues. Fix automatically. Fully offline. No CDN.</p>
 </div>
@@ -327,6 +327,20 @@ footer {
         <label for="includePlaceholders">📝 Placeholders</label>
       </div>
     </div>
+  </div>
+
+  <div class="tier-select-row">
+    <span class="tier-label">📄 Document Type</span>
+    <select id="docTypeSelect" class="tier-select" aria-label="Select document type template">
+      <option value="">Choose a document type...</option>
+      <option value="contract">Contract Review</option>
+      <option value="policy">Policy Audit</option>
+      <option value="regulatory">Regulatory Filing</option>
+      <option value="ai_governance">AI Governance Framework</option>
+      <option value="research">Research Paper / Grant Proposal</option>
+      <option value="sop">Internal SOP / Playbook</option>
+    </select>
+    <span style="font-family:var(--mono);font-size:10px;color:var(--text-dim);">General-purpose skeletons, separate from the priced tiers below.</span>
   </div>
 
   <div class="tier-select-row">
@@ -377,6 +391,14 @@ footer {
     <button class="icon-btn" id="loadPresetBtn" aria-label="Load selected preset">Load</button>
     <button class="icon-btn warning" id="deletePresetBtn" aria-label="Delete selected preset">Delete</button>
     <span style="font-family:var(--mono);font-size:10px;color:var(--text-dim);">Session-only, like auto-save — cleared when the tab closes.</span>
+  </div>
+
+  <div class="tier-select-row">
+    <span class="tier-label">🗂 Template File</span>
+    <button class="icon-btn" id="exportTemplateBtn" aria-label="Export current tree as a shareable template file">⬇ Export Template</button>
+    <button class="icon-btn" id="importTemplateBtn" aria-label="Import a template file">📥 Import Template</button>
+    <input type="file" id="importTemplateInput" accept=".json,application/json" class="visually-hidden" aria-hidden="true" tabindex="-1">
+    <span style="font-family:var(--mono);font-size:10px;color:var(--text-dim);">Durable, shareable — a JSON file you keep, not browser storage.</span>
   </div>
 
   <div class="editor-grid">
@@ -440,8 +462,9 @@ footer {
     </div>
     <div class="badge-group">
       <span class="project-badge" id="projectNameDisplay">📦 my-awesome-project</span>
+      <span class="project-badge" id="docTypeBadge" style="display:none;border-color:var(--green);color:var(--green);background:rgba(74,222,128,0.1);"></span>
       <span class="project-badge" id="tierBadge" style="display:none;border-color:var(--purple);color:var(--purple);background:rgba(168,85,247,0.1);"></span>
-      <span class="version-badge" id="versionBadge" role="button" tabindex="0" aria-label="View version history">v3.4</span>
+      <span class="version-badge" id="versionBadge" role="button" tabindex="0" aria-label="View version history">v3.5</span>
       <span class="keyboard-hint">Ctrl+Enter Parse · Ctrl+Z Undo · Ctrl+Shift+Z Redo</span>
     </div>
   </div>
@@ -461,6 +484,212 @@ footer {
 // kept in one place so the two can't silently drift out of sync)
 // ============================================================
 const SHARED_BINARY_EXTENSIONS = ['gguf','safetensors','png','jpg','jpeg','gif','ico','db','sqlite','bin','wasm','zip','tar','gz','webp','svg','mp4','mp3','wav','pdf','doc','docx','xls','xlsx'];
+
+// ============================================================
+// DOCUMENT TYPE TEMPLATES
+//
+// Separate from the priced TIER_TREES packages below: these are
+// general-purpose adversarial-document skeletons, not deliverable tiers.
+// Shared between the ZipGenerator (placeholder content, hash manifest,
+// next-steps file) and the main app (the dropdown + tree loading), so the
+// per-type copy lives in exactly one place.
+// ============================================================
+const DOCUMENT_TYPES = {
+  contract: {
+    label: 'Contract Review',
+    tree: `ContractName_Review_Date/
+├── 01_Contract_Summary.md
+├── 02_Clause_By_Clause_Analysis.md
+├── 03_Redline_Recommendations.md
+├── 04_Risk_Flags.csv
+├── 05_Supporting_Documents/
+│   ├── Original_Contract.pdf
+│   └── Prior_Correspondence.pdf
+├── Hash_Manifest.txt
+├── Verification_Checklist.txt
+└── README.txt`,
+    placeholders: {
+      readmeIntro: 'This package reviews a contract for risk, ambiguity, and unfavorable terms. Read 01_Contract_Summary.md first, then work through the clause-by-clause analysis and risk flags before touching the redline recommendations.',
+      checklist: [
+        'Confirm the original contract in 05_Supporting_Documents/ matches the version under review.',
+        'Verify every clause flagged in 02_Clause_By_Clause_Analysis.md has a corresponding entry in 04_Risk_Flags.csv.',
+        'Confirm redlines in 03_Redline_Recommendations.md do not conflict with each other.',
+        'Check governing law and jurisdiction clauses against the counterparty\'s location.',
+        'Confirm termination and renewal terms are clearly dated.'
+      ]
+    },
+    nextSteps: [
+      'Read 01_Contract_Summary.md for the high-level picture.',
+      'Work through 02_Clause_By_Clause_Analysis.md alongside the original contract.',
+      'Prioritize 04_Risk_Flags.csv by severity before drafting any redlines.',
+      'Use 03_Redline_Recommendations.md as a starting point for negotiation — verify it against your own risk tolerance first.'
+    ]
+  },
+  policy: {
+    label: 'Policy Audit',
+    tree: `PolicyName_Audit_Date/
+├── 01_Executive_Summary.md
+├── 02_Policy_Gap_Analysis.md
+├── 03_Compliance_Findings.csv
+├── 04_Remediation_Plan.md
+├── 05_Supporting_Evidence/
+│   └── Original_Policy_Document.pdf
+├── Regulatory_Anchor_References.txt
+├── Hash_Manifest.txt
+├── Verification_Checklist.txt
+└── README.txt`,
+    placeholders: {
+      readmeIntro: 'This package audits a policy document against its stated scope and applicable regulatory anchors. Start with 01_Executive_Summary.md, then review the gap analysis and compliance findings before acting on the remediation plan.',
+      checklist: [
+        'Confirm the policy version reviewed matches the version currently in force.',
+        'Verify each finding in 03_Compliance_Findings.csv cites a specific policy section.',
+        'Confirm 04_Remediation_Plan.md addresses every finding, not just the high-severity ones.',
+        'Check Regulatory_Anchor_References.txt against the policy\'s actual scope (jurisdiction, data types, sector).',
+        'Confirm sign-off / ownership is assigned for each remediation item.'
+      ],
+      anchors: [
+        'GDPR (EU) — if personal data of EU residents is in scope',
+        'HIPAA (US) — if protected health information is in scope',
+        'Applicable state privacy statute (e.g. CCPA/CPRA) — name the actual one'
+      ]
+    },
+    nextSteps: [
+      'Read 01_Executive_Summary.md for the high-level picture.',
+      'Work through 02_Policy_Gap_Analysis.md and 03_Compliance_Findings.csv together.',
+      'Edit Regulatory_Anchor_References.txt to reflect the anchors that actually apply.',
+      'Assign an owner and date to every item in 04_Remediation_Plan.md.'
+    ]
+  },
+  regulatory: {
+    label: 'Regulatory Filing',
+    tree: `FilingName_Regulatory_Date/
+├── 01_Filing_Summary.md
+├── 02_Regulatory_Cross_Reference.csv
+├── 03_Compliance_Attestation.md
+├── 04_Supporting_Exhibits/
+│   └── Original_Filing_Draft.pdf
+├── Regulatory_Anchor_References.txt
+├── Hash_Manifest.txt
+├── Verification_Checklist.txt
+└── README.txt`,
+    placeholders: {
+      readmeIntro: 'This package supports a regulatory filing under review. Start with 01_Filing_Summary.md, verify every cross-reference, and confirm the compliance attestation before the filing is submitted.',
+      checklist: [
+        'Confirm 04_Supporting_Exhibits/ contains the exact filing draft under review.',
+        'Verify every row in 02_Regulatory_Cross_Reference.csv points to a real, current citation.',
+        'Confirm 03_Compliance_Attestation.md is signed by someone with authority to attest.',
+        'Check filing deadlines against the current regulatory calendar.',
+        'Confirm Regulatory_Anchor_References.txt lists the actual regulator/statute this filing is made under.'
+      ],
+      anchors: [
+        'Sector-specific regulator rule set — name the applicable regulator (e.g. SEC, FTC, FDA)',
+        'GDPR (EU) — if personal data is in scope',
+        'Relevant state or federal disclosure requirement — name the actual statute'
+      ]
+    },
+    nextSteps: [
+      'Read 01_Filing_Summary.md for the high-level picture.',
+      'Verify every entry in 02_Regulatory_Cross_Reference.csv against the current statute or rule text.',
+      'Edit Regulatory_Anchor_References.txt to name the actual regulator and citation.',
+      'Get 03_Compliance_Attestation.md signed before submission.'
+    ]
+  },
+  ai_governance: {
+    label: 'AI Governance Framework',
+    tree: `FrameworkName_Governance_Date/
+├── 01_Framework_Overview.md
+├── 02_Risk_Classification_Matrix.csv
+├── 03_Control_Mapping.md
+├── 04_Stakeholder_Roles.md
+├── 05_Supporting_References/
+│   └── Original_Framework_Draft.pdf
+├── Regulatory_Anchor_References.txt
+├── Hash_Manifest.txt
+├── Verification_Checklist.txt
+└── README.txt`,
+    placeholders: {
+      readmeIntro: 'This package documents an AI governance framework: how a system is classified, controlled, and owned. Start with 01_Framework_Overview.md, then confirm every control in 03_Control_Mapping.md has a named owner in 04_Stakeholder_Roles.md.',
+      checklist: [
+        'Confirm 02_Risk_Classification_Matrix.csv reflects the system\'s actual deployment context, not just its technical capability.',
+        'Verify every control in 03_Control_Mapping.md maps to a specific row in the risk matrix.',
+        'Confirm 04_Stakeholder_Roles.md assigns a named owner for each control.',
+        'Check Regulatory_Anchor_References.txt against where the system is actually deployed.',
+        'Confirm the framework has a defined review/update cadence.'
+      ],
+      anchors: [
+        'EU AI Act — if the system is an "AI system" under the Act\'s definition',
+        'NIST AI Risk Management Framework',
+        'Sector-specific AI guidance — name the applicable one (e.g. FDA SaMD, EEOC automated hiring guidance)'
+      ]
+    },
+    nextSteps: [
+      'Read 01_Framework_Overview.md for the high-level picture.',
+      'Fill in 02_Risk_Classification_Matrix.csv for every system component in scope.',
+      'Map each risk to a control in 03_Control_Mapping.md, then to a named owner in 04_Stakeholder_Roles.md.',
+      'Edit Regulatory_Anchor_References.txt to reflect where the system is actually deployed.'
+    ]
+  },
+  research: {
+    label: 'Research Paper / Grant Proposal',
+    tree: `ProjectName_Research_Date/
+├── 01_Abstract.md
+├── 02_Literature_Review.md
+├── 03_Methodology.md
+├── 04_Budget_Justification.csv
+├── 05_Supporting_Materials/
+│   ├── Prior_Publications.pdf
+│   └── Letters_Of_Support.pdf
+├── Hash_Manifest.txt
+├── Verification_Checklist.txt
+└── README.txt`,
+    placeholders: {
+      readmeIntro: 'This package supports a research paper or grant proposal. Start with 01_Abstract.md, then build out the literature review and methodology before finalizing the budget justification.',
+      checklist: [
+        'Confirm 01_Abstract.md accurately summarizes 03_Methodology.md.',
+        'Verify every claim in 02_Literature_Review.md has a citation.',
+        'Confirm 04_Budget_Justification.csv line items sum to the total requested.',
+        'Check that 05_Supporting_Materials/ includes current, signed letters of support.',
+        'Confirm the proposal meets the funder\'s specific formatting requirements.'
+      ]
+    },
+    nextSteps: [
+      'Draft 01_Abstract.md last, after the other sections are stable — it should summarize, not preview.',
+      'Build 02_Literature_Review.md and 03_Methodology.md together so claims and methods line up.',
+      'Reconcile 04_Budget_Justification.csv against the narrative before submission.',
+      'Confirm every file in 05_Supporting_Materials/ is current and signed where required.'
+    ]
+  },
+  sop: {
+    label: 'Internal SOP / Playbook',
+    tree: `ProcessName_SOP_Date/
+├── 01_Purpose_And_Scope.md
+├── 02_Step_By_Step_Procedure.md
+├── 03_Roles_And_Responsibilities.md
+├── 04_Escalation_Path.md
+├── 05_Supporting_Materials/
+│   └── Reference_Documents.pdf
+├── Revision_History.csv
+├── Hash_Manifest.txt
+├── Verification_Checklist.txt
+└── README.txt`,
+    placeholders: {
+      readmeIntro: 'This package documents an internal standard operating procedure. Start with 01_Purpose_And_Scope.md, then work through the procedure and roles before publishing.',
+      checklist: [
+        'Confirm 02_Step_By_Step_Procedure.md matches how the process is actually performed today.',
+        'Verify every role named in 03_Roles_And_Responsibilities.md is a real, current position.',
+        'Confirm 04_Escalation_Path.md includes a named contact and a response-time expectation.',
+        'Check Revision_History.csv is updated with this revision.',
+        'Confirm the SOP has an assigned review date.'
+      ]
+    },
+    nextSteps: [
+      'Read 01_Purpose_And_Scope.md to confirm this is still the right process boundary.',
+      'Walk 02_Step_By_Step_Procedure.md against how the work is actually done, not how it was designed.',
+      'Confirm every name in 03_Roles_And_Responsibilities.md and 04_Escalation_Path.md is current.',
+      'Log this revision in Revision_History.csv before publishing.'
+    ]
+  }
+};
 
 // ============================================================
 // MINIMAL ZIP GENERATOR (pure JS, no dependencies)
@@ -483,18 +712,43 @@ const ZipGenerator = (() => {
   // dependency, consistent with the "fully offline" design of this tool.
   // fileEntries: [{ name, data }] — directories and the manifest file
   // itself are expected to already be excluded by the caller.
-  async function buildHashManifest(fileEntries) {
+  // Builds real Hash_Manifest.txt content from actual file bytes, computed
+  // with the browser's native crypto.subtle — no server round-trip, no
+  // dependency, consistent with the "fully offline" design of this tool.
+  // fileEntries: [{ name, data }] — directories and the manifest file
+  // itself are expected to already be excluded by the caller.
+  // onProgress(done, total), if given, fires after each file is hashed —
+  // real progress against actual work, not a decorative spinner.
+  async function buildHashManifest(fileEntries, onProgress) {
     const lines = [];
-    for (const f of fileEntries) {
-      const hex = await sha256Hex(f.data);
-      lines.push(`${hex}  ${f.name}`);
+    for (let i = 0; i < fileEntries.length; i++) {
+      const hex = await sha256Hex(fileEntries[i].data);
+      lines.push(`${hex}  ${fileEntries[i].name}`);
+      if (onProgress) onProgress(i + 1, fileEntries.length);
     }
     lines.sort();
     const header = `# Hash Manifest\n# Generated by AionSystem — SHA-256 (browser crypto.subtle), computed at build time\n# Format: <sha256>  <path>\n\n`;
     return header + lines.join('\n') + (lines.length ? '\n' : '');
   }
 
-  async function generateZip(tree, projectName, includePlaceholders, tierManifestContent) {
+  // Builds NEXT_STEPS.md — an ordered, document-type-aware instructions
+  // file, falling back to a generic checklist when no type is selected.
+  function buildNextSteps(projectName, docType, tierManifestContent) {
+    const docMeta = DOCUMENT_TYPES[docType];
+    const steps = docMeta ? docMeta.nextSteps : [
+      'Confirm every placeholder file above has been replaced with real content.',
+      'Work through files in numeric order where they are numbered.',
+      'Confirm nothing marked "Placeholder — replace with actual content." remains.'
+    ];
+    let md = `# Next Steps — ${projectName}\n\n## How to complete this package\n`;
+    steps.forEach((s, i) => { md += `${i + 1}. ${s}\n`; });
+    md += `\n## Verifying file integrity\nIf this package includes Hash_Manifest.txt, verify it from inside this folder:\n\n    sha256sum -c Hash_Manifest.txt\n\nAny line reporting FAILED means that file no longer matches what was hashed at build time — do not rely on it without investigating.\n`;
+    if (tierManifestContent) md += `\nSee Tier_Manifest.txt for what is (and isn't) included at this tier.\n`;
+    md += `\n## Questions or issues\n[ADD CONTACT NAME / EMAIL HERE]\n`;
+    return md;
+  }
+
+  async function generateZip(tree, projectName, includePlaceholders, tierManifestContent, docType, onHashProgress) {
     const files = [];
     const encoder = new TextEncoder();
     const { time: dosTime, date: dosDate } = dosDateTime(new Date());
@@ -508,7 +762,7 @@ const ZipGenerator = (() => {
         const isHashManifest = node.name === 'Hash_Manifest.txt';
         let content = '';
         if (includePlaceholders && !isHashManifest) {
-          content = generatePlaceholder(node.name, tree.name, tierManifestContent);
+          content = generatePlaceholder(node.name, tree.name, tierManifestContent, docType);
         }
         files.push({ name: fullPath, data: encoder.encode(content), isDir: false, isHashManifest });
       }
@@ -524,6 +778,14 @@ const ZipGenerator = (() => {
       files.push({ name: 'Tier_Manifest.txt', data: encoder.encode(manifestBody), isDir: false });
     }
 
+    // Always include a NEXT_STEPS.md — document-type-aware when a type is
+    // selected, a generic checklist otherwise — same toggle-respecting
+    // pattern as Tier_Manifest.txt above.
+    {
+      const nextStepsBody = includePlaceholders ? buildNextSteps(tree.name, docType, tierManifestContent) : '';
+      files.push({ name: 'NEXT_STEPS.md', data: encoder.encode(nextStepsBody), isDir: false });
+    }
+
     // Fill Hash_Manifest.txt (if the tier tree includes one) with genuine
     // SHA-256 digests of every other file actually going into this archive,
     // instead of shipping it as an empty header comment. Skipped when
@@ -533,7 +795,7 @@ const ZipGenerator = (() => {
       const hashManifestFile = files.find(f => f.isHashManifest);
       if (hashManifestFile) {
         const hashable = files.filter(f => !f.isDir && !f.isHashManifest);
-        hashManifestFile.data = encoder.encode(await buildHashManifest(hashable));
+        hashManifestFile.data = encoder.encode(await buildHashManifest(hashable, onHashProgress));
       }
     }
 
@@ -641,18 +903,38 @@ const ZipGenerator = (() => {
     return SHARED_BINARY_EXTENSIONS.includes(ext);
   }
 
-  function generatePlaceholder(name, projectName, tierManifestContent) {
+  function generatePlaceholder(name, projectName, tierManifestContent, docType) {
     if (isBinaryName(name)) return '';
     if (name === 'package.json') return JSON.stringify({name:projectName,version:'1.0.0',private:true}, null, 2);
     if (name === 'tsconfig.json') return JSON.stringify({compilerOptions:{target:'ES2022',module:'ESNext',strict:true}}, null, 2);
+    const docMeta = DOCUMENT_TYPES[docType];
     if (name === 'README.txt') {
-      return `# ${projectName}\n\nGenerated by AionSystem Scaffold v3.4\n\nReview package for document red-team analysis.\n\nTier: ${tierManifestContent ? tierManifestContent.split('\n')[0] : 'Custom'}\n`;
+      let body = `# ${projectName}\n\nGenerated by AionSystem Scaffold v3.5\n\n`;
+      body += docMeta
+        ? `## How to use this package\n${docMeta.placeholders.readmeIntro}\n\n`
+        : `Review package for document red-team analysis.\n\n`;
+      body += `Tier: ${tierManifestContent ? tierManifestContent.split('\n')[0] : 'Custom'}\n`;
+      return body;
     }
     if (name === 'Hash_Manifest.txt') {
       return `# Hash Manifest\n# Generated by AionSystem\n# SHA-256 hashes of package files\n\n`;
     }
     if (name === 'Verification_Checklist.txt') {
-      return `# Verification Checklist\n\n1. Confirm original document is included.\n2. Verify hashes in Hash_Manifest.txt.\n3. Review findings register and dossier.\n`;
+      const items = docMeta ? docMeta.placeholders.checklist : [
+        'Confirm original document is included.',
+        'Verify hashes in Hash_Manifest.txt.',
+        'Review findings register and dossier.'
+      ];
+      let body = `# Verification Checklist\n\n`;
+      items.forEach((it, i) => { body += `${i + 1}. ${it}\n`; });
+      return body;
+    }
+    if (name === 'Regulatory_Anchor_References.txt') {
+      const anchors = docMeta?.placeholders?.anchors;
+      let body = `# Regulatory Anchor References\n# Starting suggestions to edit against the actual scope — not legal advice.\n\n`;
+      if (anchors && anchors.length) anchors.forEach(a => { body += `- ${a}\n`; });
+      else body += `- [ADD APPLICABLE REGULATION / STANDARD]\n`;
+      return body;
     }
     if (name.endsWith('.csv')) {
       // CSV headers based on filename
@@ -687,7 +969,7 @@ const ZipGenerator = (() => {
     return '';
   }
   
-  return { generateZip, generatePlaceholder, isBinaryName, sha256Hex, buildHashManifest };
+  return { generateZip, generatePlaceholder, isBinaryName, sha256Hex, buildHashManifest, buildNextSteps };
 })();
 
 // ============================================================
@@ -699,11 +981,19 @@ const ZipGenerator = (() => {
   const CONFIG = {
     MAX_FILES: 15000, MAX_FOLDERS: 7500, MAX_INPUT_SIZE: 500000, MAX_DEPTH: 100,
     BINARY_EXTENSIONS: SHARED_BINARY_EXTENSIONS,
-    MAX_HISTORY: 30, AUTO_SAVE_KEY: 'aion-scaffold-v3_4', PRESETS_KEY: 'aion-scaffold-presets-v3_4',
+    MAX_HISTORY: 30, AUTO_SAVE_KEY: 'aion-scaffold-v3_5', PRESETS_KEY: 'aion-scaffold-presets-v3_5',
     PREVIEW_MAX_NODES: 500, PREVIEW_MAX_DEPTH: 4
   };
 
   const CHANGELOG = [
+    { version: 'v3.5', date: '2026-09-06', changes: [
+      'Added a Document Type selector (Contract Review, Policy Audit, Regulatory Filing, AI Governance Framework, Research Paper / Grant Proposal, Internal SOP / Playbook) — general-purpose adversarial-document skeletons, separate from the priced tier packages. Loading one clears any loaded tier, and vice versa; the two are alternative starting points, not combined',
+      'README.txt, Verification_Checklist.txt, and (where the tree includes it) Regulatory_Anchor_References.txt now generate document-type-specific content instead of generic boilerplate when a type is selected',
+      'Added an always-included NEXT_STEPS.md — an ordered, document-type-aware instructions file (falls back to a generic checklist otherwise) covering how to complete the package, how to verify Hash_Manifest.txt with sha256sum, and a contact placeholder',
+      'Added template file export/import (JSON, matching the existing "Export Template" shape) as a durable, shareable counterpart to the session-only presets — deliberately not localStorage, per the privacy call already made in the v2.7 changelog',
+      'Saving a preset over an existing name now asks for confirmation before overwriting',
+      'Generate & Download now shows real hashing progress ("hashing 12/40 files") during ZIP/script build, driven by actual per-file completion rather than a decorative spinner'
+    ]},
     { version: 'v3.4', date: '2026-09-05', changes: [
       'Hash_Manifest.txt now contains real SHA-256 digests of every file in the package, computed at build time with the browser\'s native crypto.subtle — previously it shipped as an empty header comment despite the whole tier system being built around cryptographic verification',
       'Added "Validate vs Tier" — checks the current parsed tree against the TIER_TREES definition it was loaded from and lists anything missing or extra, so deleting a required file (e.g. Authority_Ownership_Map from a loaded Tier 4) no longer goes unnoticed',
@@ -1031,12 +1321,15 @@ This is the highest tier. No further upgrades available.`
     reportModalTitle: document.getElementById('reportModalTitle'), reportModalContent: document.getElementById('reportModalContent'),
     presetNameInput: document.getElementById('presetNameInput'), presetSelect: document.getElementById('presetSelect'),
     savePresetBtn: document.getElementById('savePresetBtn'), loadPresetBtn: document.getElementById('loadPresetBtn'),
-    deletePresetBtn: document.getElementById('deletePresetBtn')
+    deletePresetBtn: document.getElementById('deletePresetBtn'),
+    docTypeSelect: document.getElementById('docTypeSelect'), docTypeBadge: document.getElementById('docTypeBadge'),
+    exportTemplateBtn: document.getElementById('exportTemplateBtn'), importTemplateBtn: document.getElementById('importTemplateBtn'),
+    importTemplateInput: document.getElementById('importTemplateInput')
   };
 
   const state = {
     parsedTree: null, fileCount: 0, folderCount: 0, pendingFixes: [], originalInput: '',
-    projectName: 'my-awesome-project', currentTier: null, tierManifest: ''
+    projectName: 'my-awesome-project', currentTier: null, tierManifest: '', currentDocType: null
   };
   const history = { past: [], future: [] };
 
@@ -1400,12 +1693,16 @@ This is the highest tier. No further upgrades available.`
 
   async function generateZip() {
     if(!state.parsedTree){ showError('Parse a tree first.'); return; }
-    const blob = await ZipGenerator.generateZip(state.parsedTree, state.projectName, elements.includePlaceholders.checked, state.tierManifest);
+    const blob = await ZipGenerator.generateZip(
+      state.parsedTree, state.projectName, elements.includePlaceholders.checked, state.tierManifest, state.currentDocType,
+      (done, total) => showInfo(`Generating… hashing ${done}/${total} files`)
+    );
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = `${state.parsedTree.name}.zip`;
     a.click();
-    const expectedFiles = state.fileCount + (state.tierManifest ? 1 : 0);
+    // +1 for Tier_Manifest.txt if a tier is loaded, +1 for the always-included NEXT_STEPS.md
+    const expectedFiles = state.fileCount + (state.tierManifest ? 1 : 0) + 1;
     const expectedDirs = state.folderCount + 1; // +1 for the root folder entry itself
     const verified = await verifyZip(blob);
     if(verified.files === expectedFiles && verified.dirs === expectedDirs){
@@ -1432,17 +1729,18 @@ This is the highest tier. No further upgrades available.`
       if(n.type==='folder'){ n.children?.forEach(c=>collect(c,f)); }
       else {
         const isHashManifest = n.name === 'Hash_Manifest.txt';
-        const content = (includePlaceholders && !isHashManifest) ? ZipGenerator.generatePlaceholder(n.name, state.parsedTree.name, state.tierManifest) : '';
+        const content = (includePlaceholders && !isHashManifest) ? ZipGenerator.generatePlaceholder(n.name, state.parsedTree.name, state.tierManifest, state.currentDocType) : '';
         fileEntries.push({ path: f, content, isHashManifest });
       }
     }
     state.parsedTree.children?.forEach(c=>collect(c, ''));
     if(state.tierManifest) fileEntries.push({ path: 'Tier_Manifest.txt', content: includePlaceholders ? state.tierManifest : '', isHashManifest: false });
+    fileEntries.push({ path: 'NEXT_STEPS.md', content: includePlaceholders ? ZipGenerator.buildNextSteps(state.parsedTree.name, state.currentDocType, state.tierManifest) : '', isHashManifest: false });
 
     let hashManifestText = '';
     if(includePlaceholders){
       const hashable = fileEntries.filter(f => !f.isHashManifest).map(f => ({ name: f.path, data: encoder.encode(f.content) }));
-      hashManifestText = await ZipGenerator.buildHashManifest(hashable);
+      hashManifestText = await ZipGenerator.buildHashManifest(hashable, (done, total) => showInfo(`Generating… hashing ${done}/${total} files`));
     }
     const contentByPath = new Map(fileEntries.map(f => [f.path, f.isHashManifest ? hashManifestText : f.content]));
 
@@ -1457,16 +1755,18 @@ This is the highest tier. No further upgrades available.`
       }
     }
     s+=`mkdir -p ${shellQuote(state.parsedTree.name)}\ncd ${shellQuote(state.parsedTree.name)}\n`; state.parsedTree.children?.forEach(c=>add(c,''));
-    if(state.tierManifest){
-      const tmContent = contentByPath.get('Tier_Manifest.txt') ?? '';
-      if(tmContent){ s+=`cat > ${shellQuote('Tier_Manifest.txt')} << 'AION_EOF'\n${tmContent}\nAION_EOF\n`; }
-      else { s+=`touch ${shellQuote('Tier_Manifest.txt')}\n`; }
+    function writeExtra(name){
+      const content = contentByPath.get(name) ?? '';
+      if(content){ s+=`cat > ${shellQuote(name)} << 'AION_EOF'\n${content}\nAION_EOF\n`; }
+      else { s+=`touch ${shellQuote(name)}\n`; }
     }
+    if(state.tierManifest) writeExtra('Tier_Manifest.txt');
+    writeExtra('NEXT_STEPS.md');
     const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([s])); a.download=`${state.parsedTree.name}.sh`; a.click(); showSuccess(`${state.parsedTree.name}.sh generated.`);
   }
 
-  function exportTree(){ if(!state.parsedTree)return; let o=`${state.parsedTree.name}/\n`; function add(n,d=0,last=true,pre=''){ if(d===0){ n.children?.forEach((c,i)=>add(c,d+1,i===n.children.length-1,'')); return; } o+=pre+(last?'└── ':'├── ')+n.name+(n.type==='folder'?'/':'')+'\n'; if(n.type==='folder'&&n.children){ const np=pre+(last?'    ':'│   '); n.children.forEach((c,i)=>add(c,d+1,i===n.children.length-1,np)); } } add(state.parsedTree); if(state.tierManifest){ o+=`Tier_Manifest.txt\n`; } const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([o])); a.download=`${state.parsedTree.name}.tree.txt`; a.click(); showSuccess(`Tree exported.`); }
-  function exportJSON(){ if(!state.parsedTree)return; const obj={tree:state.parsedTree, tierManifest:state.tierManifest}; const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(obj,null,2)])); a.download=`${state.parsedTree.name}.json`; a.click(); showSuccess(`JSON exported.`); }
+  function exportTree(){ if(!state.parsedTree)return; let o=`${state.parsedTree.name}/\n`; function add(n,d=0,last=true,pre=''){ if(d===0){ n.children?.forEach((c,i)=>add(c,d+1,i===n.children.length-1,'')); return; } o+=pre+(last?'└── ':'├── ')+n.name+(n.type==='folder'?'/':'')+'\n'; if(n.type==='folder'&&n.children){ const np=pre+(last?'    ':'│   '); n.children.forEach((c,i)=>add(c,d+1,i===n.children.length-1,np)); } } add(state.parsedTree); if(state.tierManifest){ o+=`Tier_Manifest.txt\n`; } o+=`NEXT_STEPS.md\n`; const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([o])); a.download=`${state.parsedTree.name}.tree.txt`; a.click(); showSuccess(`Tree exported.`); }
+  function exportJSON(){ if(!state.parsedTree)return; const obj={tree:state.parsedTree, tierManifest:state.tierManifest, docType:state.currentDocType}; const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(obj,null,2)])); a.download=`${state.parsedTree.name}.json`; a.click(); showSuccess(`JSON exported.`); }
   function handleExport(){
     const f=elements.exportFormat.value;
     // Tree/JSON exports are cheap regardless of size; ZIP/script building on a
@@ -1498,6 +1798,12 @@ This is the highest tier. No further upgrades available.`
     else { elements.tierBadge.style.display = 'none'; }
   }
 
+  function updateDocTypeBadge() {
+    const meta = DOCUMENT_TYPES[state.currentDocType];
+    if(meta){ elements.docTypeBadge.textContent = `📄 ${meta.label}`; elements.docTypeBadge.style.display = 'inline-block'; }
+    else { elements.docTypeBadge.style.display = 'none'; }
+  }
+
   function checkpointIfDirty() {
     // Snapshot whatever is currently in the editor before a destructive
     // action (Load Example / Load Tier / Clear) overwrites it, so Undo
@@ -1506,9 +1812,9 @@ This is the highest tier. No further upgrades available.`
     if(elements.input.value.trim()) pushHistory();
   }
 
-  function clearAll(){ checkpointIfDirty(); elements.input.value=''; elements.preview.innerHTML='<span style="color: var(--text-dim);">Click "Example" or load a tier template...</span>'; elements.statsText.innerHTML='📁 0 folders · 📄 0 files'; clearMessages(); elements.auditPanel.classList.remove('visible'); state.parsedTree=null; state.tierManifest=''; state.currentTier=null; elements.tierSelect.value=''; updateTierBadge(); }
+  function clearAll(){ checkpointIfDirty(); elements.input.value=''; elements.preview.innerHTML='<span style="color: var(--text-dim);">Click "Example" or load a tier template...</span>'; elements.statsText.innerHTML='📁 0 folders · 📄 0 files'; clearMessages(); elements.auditPanel.classList.remove('visible'); state.parsedTree=null; state.tierManifest=''; state.currentTier=null; elements.tierSelect.value=''; state.currentDocType=null; elements.docTypeSelect.value=''; updateTierBadge(); updateDocTypeBadge(); }
   function cleanComments(){ elements.input.value=elements.input.value.split('\n').map(stripComments).join('\n'); showSuccess('Comments stripped.'); }
-  function loadExample(){ checkpointIfDirty(); elements.input.value=EXAMPLE_TREE; elements.projectNameInput.value='my-saas'; state.projectName='my-saas'; elements.projectNameDisplay.textContent='📦 my-saas'; elements.tierSelect.value=''; state.currentTier=null; state.tierManifest=''; updateTierBadge(); showInfo('Example loaded. Click "Parse" or "Audit & Fix".'); }
+  function loadExample(){ checkpointIfDirty(); elements.input.value=EXAMPLE_TREE; elements.projectNameInput.value='my-saas'; state.projectName='my-saas'; elements.projectNameDisplay.textContent='📦 my-saas'; elements.tierSelect.value=''; state.currentTier=null; state.tierManifest=''; state.currentDocType=null; elements.docTypeSelect.value=''; updateTierBadge(); updateDocTypeBadge(); showInfo('Example loaded. Click "Parse" or "Audit & Fix".'); }
 
   function loadTier(tierKey) {
     if(!TIER_TREES[tierKey]) return;
@@ -1520,8 +1826,32 @@ This is the highest tier. No further upgrades available.`
     elements.projectNameDisplay.textContent = `📦 ${state.projectName}`;
     state.currentTier = tierKey;
     state.tierManifest = TIER_MANIFESTS[tierKey] || '';
+    // Tiers and document types are alternative starting skeletons, not
+    // combinable — loading one clears the other.
+    state.currentDocType = null;
+    elements.docTypeSelect.value = '';
+    updateDocTypeBadge();
     updateTierBadge();
     showInfo(`Tier ${tierName} template loaded. Parse to build.`);
+  }
+
+  function loadDocType(typeKey) {
+    const meta = DOCUMENT_TYPES[typeKey];
+    if(!meta) return;
+    checkpointIfDirty();
+    elements.input.value = meta.tree;
+    const slug = meta.label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    elements.projectNameInput.value = `${slug}-project`;
+    state.projectName = sanitizeProjectName(elements.projectNameInput.value);
+    elements.projectNameDisplay.textContent = `📦 ${state.projectName}`;
+    state.currentDocType = typeKey;
+    // Clears any loaded tier — see note in loadTier().
+    state.currentTier = null;
+    state.tierManifest = '';
+    elements.tierSelect.value = '';
+    updateTierBadge();
+    updateDocTypeBadge();
+    showInfo(`${meta.label} template loaded. Parse to build.`);
   }
 
   function validateAgainstTier() {
@@ -1599,7 +1929,8 @@ This is the highest tier. No further upgrades available.`
     if(!name){ showError('Give the preset a name first.'); return; }
     if(!elements.input.value.trim()){ showError('Nothing to save — paste or load a tree first.'); return; }
     const store = loadPresetsStore();
-    store[name] = { input: elements.input.value, projectName: state.projectName, tier: state.currentTier, tierManifest: state.tierManifest };
+    if(store[name] && !confirm(`A preset named "${name}" already exists. Overwrite it?`)) return;
+    store[name] = { input: elements.input.value, projectName: state.projectName, tier: state.currentTier, tierManifest: state.tierManifest, docType: state.currentDocType };
     savePresetsStore(store);
     refreshPresetSelect();
     elements.presetSelect.value = name;
@@ -1619,7 +1950,10 @@ This is the highest tier. No further upgrades available.`
     state.currentTier = p.tier || null;
     state.tierManifest = p.tierManifest || '';
     elements.tierSelect.value = state.currentTier || '';
+    state.currentDocType = p.docType || null;
+    elements.docTypeSelect.value = state.currentDocType || '';
     updateTierBadge();
+    updateDocTypeBadge();
     showInfo(`Preset "${name}" loaded. Click "Parse" to rebuild.`);
   }
   function deletePreset() {
@@ -1631,6 +1965,49 @@ This is the highest tier. No further upgrades available.`
     refreshPresetSelect();
     showSuccess(`Preset "${name}" deleted.`);
   }
+
+  // ----------------------------------------------------------
+  // Template files — the durable, shareable counterpart to the
+  // session-only presets above. Same payload shape, but written to a
+  // JSON file the person keeps on disk instead of sessionStorage, so it
+  // survives a browser restart and can be handed to someone else —
+  // without reviving the localStorage approach this tool deliberately
+  // moved away from (see the v2.7 changelog entry).
+  // ----------------------------------------------------------
+  function exportTemplate() {
+    if(!elements.input.value.trim()){ showError('Nothing to export — paste or load a tree first.'); return; }
+    const payload = { input: elements.input.value, projectName: state.projectName, tier: state.currentTier, tierManifest: state.tierManifest, docType: state.currentDocType };
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' }));
+    a.download = `${state.projectName || 'template'}.aion-template.json`;
+    a.click();
+    showSuccess('Template exported. Keep the file or share it — re-import it anytime.');
+  }
+  function importTemplateFile(file) {
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      let payload;
+      try { payload = JSON.parse(reader.result); } catch(e) { showError('That file isn\'t valid JSON.'); return; }
+      if(typeof payload.input !== 'string'){ showError('That file doesn\'t look like an AION Scaffold template (missing "input").'); return; }
+      checkpointIfDirty();
+      elements.input.value = payload.input;
+      elements.projectNameInput.value = payload.projectName || 'my-awesome-project';
+      state.projectName = sanitizeProjectName(elements.projectNameInput.value);
+      elements.projectNameDisplay.textContent = `📦 ${state.projectName}`;
+      state.currentTier = payload.tier || null;
+      state.tierManifest = payload.tierManifest || '';
+      elements.tierSelect.value = state.currentTier || '';
+      state.currentDocType = payload.docType || null;
+      elements.docTypeSelect.value = state.currentDocType || '';
+      updateTierBadge();
+      updateDocTypeBadge();
+      showInfo('Template imported. Click "Parse" to rebuild.');
+    };
+    reader.onerror = () => showError('Could not read that file.');
+    reader.readAsText(file);
+  }
+
 
   function handleFolderImport(fileList) {
     if(!fileList || !fileList.length){ return; }
@@ -1673,6 +2050,7 @@ This is the highest tier. No further upgrades available.`
     state.projectName = tree.name;
     elements.projectNameDisplay.textContent = `📦 ${tree.name}`;
     elements.tierSelect.value = ''; state.currentTier = null; state.tierManifest = ''; updateTierBadge();
+    elements.docTypeSelect.value = ''; state.currentDocType = null; updateDocTypeBadge();
     showInfo(`Imported ${paths.length.toLocaleString()} files from local folder. Click "Parse" to build.`);
   }
 
@@ -1732,6 +2110,15 @@ This is the highest tier. No further upgrades available.`
   elements.loadPresetBtn.onclick = loadPreset;
   elements.deletePresetBtn.onclick = deletePreset;
   refreshPresetSelect();
+  elements.docTypeSelect.addEventListener('change', (e) => {
+    if(e.target.value) loadDocType(e.target.value);
+  });
+  elements.exportTemplateBtn.onclick = exportTemplate;
+  elements.importTemplateBtn.onclick = () => elements.importTemplateInput.click();
+  elements.importTemplateInput.addEventListener('change', (e) => {
+    if(e.target.files && e.target.files[0]) importTemplateFile(e.target.files[0]);
+    e.target.value = '';
+  });
 
   // Theme toggle — shares the same 'aion-theme' localStorage key as the rest
   // of the AionSystem site (aionsystem.github.io), so a preference set on one
