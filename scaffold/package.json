@@ -1,7 +1,7 @@
 {
   "name": "aion-scaffold",
-  "version": "2.6.5",
-  "description": "Intelligent tree-to-filesystem scaffolding. Parse ASCII trees, audit issues, fix automatically. FORGE-hardened.",
+  "version": "2.7.0",
+  "description": "Intelligent tree-to-filesystem scaffolding. Parse ASCII trees, audit issues, fix automatically. Generate tier deliverable packages or document-review templates with real SHA-256 hash manifests. FORGE-hardened.",
   "main": "cli.js",
   "bin": {
     "aion-scaffold": "./cli.js",
@@ -35,7 +35,11 @@
     "builder",
     "aion",
     "forge",
-    "certainty"
+    "certainty",
+    "tier",
+    "document-review",
+    "sha256",
+    "hash-manifest"
   ],
   "author": {
     "name": "Sheldon K. Salmon",
